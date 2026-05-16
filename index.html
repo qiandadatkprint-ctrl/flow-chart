@@ -2,21 +2,18 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>清洁生产工艺流程图绘制工具</title>
-    <script src="https://unpkg.com/@antv/x6/dist/x6.js"></script>
-    <script src="https://unpkg.com/dagre@0.8.5/dist/dagre.min.js"></script>
+    <title>清洁生产工艺流程图绘制工具 (国内优化版)</title>
+    <script src="[https://cdn.jsdelivr.net/npm/@antv/x6/dist/x6.js](https://cdn.jsdelivr.net/npm/@antv/x6/dist/x6.js)"></script>
+    <script src="[https://cdn.jsdelivr.net/npm/dagre@0.8.5/dist/dagre.min.js](https://cdn.jsdelivr.net/npm/dagre@0.8.5/dist/dagre.min.js)"></script>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; display: flex; height: 100vh; background: #f0f2f5; }
-        /* 左侧输入区 */
         .sidebar { width: 320px; background: #fff; padding: 20px; box-shadow: 2px 0 8px rgba(0,0,0,0.1); display: flex; flex-direction: column; z-index: 10; }
         .sidebar h3 { margin-top: 0; font-size: 16px; }
         textarea { flex: 1; resize: none; border: 1px solid #d9d9d9; border-radius: 4px; padding: 10px; font-family: monospace; font-size: 12px; margin-bottom: 10px; }
         button { background: #1890ff; color: #fff; border: none; padding: 10px; border-radius: 4px; cursor: pointer; font-weight: bold; margin-bottom: 10px;}
         button:hover { background: #40a9ff; }
-        /* 顶部工具栏 */
         .toolbar { position: absolute; top: 20px; left: 360px; background: #fff; padding: 10px 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: flex; gap: 15px; align-items: center; z-index: 10; display: none; }
         .toolbar input, .toolbar select { padding: 4px; }
-        /* 画布区 */
         #container { flex: 1; height: 100%; position: relative; }
         .tip { font-size: 12px; color: #888; margin-bottom: 10px; }
     </style>
@@ -25,29 +22,14 @@
 
 <div class="sidebar">
     <h3>1. 粘贴 AI 生成的 JSON 数据</h3>
-    <div class="tip">由外部 AI 结构化后的工艺节点与连接关系。</div>
-    <textarea id="jsonInput">
-{
-  "nodes": [
-    {"id": "n1", "label": "原辅料", "category": "material"},
-    {"id": "n2", "label": "核心反应", "category": "process"},
-    {"id": "n3", "label": "G1-1 废气", "category": "emission"},
-    {"id": "n4", "label": "W1-1 废水", "category": "emission"}
-  ],
-  "edges": [
-    {"source": "n1", "target": "n2", "type": "solid"},
-    {"source": "n2", "target": "n3", "type": "dashed"},
-    {"source": "n2", "target": "n4", "type": "dashed"}
-  ]
-}
-    </textarea>
+    <textarea id="jsonInput" placeholder="在此粘贴 JSON 数据..."></textarea>
     <button onclick="renderFromJSON()">生成流程图</button>
     <button onclick="exportPNG()" style="background: #52c41a;">导出图片 (PNG)</button>
     <div class="tip" style="margin-top:20px;">
         <b>操作指南：</b><br>
         - 鼠标左键拖拽调整节点位置<br>
-        - 点击节点可在顶部工具栏修改样式<br>
-        - 鼠标悬浮节点边缘可拉出新连线<br>
+        - 滚轮控制画布缩放<br>
+        - 点击节点可在顶部工具栏修改颜色<br>
         - 选中节点或连线后按 <b>Delete</b> 键删除
     </div>
 </div>
@@ -62,56 +44,50 @@
 <div id="container"></div>
 
 <script>
-    // 初始化 AntV X6 画布
+    // 初始化画布
     const graph = new X6.Graph({
         container: document.getElementById('container'),
         grid: true,
-        panning: true, // 允许平移画布
-        mousewheel: { enabled: true, zoomAtMousePosition: true, modifiers: 'ctrl', minScale: 0.5, maxScale: 3 }, // 允许缩放
+        panning: true,
+        mousewheel: { enabled: true, zoomAtMousePosition: true, modifiers: 'ctrl', minScale: 0.5, maxScale: 3 },
         connecting: {
-            snap: true, // 连线吸附
+            snap: true,
             allowBlank: false,
             allowLoop: false,
             highlight: true,
             createEdge() { return new X6.Shape.Edge({ attrs: { line: { stroke: '#555', strokeWidth: 2, targetMarker: 'block' } } }); }
         },
-        keyboard: { enabled: true } // 允许快捷键
+        keyboard: { enabled: true }
     });
 
     let activeNode = null;
 
-    // 绑定删除快捷键
     graph.bindKey('delete', () => {
         const cells = graph.getSelectedCells();
         if (cells.length) { graph.removeCells(cells); hideToolbar(); }
     });
 
-    // 监听节点点击，显示工具栏
     graph.on('node:click', ({ node }) => {
         activeNode = node;
         const toolbar = document.getElementById('toolbar');
         toolbar.style.display = 'flex';
         
-        // 读取当前节点的样式填充到工具栏
         const attrs = node.getAttrs();
         document.getElementById('bgColor').value = attrs.body.fill || '#ffffff';
         document.getElementById('strokeColor').value = attrs.body.stroke || '#333333';
         document.getElementById('fontSize').value = attrs.text.fontSize || 14;
         
-        // 简单的高亮效果
         graph.getNodes().forEach(n => n.attr('body/strokeWidth', n.id === node.id ? 4 : 2));
     });
 
-    // 监听空白处点击，隐藏工具栏
     graph.on('blank:click', () => {
         activeNode = null;
         hideToolbar();
-        graph.getNodes().forEach(n => n.attr('body/strokeWidth', 2)); // 恢复边框宽度
+        graph.getNodes().forEach(n => n.attr('body/strokeWidth', 2));
     });
 
     function hideToolbar() { document.getElementById('toolbar').style.display = 'none'; }
 
-    // 更新节点样式函数
     window.updateNodeStyle = function(type, value) {
         if (!activeNode) return;
         if (type === 'fill') activeNode.attr('body/fill', value);
@@ -119,77 +95,81 @@
         if (type === 'fontSize') activeNode.attr('text/fontSize', parseInt(value));
     };
 
-    // 核心排版与渲染逻辑
     window.renderFromJSON = function() {
-        const jsonStr = document.getElementById('jsonInput').value;
+        let jsonStr = document.getElementById('jsonInput').value;
+        
+        // 【新增优化】自动清洗 AI 输出的 Markdown 格式符
+        jsonStr = jsonStr.replace(/```json/gi, '').replace(/```/g, '').trim();
+
+        if (!jsonStr) {
+            alert("请输入JSON数据");
+            return;
+        }
+
         let data;
-        try { data = JSON.parse(jsonStr); } catch (e) { alert("JSON 格式有误，请检查！"); return; }
+        try { 
+            data = JSON.parse(jsonStr); 
+        } catch (e) { 
+            alert("JSON 解析失败，请检查数据格式是否遗漏了逗号或引号！"); 
+            return; 
+        }
 
         graph.clearCells();
         hideToolbar();
 
-        // 1. 使用 Dagre 进行自动排版计算
         const g = new dagre.graphlib.Graph();
-        g.setGraph({ rankdir: 'TB', nodesep: 60, ranksep: 80 }); // TB: 从上到下排版
+        g.setGraph({ rankdir: 'TB', nodesep: 40, ranksep: 60 });
         g.setDefaultEdgeLabel(() => ({}));
 
-        // 定义节点样式字典
+        // 【新增优化】调整宽度为 140，适应长名称如“乳化剂（TW-80）”
         const styleMap = {
-            process: { width: 120, height: 40, fill: '#f9f9f9', stroke: '#333', rx: 0 },
-            material: { width: 100, height: 40, fill: '#ffffff', stroke: '#333', rx: 20 },
-            emission: { width: 100, height: 40, fill: '#fff1f0', stroke: '#ff4d4f', rx: 0, fontColor: '#d9363e' }
+            process: { width: 140, height: 40, fill: '#f9f9f9', stroke: '#333', rx: 0 },
+            material: { width: 140, height: 40, fill: '#ffffff', stroke: '#333', rx: 20 },
+            emission: { width: 140, height: 40, fill: '#fff1f0', stroke: '#ff4d4f', rx: 0, fontColor: '#d9363e' }
         };
 
-        // 将 JSON 节点加入排版引擎
         data.nodes.forEach(node => {
             const style = styleMap[node.category] || styleMap['process'];
             g.setNode(node.id, { width: style.width, height: style.height, ...style, label: node.label });
         });
 
-        // 将 JSON 连线加入排版引擎
         data.edges.forEach(edge => { g.setEdge(edge.source, edge.target); });
 
-        // 执行计算
         dagre.layout(g);
 
-        // 2. 将计算好坐标的节点渲染到 X6 画布
-        const x6Nodes = {};
         g.nodes().forEach(v => {
             const nodeMeta = g.node(v);
             if(!nodeMeta) return;
-            const x6Node = graph.addNode({
+            graph.addNode({
                 id: v,
-                x: nodeMeta.x - nodeMeta.width / 2 + 300, // 基础偏移
+                x: nodeMeta.x - nodeMeta.width / 2 + 200,
                 y: nodeMeta.y - nodeMeta.height / 2 + 50,
                 width: nodeMeta.width, height: nodeMeta.height,
                 attrs: {
                     body: { fill: nodeMeta.fill, stroke: nodeMeta.stroke, strokeWidth: 2, rx: nodeMeta.rx, ry: nodeMeta.rx },
-                    text: { text: nodeMeta.label, fill: nodeMeta.fontColor || '#333', fontSize: 14, fontWeight: nodeMeta.category === 'process' ? 'bold' : 'normal' }
+                    text: { text: nodeMeta.label, fill: nodeMeta.fontColor || '#333', fontSize: 13, fontWeight: nodeMeta.category === 'process' ? 'bold' : 'normal' }
                 }
             });
-            x6Nodes[v] = x6Node;
         });
 
-        // 3. 绘制连线
         data.edges.forEach(edge => {
             graph.addEdge({
                 source: { cell: edge.source },
                 target: { cell: edge.target },
                 attrs: {
                     line: {
-                        stroke: edge.type === 'dashed' ? '#ff4d4f' : '#555', // 产排污用红色，主物料用灰色
+                        stroke: edge.type === 'dashed' ? '#ff4d4f' : '#555',
                         strokeWidth: 2,
-                        strokeDasharray: edge.type === 'dashed' ? '5 5' : '0', // 识别实线和虚线
+                        strokeDasharray: edge.type === 'dashed' ? '5 5' : '0',
                         targetMarker: 'block',
                     }
                 }
             });
         });
         
-        graph.centerContent(); // 居中画布
+        graph.centerContent();
     };
 
-    // 导出图片
     window.exportPNG = function() {
         graph.toPNG((dataUri) => {
             const link = document.createElement('a');
@@ -198,9 +178,6 @@
             link.click();
         }, { padding: { top: 20, right: 20, bottom: 20, left: 20 }, backgroundColor: '#fff' });
     };
-
-    // 初始渲染一次默认数据
-    renderFromJSON();
 </script>
 
 </body>
