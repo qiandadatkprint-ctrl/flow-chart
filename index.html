@@ -2,140 +2,205 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>工艺流程及产排污节点自动生成系统</title>
-    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <title>清洁生产工艺流程图绘制工具</title>
+    <script src="https://unpkg.com/@antv/x6/dist/x6.js"></script>
+    <script src="https://unpkg.com/dagre@0.8.5/dist/dagre.min.js"></script>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; background-color: #f5f6fa; }
-        .container { display: flex; gap: 20px; height: 90vh; }
-        .panel { flex: 1; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); display: flex; flex-direction: column; }
-        textarea { width: 100%; resize: none; border: 1px solid #ccc; border-radius: 4px; padding: 10px; font-family: monospace; box-sizing: border-box; }
-        .config-area { margin-bottom: 15px; display: flex; gap: 10px; }
-        input[type="text"] { flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
-        button { padding: 8px 16px; background-color: #1a73e8; color: white; border: none; border-radius: 4px; cursor: pointer; }
-        button:hover { background-color: #1557b0; }
-        #textInput { flex: 0.4; margin-bottom: 15px; }
-        #mermaidInput { flex: 0.6; background-color: #1e1e1e; color: #d4d4d4; }
-        #renderArea { flex: 1; overflow: auto; display: flex; justify-content: center; align-items: flex-start; border: 1px dashed #ccc; padding: 20px; background: #fafafa; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; display: flex; height: 100vh; background: #f0f2f5; }
+        /* 左侧输入区 */
+        .sidebar { width: 320px; background: #fff; padding: 20px; box-shadow: 2px 0 8px rgba(0,0,0,0.1); display: flex; flex-direction: column; z-index: 10; }
+        .sidebar h3 { margin-top: 0; font-size: 16px; }
+        textarea { flex: 1; resize: none; border: 1px solid #d9d9d9; border-radius: 4px; padding: 10px; font-family: monospace; font-size: 12px; margin-bottom: 10px; }
+        button { background: #1890ff; color: #fff; border: none; padding: 10px; border-radius: 4px; cursor: pointer; font-weight: bold; margin-bottom: 10px;}
+        button:hover { background: #40a9ff; }
+        /* 顶部工具栏 */
+        .toolbar { position: absolute; top: 20px; left: 360px; background: #fff; padding: 10px 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: flex; gap: 15px; align-items: center; z-index: 10; display: none; }
+        .toolbar input, .toolbar select { padding: 4px; }
+        /* 画布区 */
+        #container { flex: 1; height: 100%; position: relative; }
+        .tip { font-size: 12px; color: #888; margin-bottom: 10px; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <div class="panel">
-        <div class="config-area">
-            <input type="text" id="apiKey" placeholder="在此输入大模型 API Key (如不填则需手动编写代码)" />
-            <button onclick="generateFromText()">一键生成</button>
-        </div>
-        
-        <label for="textInput">1. 粘贴工艺流程文字说明：</label>
-        <textarea id="textInput" placeholder="例如：人工将原料药加入反应釜。此过程产生投料废气G1-1；开启搅拌及温控设备，生成中间体1..."></textarea>
-        
-        <label for="mermaidInput">2. 流程图代码 (可在此处自行手动增删、调整节点)：</label>
-        <textarea id="mermaidInput" oninput="renderGraph()"></textarea>
-    </div>
-
-    <div class="panel">
-        <h3 style="margin-top: 0;">工艺流程图预览</h3>
-        <div id="renderArea"></div>
+<div class="sidebar">
+    <h3>1. 粘贴 AI 生成的 JSON 数据</h3>
+    <div class="tip">由外部 AI 结构化后的工艺节点与连接关系。</div>
+    <textarea id="jsonInput">
+{
+  "nodes": [
+    {"id": "n1", "label": "原辅料", "category": "material"},
+    {"id": "n2", "label": "核心反应", "category": "process"},
+    {"id": "n3", "label": "G1-1 废气", "category": "emission"},
+    {"id": "n4", "label": "W1-1 废水", "category": "emission"}
+  ],
+  "edges": [
+    {"source": "n1", "target": "n2", "type": "solid"},
+    {"source": "n2", "target": "n3", "type": "dashed"},
+    {"source": "n2", "target": "n4", "type": "dashed"}
+  ]
+}
+    </textarea>
+    <button onclick="renderFromJSON()">生成流程图</button>
+    <button onclick="exportPNG()" style="background: #52c41a;">导出图片 (PNG)</button>
+    <div class="tip" style="margin-top:20px;">
+        <b>操作指南：</b><br>
+        - 鼠标左键拖拽调整节点位置<br>
+        - 点击节点可在顶部工具栏修改样式<br>
+        - 鼠标悬浮节点边缘可拉出新连线<br>
+        - 选中节点或连线后按 <b>Delete</b> 键删除
     </div>
 </div>
 
+<div class="toolbar" id="toolbar">
+    <span style="font-size: 14px; font-weight: bold; color: #333;">节点设置:</span>
+    <label>背景色: <input type="color" id="bgColor" onchange="updateNodeStyle('fill', this.value)"></label>
+    <label>边框色: <input type="color" id="strokeColor" onchange="updateNodeStyle('stroke', this.value)"></label>
+    <label>字号: <input type="number" id="fontSize" style="width: 50px;" value="14" onchange="updateNodeStyle('fontSize', this.value)"></label>
+</div>
+
+<div id="container"></div>
+
 <script>
-    // 初始化 Mermaid
-    mermaid.initialize({ startOnLoad: false, theme: 'default' });
+    // 初始化 AntV X6 画布
+    const graph = new X6.Graph({
+        container: document.getElementById('container'),
+        grid: true,
+        panning: true, // 允许平移画布
+        mousewheel: { enabled: true, zoomAtMousePosition: true, modifiers: 'ctrl', minScale: 0.5, maxScale: 3 }, // 允许缩放
+        connecting: {
+            snap: true, // 连线吸附
+            allowBlank: false,
+            allowLoop: false,
+            highlight: true,
+            createEdge() { return new X6.Shape.Edge({ attrs: { line: { stroke: '#555', strokeWidth: 2, targetMarker: 'block' } } }); }
+        },
+        keyboard: { enabled: true } // 允许快捷键
+    });
 
-    // 大模型提示词，严格约束物料平衡图输出规范
-    const sysPrompt = `你是一个专业的环境工程技术人员。请根据用户提供的工艺流程文字，提取并生成符合清洁生产审核规范的Mermaid流程图代码。
-规范要求：
-1. 方向统一为从上到下（graph TD）。
-2. 头部必须包含以下三种样式定义：
-   classDef process fill:#f9f9f9,stroke:#333,stroke-width:2px;
-   classDef material fill:#fff,stroke:#fff,font-weight:bold;
-   classDef emission fill:#fff,stroke:#fff,color:#d93025;
-3. 主工艺环节使用实线方框，应用process样式，如：P1[酯化反应]:::process
-4. 原辅料输入使用圆角框，应用material样式，用实线指向工艺节点，如：M1(纯水) --> P1
-5. 产排污节点（废气G、废水W、固废S）应用emission样式，强制使用虚线从工艺节点引出，如：P1 -.-> E1(G1-1 投料废气):::emission
-6. 严格按照文字的先后顺序梳理上下游主工艺物料流动连接，如：P1 --> P2
-注意：只需输出纯Mermaid代码，不要任何解释，不要用Markdown代码块（如\`\`\`）包裹。`;
+    let activeNode = null;
 
-    // 默认展示一个规范示例
-    const defaultCode = `graph TD
-    classDef process fill:#f9f9f9,stroke:#333,stroke-width:2px;
-    classDef material fill:#fff,stroke:#fff,font-weight:bold;
-    classDef emission fill:#fff,stroke:#fff,color:#d93025;
+    // 绑定删除快捷键
+    graph.bindKey('delete', () => {
+        const cells = graph.getSelectedCells();
+        if (cells.length) { graph.removeCells(cells); hideToolbar(); }
+    });
 
-    M1(原料药) --> P1
-    P1[酯化反应]:::process
-    P1 -.-> E1(G1-1 投料废气):::emission
-
-    M2(纯水) --> P2
-    P1 --> P2[淬灭反应]:::process
-    P2 -.-> E2(G2-7 反应生成废气):::emission`;
-    
-    document.getElementById('mermaidInput').value = defaultCode;
-    renderGraph();
-
-    // 实时渲染图形
-    async function renderGraph() {
-        const code = document.getElementById('mermaidInput').value;
-        const renderArea = document.getElementById('renderArea');
-        if (!code.trim()) return;
-        try {
-            // 使用 Mermaid 较新的渲染 API
-            const { svg } = await mermaid.render('mermaid-svg', code);
-            renderArea.innerHTML = svg;
-        } catch (e) {
-            // 捕获语法错误并忽略，等待用户继续输入正确语法
-            console.error('渲染等待中或语法不完整', e);
-        }
-    }
-
-    // 调用 API 将文字转化为图形代码
-    async function generateFromText() {
-        const text = document.getElementById('textInput').value;
-        const apiKey = document.getElementById('apiKey').value;
+    // 监听节点点击，显示工具栏
+    graph.on('node:click', ({ node }) => {
+        activeNode = node;
+        const toolbar = document.getElementById('toolbar');
+        toolbar.style.display = 'flex';
         
-        if (!text) return alert("请先粘贴工艺文字！");
-        if (!apiKey) return alert("配置大模型 API Key 后方可自动解析。目前支持兼容 OpenAI 格式的接口（如 DeepSeek、通义千问等）。");
+        // 读取当前节点的样式填充到工具栏
+        const attrs = node.getAttrs();
+        document.getElementById('bgColor').value = attrs.body.fill || '#ffffff';
+        document.getElementById('strokeColor').value = attrs.body.stroke || '#333333';
+        document.getElementById('fontSize').value = attrs.text.fontSize || 14;
+        
+        // 简单的高亮效果
+        graph.getNodes().forEach(n => n.attr('body/strokeWidth', n.id === node.id ? 4 : 2));
+    });
 
-        const btn = document.querySelector('button');
-        btn.innerText = "解析中...";
-        btn.disabled = true;
+    // 监听空白处点击，隐藏工具栏
+    graph.on('blank:click', () => {
+        activeNode = null;
+        hideToolbar();
+        graph.getNodes().forEach(n => n.attr('body/strokeWidth', 2)); // 恢复边框宽度
+    });
 
-        try {
-            // 此处以通用的大模型 API 格式为例，可根据实际申请的模型修改 baseURL
-            const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${apiKey}`
-                },
-                body: JSON.stringify({
-                    model: "deepseek-chat", // 替换为你使用的实际模型名称
-                    messages: [
-                        { role: "system", content: sysPrompt },
-                        { role: "user", content: text }
-                    ],
-                    temperature: 0.1 // 极低的温度保证结构化输出的稳定性
-                })
+    function hideToolbar() { document.getElementById('toolbar').style.display = 'none'; }
+
+    // 更新节点样式函数
+    window.updateNodeStyle = function(type, value) {
+        if (!activeNode) return;
+        if (type === 'fill') activeNode.attr('body/fill', value);
+        if (type === 'stroke') activeNode.attr('body/stroke', value);
+        if (type === 'fontSize') activeNode.attr('text/fontSize', parseInt(value));
+    };
+
+    // 核心排版与渲染逻辑
+    window.renderFromJSON = function() {
+        const jsonStr = document.getElementById('jsonInput').value;
+        let data;
+        try { data = JSON.parse(jsonStr); } catch (e) { alert("JSON 格式有误，请检查！"); return; }
+
+        graph.clearCells();
+        hideToolbar();
+
+        // 1. 使用 Dagre 进行自动排版计算
+        const g = new dagre.graphlib.Graph();
+        g.setGraph({ rankdir: 'TB', nodesep: 60, ranksep: 80 }); // TB: 从上到下排版
+        g.setDefaultEdgeLabel(() => ({}));
+
+        // 定义节点样式字典
+        const styleMap = {
+            process: { width: 120, height: 40, fill: '#f9f9f9', stroke: '#333', rx: 0 },
+            material: { width: 100, height: 40, fill: '#ffffff', stroke: '#333', rx: 20 },
+            emission: { width: 100, height: 40, fill: '#fff1f0', stroke: '#ff4d4f', rx: 0, fontColor: '#d9363e' }
+        };
+
+        // 将 JSON 节点加入排版引擎
+        data.nodes.forEach(node => {
+            const style = styleMap[node.category] || styleMap['process'];
+            g.setNode(node.id, { width: style.width, height: style.height, ...style, label: node.label });
+        });
+
+        // 将 JSON 连线加入排版引擎
+        data.edges.forEach(edge => { g.setEdge(edge.source, edge.target); });
+
+        // 执行计算
+        dagre.layout(g);
+
+        // 2. 将计算好坐标的节点渲染到 X6 画布
+        const x6Nodes = {};
+        g.nodes().forEach(v => {
+            const nodeMeta = g.node(v);
+            if(!nodeMeta) return;
+            const x6Node = graph.addNode({
+                id: v,
+                x: nodeMeta.x - nodeMeta.width / 2 + 300, // 基础偏移
+                y: nodeMeta.y - nodeMeta.height / 2 + 50,
+                width: nodeMeta.width, height: nodeMeta.height,
+                attrs: {
+                    body: { fill: nodeMeta.fill, stroke: nodeMeta.stroke, strokeWidth: 2, rx: nodeMeta.rx, ry: nodeMeta.rx },
+                    text: { text: nodeMeta.label, fill: nodeMeta.fontColor || '#333', fontSize: 14, fontWeight: nodeMeta.category === 'process' ? 'bold' : 'normal' }
+                }
             });
+            x6Nodes[v] = x6Node;
+        });
 
-            const data = await response.json();
-            let result = data.choices[0].message.content;
-            
-            // 清理模型偶尔带入的 Markdown 标记
-            result = result.replace(/```mermaid/ig, '').replace(/```/g, '').trim();
-            
-            document.getElementById('mermaidInput').value = result;
-            renderGraph();
-        } catch (error) {
-            alert("解析失败，请检查网络或 API Key 状态。");
-            console.error(error);
-        } finally {
-            btn.innerText = "一键生成";
-            btn.disabled = false;
-        }
-    }
+        // 3. 绘制连线
+        data.edges.forEach(edge => {
+            graph.addEdge({
+                source: { cell: edge.source },
+                target: { cell: edge.target },
+                attrs: {
+                    line: {
+                        stroke: edge.type === 'dashed' ? '#ff4d4f' : '#555', // 产排污用红色，主物料用灰色
+                        strokeWidth: 2,
+                        strokeDasharray: edge.type === 'dashed' ? '5 5' : '0', // 识别实线和虚线
+                        targetMarker: 'block',
+                    }
+                }
+            });
+        });
+        
+        graph.centerContent(); // 居中画布
+    };
+
+    // 导出图片
+    window.exportPNG = function() {
+        graph.toPNG((dataUri) => {
+            const link = document.createElement('a');
+            link.download = '工艺流程图.png';
+            link.href = dataUri;
+            link.click();
+        }, { padding: { top: 20, right: 20, bottom: 20, left: 20 }, backgroundColor: '#fff' });
+    };
+
+    // 初始渲染一次默认数据
+    renderFromJSON();
 </script>
 
 </body>
