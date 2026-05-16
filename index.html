@@ -9,18 +9,16 @@
         :root { --primary: #1890ff; --bg: #f0f2f5; --border: #d9d9d9; }
         body { font-family: 'Microsoft YaHei', sans-serif; margin: 0; padding: 0; display: flex; height: 100vh; background: var(--bg); overflow: hidden; }
         
-        /* 左侧边栏 - 极简版 */
         .sidebar { width: 320px; background: #fff; display: flex; flex-direction: column; box-shadow: 2px 0 8px rgba(0,0,0,0.08); z-index: 10; border-right: 1px solid var(--border); }
         .section { padding: 15px; border-bottom: 1px solid var(--border); }
         .section-title { font-size: 13px; font-weight: bold; color: #333; margin: 0 0 10px 0; display: flex; justify-content: space-between; align-items: center; }
         
-        .ai-prompt { background: #f9fcff; border: 1px dashed #bae0ff; padding: 10px; border-radius: 4px; font-size: 12px; color: #555; height: 120px; overflow-y: auto; line-height: 1.4; }
+        .ai-prompt { background: #f9fcff; border: 1px dashed #bae0ff; padding: 10px; border-radius: 4px; font-size: 12px; color: #555; height: 135px; overflow-y: auto; line-height: 1.4; }
         textarea { width: 100%; box-sizing: border-box; height: 100px; resize: none; border: 1px solid var(--border); border-radius: 4px; padding: 8px; font-family: monospace; font-size: 12px; }
         
         .btn { background: var(--primary); color: #fff; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; width: 100%; font-size: 13px; transition: 0.2s; }
         .btn:hover { background: #40a9ff; }
         
-        /* 组件区 */
         .stencil-container { padding: 15px; flex: 1; overflow-y: auto; background: #fafafa; }
         .drag-item { width: 120px; height: 34px; line-height: 34px; text-align: center; border-radius: 4px; border: 2px solid #333; margin-bottom: 12px; font-size: 13px; cursor: grab; user-select: none; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
         .drag-process { font-weight: bold; }
@@ -28,7 +26,6 @@
         .drag-emission { border-color: #ff4d4f; background: #fff1f0; color: #d9363e; }
         .drag-text { border: 1px dashed #999; background: transparent; }
 
-        /* 工作区与工具栏整合 */
         .main-workspace { flex: 1; display: flex; flex-direction: column; position: relative; }
         
         .toolbar { height: 50px; background: #fff; border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 15px; gap: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); z-index: 5; flex-wrap: nowrap; overflow-x: auto; }
@@ -44,11 +41,11 @@
         #container { flex: 1; width: 100%; position: relative; }
         #minimap { position: absolute; right: 20px; bottom: 20px; width: 200px; height: 140px; background: #fff; border: 1px solid #ccc; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 100; border-radius: 4px; overflow: hidden; }
         
+        /* 强化连接点的视觉与触发区域 */
         .x6-node .x6-port-body { visibility: hidden; }
         .x6-node:hover .x6-port-body { visibility: visible; }
         .x6-node-selected .x6-port-body { visibility: visible; }
 
-        /* 弹窗 */
         #editModal { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.3); z-index: 1000; align-items: center; justify-content: center; }
         .modal-content { background: #fff; padding: 20px; border-radius: 8px; width: 300px; }
         .modal-content textarea { width: 100%; height: 80px; margin-bottom: 10px; font-size: 14px; box-sizing: border-box; }
@@ -69,8 +66,8 @@
         </div>
         <div class="ai-prompt" id="promptText">解析以下工艺文字，提取节点并输出为纯JSON格式。
 规则：
-1. category: material(物料)、process(工艺)、emission(排污)。
-2. 同工序多个排污物用 \n 合并到同一节点。如:"G1废气\nW1废水"。
+1. category: material(原辅料)、process(工艺)、emission(排污)。
+2. 合并同类项：同一工序的多个【排污物】必须用 \n 换行符合并到同一个emission节点；同一工序的多个【原辅料】也必须用 \n 换行符合并到同一个material节点。如:"G1废气\nW1废水" 或 "原水\n药剂"。
 3. type: solid(实线主物流), dashed(虚线排污)。
 待解析文字：
 [粘贴至此]</div>
@@ -98,20 +95,30 @@
     <div class="toolbar" id="toolbar">
         <div class="toolbar-group">
             <button class="btn-small" id="drawModeBtn" onclick="toggleDrawMode()">✏️ 自由画线</button>
-            <select id="edgeType" onchange="updateSelectedEdge()"><option value="normal">直线</option><option value="orth">折线</option><option value="smooth">曲线</option></select>
+            <select id="edgeType" onchange="updateSelectedEdge()">
+                <option value="manhattan">智能避让 (推荐)</option>
+                <option value="orth">标准折线</option>
+                <option value="normal">直线</option>
+                <option value="smooth">曲线</option>
+            </select>
             <label><input type="checkbox" id="edgeArrow" checked onchange="updateSelectedEdge()">箭头</label>
             <label><input type="checkbox" id="edgeDashed" onchange="updateSelectedEdge()">虚线</label>
         </div>
 
         <div class="toolbar-group">
-            <select id="globalFont" onchange="updateNodeStyle('fontFamily')">
+            <label>西文:</label>
+            <select id="westFont" onchange="updateNodeStyle('fontFamily')" style="width: 70px;">
+                <option value="Arial">Arial</option>
+                <option value="Times New Roman">Times</option>
+            </select>
+            <label>中文:</label>
+            <select id="eastFont" onchange="updateNodeStyle('fontFamily')" style="width: 80px;">
                 <option value="Microsoft YaHei">微软雅黑</option>
                 <option value="SimSun">宋体</option>
                 <option value="SimHei">黑体</option>
-                <option value="Arial">Arial</option>
             </select>
-            <input type="number" id="globalFontSize" value="13" style="width: 45px;" onchange="updateNodeStyle('fontSize')">
-            <button class="btn-small" style="font-weight:bold; color:#1890ff; border-color:#1890ff;" onclick="applyGlobalFont()">应用到全局</button>
+            <input type="number" id="globalFontSize" value="13" style="width: 40px;" onchange="updateNodeStyle('fontSize')">
+            <button class="btn-small" style="font-weight:bold; color:#1890ff; border-color:#1890ff;" onclick="applyGlobalFont()">应用全局</button>
         </div>
         
         <div class="toolbar-group">
@@ -137,7 +144,7 @@
 
 <div id="editModal">
     <div class="modal-content">
-        <h3 style="margin-top:0; font-size:14px;">编辑内容</h3>
+        <h3 style="margin-top:0; font-size:14px;">编辑内容 (支持多行)</h3>
         <textarea id="editModalInput"></textarea>
         <div class="modal-actions">
             <button style="background: #f5f5f5; border: 1px solid #d9d9d9;" onclick="document.getElementById('editModal').style.display='none'">取消</button>
@@ -147,6 +154,7 @@
 </div>
 
 <script>
+    // 定义四周连接点：加入磁吸属性 magnet: true，方便画出精准折线
     const portAttrs = { circle: { r: 5, magnet: true, stroke: '#1890ff', strokeWidth: 1.5, fill: '#fff' } };
     const defaultPorts = {
         groups: { top: { position: 'top', attrs: portAttrs }, bottom: { position: 'bottom', attrs: portAttrs }, left: { position: 'left', attrs: portAttrs }, right: { position: 'right', attrs: portAttrs } },
@@ -159,13 +167,29 @@
     let isDrawMode = false;
     let currentEdge = null;
 
-    // 获取带大抓取区域的线条配置（解决极难选中的痛点）
+    // 组合字体字符串
+    function getCombinedFont() {
+        const west = document.getElementById('westFont').value;
+        const east = document.getElementById('eastFont').value;
+        return `'${west}', '${east}', sans-serif`;
+    }
+
+    // 引入自动避让算法 (Manhattan)
+    function getSelectedRouter() {
+        const type = document.getElementById('edgeType').value;
+        if (type === 'manhattan') return { name: 'manhattan', args: { padding: 15 } };
+        if (type === 'orth') return { name: 'orth' };
+        if (type === 'smooth') return { name: 'smooth' };
+        return null;
+    }
+
+    // 线条带 20px 抓取层
     function getSelectedEdgeAttrs() {
         const hasArrow = document.getElementById('edgeArrow').checked;
         const isDashed = document.getElementById('edgeDashed').checked;
         return { 
             line: { stroke: '#555555', strokeWidth: 2, targetMarker: hasArrow ? 'block' : null, strokeDasharray: isDashed ? '5 5' : '0' },
-            wrap: { strokeWidth: 20 } // 隐形扩大抓取区，单击秒选
+            wrap: { strokeWidth: 20 } 
         };
     }
 
@@ -179,7 +203,7 @@
             selecting: { enabled: true, rubberband: true, showNodeSelectionBox: true, showEdgeSelectionBox: true }, 
             minimap: { enabled: true, container: document.getElementById('minimap'), padding: 10 },
             connecting: {
-                snap: true,
+                snap: true, // 开启连线吸附
                 allowBlank: true, 
                 allowNode: true,
                 highlight: true,
@@ -199,8 +223,11 @@
                 document.getElementById('strokeColor').value = attrs.body.stroke || '#333333';
                 document.getElementById('showBorder').checked = attrs.body.strokeWidth !== 0 && attrs.body.stroke !== 'transparent';
                 
-                const font = (attrs.text.fontFamily || '').replace(/['"]/g, '').split(',')[0].trim();
-                if(font) document.getElementById('globalFont').value = font;
+                // 拆分中西文解析
+                const fonts = (attrs.text.fontFamily || '').replace(/['"]/g, '').split(',').map(f => f.trim());
+                if(fonts[0]) document.getElementById('westFont').value = fonts[0];
+                if(fonts[1]) document.getElementById('eastFont').value = fonts[1];
+
             } else if (cell.isEdge()) {
                 const router = cell.getRouter();
                 document.getElementById('edgeType').value = router ? router.name : 'normal';
@@ -244,13 +271,6 @@
         }
     };
 
-    function getSelectedRouter() {
-        const type = document.getElementById('edgeType').value;
-        if (type === 'orth') return { name: 'orth' };
-        if (type === 'smooth') return { name: 'smooth' };
-        return null;
-    }
-
     window.updateSelectedEdge = function() {
         const cells = graph.getSelectedCells();
         cells.forEach(cell => {
@@ -263,13 +283,12 @@
         });
     };
 
-    // 一键全局应用字体和字号
     window.applyGlobalFont = function() {
         if (!graph) return;
-        const font = document.getElementById('globalFont').value;
+        const combinedFont = getCombinedFont();
         const size = parseInt(document.getElementById('globalFontSize').value);
         graph.getNodes().forEach(node => {
-            node.attr('text/fontFamily', `'${font}', Arial, sans-serif`);
+            node.attr('text/fontFamily', combinedFont);
             node.attr('text/fontSize', size);
         });
     };
@@ -279,7 +298,7 @@
         if (type === 'fill') activeCell.attr('body/fill', document.getElementById('bgColor').value);
         if (type === 'stroke') activeCell.attr('body/stroke', document.getElementById('strokeColor').value);
         if (type === 'fontSize') activeCell.attr('text/fontSize', parseInt(document.getElementById('globalFontSize').value));
-        if (type === 'fontFamily') activeCell.attr('text/fontFamily', `'${document.getElementById('globalFont').value}', Arial, sans-serif`);
+        if (type === 'fontFamily') activeCell.attr('text/fontFamily', getCombinedFont());
         if (type === 'borderToggle') {
             const show = document.getElementById('showBorder').checked;
             activeCell.attr('body/strokeWidth', show ? 2 : 0);
@@ -293,6 +312,7 @@
             editTargetNode.attr('text/text', newText);
             const lines = newText.split('\n').length;
             const currentSize = editTargetNode.getSize();
+            // 自适应高度逻辑
             editTargetNode.resize(currentSize.width, Math.max(40, lines * 18 + 20));
         }
         document.getElementById('editModal').style.display='none';
@@ -324,7 +344,7 @@
             ports: defaultPorts,
             attrs: {
                 body: { fill: style.fill, stroke: style.stroke, strokeWidth: style.strokeWidth, rx: style.rx, ry: style.rx },
-                text: { text: label, fill: style.color, fontSize: parseInt(document.getElementById('globalFontSize').value), fontFamily: `'${document.getElementById('globalFont').value}', Arial, sans-serif` }
+                text: { text: label, fill: style.color, fontSize: parseInt(document.getElementById('globalFontSize').value), fontFamily: getCombinedFont() }
             }
         });
     });
@@ -338,10 +358,11 @@
         graph.clearCells();
         const g = new dagre.graphlib.Graph(); g.setGraph({ rankdir: 'TB', nodesep: 40, ranksep: 60 }); g.setDefaultEdgeLabel(() => ({}));
         
-        const currentFont = document.getElementById('globalFont').value;
+        const currentFont = getCombinedFont();
         const currentSize = parseInt(document.getElementById('globalFontSize').value);
 
         data.nodes.forEach(node => {
+            // 动态高度自适应计算
             const lines = (node.label.match(/\n/g) || []).length + 1;
             let style = { width: 150, height: Math.max(45, lines * 18 + 20), fill: '#f9f9f9', stroke: '#333', rx: 0, fontColor: '#333', fw: 'bold' };
             if (node.category === 'material') { style.fill = '#fff'; style.rx = 20; style.width = 140; style.fw = 'normal'; }
@@ -356,7 +377,7 @@
             const n = g.node(v); if(!n) return;
             graph.addNode({
                 id: v, x: n.x, y: n.y, width: n.width, height: n.height, ports: defaultPorts,
-                attrs: { body: { fill: n.fill, stroke: n.stroke, strokeWidth: 2, rx: n.rx, ry: n.rx }, text: { text: n.label, fill: n.fontColor, fontSize: currentSize, fontFamily: `'${currentFont}', Arial, sans-serif`, fontWeight: n.fw } }
+                attrs: { body: { fill: n.fill, stroke: n.stroke, strokeWidth: 2, rx: n.rx, ry: n.rx }, text: { text: n.label, fill: n.fontColor, fontSize: currentSize, fontFamily: currentFont, fontWeight: n.fw } }
             });
         });
 
@@ -364,7 +385,8 @@
             data.edges.forEach(edge => {
                 graph.addEdge({
                     source: { cell: edge.source }, target: { cell: edge.target },
-                    attrs: getSelectedEdgeAttrs()
+                    // 使用最新的路由和外观规则
+                    attrs: getSelectedEdgeAttrs(), router: getSelectedRouter()
                 });
             });
         }
