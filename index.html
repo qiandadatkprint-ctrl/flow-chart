@@ -2,9 +2,9 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>清洁生产工艺流程图绘制工具 (国内优化版)</title>
-    <script src="[https://cdn.jsdelivr.net/npm/@antv/x6/dist/x6.js](https://cdn.jsdelivr.net/npm/@antv/x6/dist/x6.js)"></script>
-    <script src="[https://cdn.jsdelivr.net/npm/dagre@0.8.5/dist/dagre.min.js](https://cdn.jsdelivr.net/npm/dagre@0.8.5/dist/dagre.min.js)"></script>
+    <title>清洁生产工艺流程图绘制工具 (极速稳定版)</title>
+    <script src="https://fastly.jsdelivr.net/npm/@antv/x6@1.34.6/dist/x6.js"></script>
+    <script src="https://fastly.jsdelivr.net/npm/dagre@0.8.5/dist/dagre.min.js"></script>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; display: flex; height: 100vh; background: #f0f2f5; }
         .sidebar { width: 320px; background: #fff; padding: 20px; box-shadow: 2px 0 8px rgba(0,0,0,0.1); display: flex; flex-direction: column; z-index: 10; }
@@ -12,79 +12,119 @@
         textarea { flex: 1; resize: none; border: 1px solid #d9d9d9; border-radius: 4px; padding: 10px; font-family: monospace; font-size: 12px; margin-bottom: 10px; }
         button { background: #1890ff; color: #fff; border: none; padding: 10px; border-radius: 4px; cursor: pointer; font-weight: bold; margin-bottom: 10px;}
         button:hover { background: #40a9ff; }
-        .toolbar { position: absolute; top: 20px; left: 360px; background: #fff; padding: 10px 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: flex; gap: 15px; align-items: center; z-index: 10; display: none; }
-        .toolbar input, .toolbar select { padding: 4px; }
-        #container { flex: 1; height: 100%; position: relative; }
-        .tip { font-size: 12px; color: #888; margin-bottom: 10px; }
+        .toolbar { position: absolute; top: 20px; left: 360px; background: #fff; padding: 10px 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: flex; gap: 15px; align-items: center; z-index: 10; display: none; border: 1px solid #e8e8e8; }
+        .toolbar input { padding: 0; cursor: pointer; }
+        .toolbar input[type="number"] { padding: 4px; border: 1px solid #ccc; border-radius: 4px; }
+        
+        /* 强制确保右侧区域充满且可见 */
+        #container-wrapper { flex: 1; height: 100%; position: relative; background: #fafafa; }
+        #container { width: 100%; height: 100%; }
+        
+        .tip { font-size: 12px; color: #888; margin-bottom: 10px; line-height: 1.5; }
+        .status-bar { padding: 10px; background: #fffbe6; border: 1px solid #ffe58f; color: #d46b08; font-size: 12px; border-radius: 4px; margin-bottom: 10px; display: none; }
     </style>
 </head>
 <body>
 
 <div class="sidebar">
-    <h3>1. 粘贴 AI 生成的 JSON 数据</h3>
-    <textarea id="jsonInput" placeholder="在此粘贴 JSON 数据..."></textarea>
-    <button onclick="renderFromJSON()">生成流程图</button>
+    <h3>1. 粘贴工艺 JSON 数据</h3>
+    <div id="statusAlert" class="status-bar"></div>
+    <textarea id="jsonInput" placeholder="在此粘贴数据..."></textarea>
+    <button onclick="renderFromJSON()">生成 / 更新流程图</button>
     <button onclick="exportPNG()" style="background: #52c41a;">导出图片 (PNG)</button>
-    <div class="tip" style="margin-top:20px;">
-        <b>操作指南：</b><br>
-        - 鼠标左键拖拽调整节点位置<br>
-        - 滚轮控制画布缩放<br>
-        - 点击节点可在顶部工具栏修改颜色<br>
-        - 选中节点或连线后按 <b>Delete</b> 键删除
+    <div class="tip" style="margin-top:10px;">
+        <b>交互说明：</b><br>
+        1. 鼠标<b>左键拖拽</b>可移动节点<br>
+        2. 鼠标<b>滚轮</b>可缩放画布<br>
+        3. 按住画布空白处拖拽可平移<br>
+        4. 点击节点，上方出现颜色修改工具<br>
+        5. 选中节点或连线按 <b>Delete</b> 键删除
     </div>
 </div>
 
-<div class="toolbar" id="toolbar">
-    <span style="font-size: 14px; font-weight: bold; color: #333;">节点设置:</span>
-    <label>背景色: <input type="color" id="bgColor" onchange="updateNodeStyle('fill', this.value)"></label>
-    <label>边框色: <input type="color" id="strokeColor" onchange="updateNodeStyle('stroke', this.value)"></label>
-    <label>字号: <input type="number" id="fontSize" style="width: 50px;" value="14" onchange="updateNodeStyle('fontSize', this.value)"></label>
+<div id="container-wrapper">
+    <div class="toolbar" id="toolbar">
+        <span style="font-size: 13px; font-weight: bold; color: #333;">节点样式调整:</span>
+        <label style="font-size: 13px;">背景: <input type="color" id="bgColor" onchange="updateNodeStyle('fill', this.value)"></label>
+        <label style="font-size: 13px;">边框: <input type="color" id="strokeColor" onchange="updateNodeStyle('stroke', this.value)"></label>
+        <label style="font-size: 13px;">字号: <input type="number" id="fontSize" style="width: 45px;" value="14" onchange="updateNodeStyle('fontSize', this.value)"></label>
+    </div>
+    <div id="container"></div>
 </div>
 
-<div id="container"></div>
-
 <script>
-    // 初始化画布
-    const graph = new X6.Graph({
-        container: document.getElementById('container'),
-        grid: true,
-        panning: true,
-        mousewheel: { enabled: true, zoomAtMousePosition: true, modifiers: 'ctrl', minScale: 0.5, maxScale: 3 },
-        connecting: {
-            snap: true,
-            allowBlank: false,
-            allowLoop: false,
-            highlight: true,
-            createEdge() { return new X6.Shape.Edge({ attrs: { line: { stroke: '#555', strokeWidth: 2, targetMarker: 'block' } } }); }
-        },
-        keyboard: { enabled: true }
-    });
+    // 全局错误捕获机制
+    function showError(msg) {
+        const alertBox = document.getElementById('statusAlert');
+        alertBox.style.display = 'block';
+        alertBox.innerHTML = `⚠️ ${msg}`;
+        console.error(msg);
+    }
 
+    // 检查核心库是否加载成功
+    window.onload = function() {
+        if (typeof X6 === 'undefined' || typeof dagre === 'undefined') {
+            showError("绘图引擎加载失败！请检查您的网络是否拦截了 JS 脚本，或尝试刷新页面。");
+            return;
+        }
+        initGraph();
+    };
+
+    let graph;
     let activeNode = null;
 
-    graph.bindKey('delete', () => {
-        const cells = graph.getSelectedCells();
-        if (cells.length) { graph.removeCells(cells); hideToolbar(); }
-    });
+    function initGraph() {
+        try {
+            // 初始化画布
+            graph = new X6.Graph({
+                container: document.getElementById('container'),
+                grid: { size: 10, visible: true, type: 'dot', args: { color: '#ddd', thickness: 1 } }, // 明显网格
+                panning: true,
+                mousewheel: { enabled: true, zoomAtMousePosition: true, modifiers: 'ctrl', minScale: 0.2, maxScale: 3 },
+                connecting: {
+                    snap: true,
+                    allowBlank: false,
+                    allowLoop: false,
+                    highlight: true,
+                    createEdge() { return new X6.Shape.Edge({ attrs: { line: { stroke: '#555', strokeWidth: 2, targetMarker: 'block' } } }); }
+                },
+                keyboard: { enabled: true }
+            });
 
-    graph.on('node:click', ({ node }) => {
-        activeNode = node;
-        const toolbar = document.getElementById('toolbar');
-        toolbar.style.display = 'flex';
-        
-        const attrs = node.getAttrs();
-        document.getElementById('bgColor').value = attrs.body.fill || '#ffffff';
-        document.getElementById('strokeColor').value = attrs.body.stroke || '#333333';
-        document.getElementById('fontSize').value = attrs.text.fontSize || 14;
-        
-        graph.getNodes().forEach(n => n.attr('body/strokeWidth', n.id === node.id ? 4 : 2));
-    });
+            // 快捷键删除
+            graph.bindKey(['delete', 'backspace'], () => {
+                const cells = graph.getSelectedCells();
+                if (cells.length) { graph.removeCells(cells); hideToolbar(); }
+            });
 
-    graph.on('blank:click', () => {
-        activeNode = null;
-        hideToolbar();
-        graph.getNodes().forEach(n => n.attr('body/strokeWidth', 2));
-    });
+            // 点击节点高亮并显示工具栏
+            graph.on('node:click', ({ node }) => {
+                activeNode = node;
+                const toolbar = document.getElementById('toolbar');
+                toolbar.style.display = 'flex';
+                
+                const attrs = node.getAttrs();
+                document.getElementById('bgColor').value = attrs.body.fill || '#ffffff';
+                document.getElementById('strokeColor').value = attrs.body.stroke || '#333333';
+                document.getElementById('fontSize').value = attrs.text.fontSize || 14;
+                
+                // 所有节点恢复默认边框，当前高亮
+                graph.getNodes().forEach(n => n.attr('body/strokeWidth', n.id === node.id ? 4 : 2));
+            });
+
+            // 点击空白处取消选中
+            graph.on('blank:click', () => {
+                activeNode = null;
+                hideToolbar();
+                graph.getNodes().forEach(n => n.attr('body/strokeWidth', 2));
+            });
+
+            document.getElementById('statusAlert').style.display = 'none'; // 隐藏错误框
+
+        } catch (error) {
+            showError("画布初始化失败: " + error.message);
+        }
+    }
 
     function hideToolbar() { document.getElementById('toolbar').style.display = 'none'; }
 
@@ -96,13 +136,17 @@
     };
 
     window.renderFromJSON = function() {
+        if (!graph) {
+            alert("画布未就绪，请检查网络并刷新重试！");
+            return;
+        }
+
+        document.getElementById('statusAlert').style.display = 'none';
         let jsonStr = document.getElementById('jsonInput').value;
-        
-        // 【新增优化】自动清洗 AI 输出的 Markdown 格式符
         jsonStr = jsonStr.replace(/```json/gi, '').replace(/```/g, '').trim();
 
         if (!jsonStr) {
-            alert("请输入JSON数据");
+            showError("请输入有效的 JSON 数据");
             return;
         }
 
@@ -110,67 +154,85 @@
         try { 
             data = JSON.parse(jsonStr); 
         } catch (e) { 
-            alert("JSON 解析失败，请检查数据格式是否遗漏了逗号或引号！"); 
+            showError("JSON 格式错误，请检查是否有多余符号或遗漏了引号！"); 
             return; 
         }
 
-        graph.clearCells();
-        hideToolbar();
+        try {
+            graph.clearCells();
+            hideToolbar();
 
-        const g = new dagre.graphlib.Graph();
-        g.setGraph({ rankdir: 'TB', nodesep: 40, ranksep: 60 });
-        g.setDefaultEdgeLabel(() => ({}));
+            // 使用 Dagre 排版
+            const g = new dagre.graphlib.Graph();
+            g.setGraph({ rankdir: 'TB', nodesep: 30, ranksep: 60 }); // 调整间距更紧凑
+            g.setDefaultEdgeLabel(() => ({}));
 
-        // 【新增优化】调整宽度为 140，适应长名称如“乳化剂（TW-80）”
-        const styleMap = {
-            process: { width: 140, height: 40, fill: '#f9f9f9', stroke: '#333', rx: 0 },
-            material: { width: 140, height: 40, fill: '#ffffff', stroke: '#333', rx: 20 },
-            emission: { width: 140, height: 40, fill: '#fff1f0', stroke: '#ff4d4f', rx: 0, fontColor: '#d9363e' }
-        };
+            const styleMap = {
+                process: { width: 150, height: 45, fill: '#f9f9f9', stroke: '#333', rx: 0 },
+                material: { width: 140, height: 40, fill: '#ffffff', stroke: '#333', rx: 20 },
+                emission: { width: 140, height: 40, fill: '#fff1f0', stroke: '#ff4d4f', rx: 0, fontColor: '#d9363e' }
+            };
 
-        data.nodes.forEach(node => {
-            const style = styleMap[node.category] || styleMap['process'];
-            g.setNode(node.id, { width: style.width, height: style.height, ...style, label: node.label });
-        });
-
-        data.edges.forEach(edge => { g.setEdge(edge.source, edge.target); });
-
-        dagre.layout(g);
-
-        g.nodes().forEach(v => {
-            const nodeMeta = g.node(v);
-            if(!nodeMeta) return;
-            graph.addNode({
-                id: v,
-                x: nodeMeta.x - nodeMeta.width / 2 + 200,
-                y: nodeMeta.y - nodeMeta.height / 2 + 50,
-                width: nodeMeta.width, height: nodeMeta.height,
-                attrs: {
-                    body: { fill: nodeMeta.fill, stroke: nodeMeta.stroke, strokeWidth: 2, rx: nodeMeta.rx, ry: nodeMeta.rx },
-                    text: { text: nodeMeta.label, fill: nodeMeta.fontColor || '#333', fontSize: 13, fontWeight: nodeMeta.category === 'process' ? 'bold' : 'normal' }
-                }
+            // 添加节点到引擎
+            data.nodes.forEach(node => {
+                const style = styleMap[node.category] || styleMap['process'];
+                g.setNode(node.id, { width: style.width, height: style.height, ...style, label: node.label });
             });
-        });
 
-        data.edges.forEach(edge => {
-            graph.addEdge({
-                source: { cell: edge.source },
-                target: { cell: edge.target },
-                attrs: {
-                    line: {
-                        stroke: edge.type === 'dashed' ? '#ff4d4f' : '#555',
-                        strokeWidth: 2,
-                        strokeDasharray: edge.type === 'dashed' ? '5 5' : '0',
-                        targetMarker: 'block',
+            // 添加连线到引擎
+            if(data.edges) {
+                data.edges.forEach(edge => { g.setEdge(edge.source, edge.target); });
+            }
+
+            // 执行排版计算
+            dagre.layout(g);
+
+            // 绘制节点
+            const nodeMap = {};
+            g.nodes().forEach(v => {
+                const nodeMeta = g.node(v);
+                if(!nodeMeta) return;
+                const xNode = graph.addNode({
+                    id: v,
+                    x: nodeMeta.x,
+                    y: nodeMeta.y,
+                    width: nodeMeta.width, height: nodeMeta.height,
+                    attrs: {
+                        body: { fill: nodeMeta.fill, stroke: nodeMeta.stroke, strokeWidth: 2, rx: nodeMeta.rx, ry: nodeMeta.rx },
+                        text: { text: nodeMeta.label, fill: nodeMeta.fontColor || '#333', fontSize: 13, fontWeight: nodeMeta.category === 'process' ? 'bold' : 'normal' }
                     }
-                }
+                });
+                nodeMap[v] = xNode;
             });
-        });
-        
-        graph.centerContent();
+
+            // 绘制连线
+            if(data.edges) {
+                data.edges.forEach(edge => {
+                    graph.addEdge({
+                        source: { cell: edge.source },
+                        target: { cell: edge.target },
+                        attrs: {
+                            line: {
+                                stroke: edge.type === 'dashed' ? '#ff4d4f' : '#555',
+                                strokeWidth: 2,
+                                strokeDasharray: edge.type === 'dashed' ? '5 5' : '0',
+                                targetMarker: 'block',
+                            }
+                        }
+                    });
+                });
+            }
+            
+            // 自动居中画布，留出50px的边距
+            graph.centerContent({ padding: 50 });
+
+        } catch (err) {
+            showError("渲染过程中出错: " + err.message);
+        }
     };
 
     window.exportPNG = function() {
+        if (!graph || graph.getCells().length === 0) return alert("画布为空，请先生成图表！");
         graph.toPNG((dataUri) => {
             const link = document.createElement('a');
             link.download = '工艺流程图.png';
