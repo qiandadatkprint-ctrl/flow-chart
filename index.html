@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>工艺流程及产排污节点自动生成系统</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; background-color: #f5f6fa; }
+        .container { display: flex; gap: 20px; height: 90vh; }
+        .panel { flex: 1; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); display: flex; flex-direction: column; }
+        textarea { width: 100%; resize: none; border: 1px solid #ccc; border-radius: 4px; padding: 10px; font-family: monospace; box-sizing: border-box; }
+        .config-area { margin-bottom: 15px; display: flex; gap: 10px; }
+        input[type="text"] { flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+        button { padding: 8px 16px; background-color: #1a73e8; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background-color: #1557b0; }
+        #textInput { flex: 0.4; margin-bottom: 15px; }
+        #mermaidInput { flex: 0.6; background-color: #1e1e1e; color: #d4d4d4; }
+        #renderArea { flex: 1; overflow: auto; display: flex; justify-content: center; align-items: flex-start; border: 1px dashed #ccc; padding: 20px; background: #fafafa; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="panel">
+        <div class="config-area">
+            <input type="text" id="apiKey" placeholder="在此输入大模型 API Key (如不填则需手动编写代码)" />
+            <button onclick="generateFromText()">一键生成</button>
+        </div>
+        
+        <label for="textInput">1. 粘贴工艺流程文字说明：</label>
+        <textarea id="textInput" placeholder="例如：人工将原料药加入反应釜。此过程产生投料废气G1-1；开启搅拌及温控设备，生成中间体1..."></textarea>
+        
+        <label for="mermaidInput">2. 流程图代码 (可在此处自行手动增删、调整节点)：</label>
+        <textarea id="mermaidInput" oninput="renderGraph()"></textarea>
+    </div>
+
+    <div class="panel">
+        <h3 style="margin-top: 0;">工艺流程图预览</h3>
+        <div id="renderArea"></div>
+    </div>
+</div>
+
+<script>
+    // 初始化 Mermaid
+    mermaid.initialize({ startOnLoad: false, theme: 'default' });
+
+    // 大模型提示词，严格约束物料平衡图输出规范
+    const sysPrompt = `你是一个专业的环境工程技术人员。请根据用户提供的工艺流程文字，提取并生成符合清洁生产审核规范的Mermaid流程图代码。
+规范要求：
+1. 方向统一为从上到下（graph TD）。
+2. 头部必须包含以下三种样式定义：
+   classDef process fill:#f9f9f9,stroke:#333,stroke-width:2px;
+   classDef material fill:#fff,stroke:#fff,font-weight:bold;
+   classDef emission fill:#fff,stroke:#fff,color:#d93025;
+3. 主工艺环节使用实线方框，应用process样式，如：P1[酯化反应]:::process
+4. 原辅料输入使用圆角框，应用material样式，用实线指向工艺节点，如：M1(纯水) --> P1
+5. 产排污节点（废气G、废水W、固废S）应用emission样式，强制使用虚线从工艺节点引出，如：P1 -.-> E1(G1-1 投料废气):::emission
+6. 严格按照文字的先后顺序梳理上下游主工艺物料流动连接，如：P1 --> P2
+注意：只需输出纯Mermaid代码，不要任何解释，不要用Markdown代码块（如\`\`\`）包裹。`;
+
+    // 默认展示一个规范示例
+    const defaultCode = `graph TD
+    classDef process fill:#f9f9f9,stroke:#333,stroke-width:2px;
+    classDef material fill:#fff,stroke:#fff,font-weight:bold;
+    classDef emission fill:#fff,stroke:#fff,color:#d93025;
+
+    M1(原料药) --> P1
+    P1[酯化反应]:::process
+    P1 -.-> E1(G1-1 投料废气):::emission
+
+    M2(纯水) --> P2
+    P1 --> P2[淬灭反应]:::process
+    P2 -.-> E2(G2-7 反应生成废气):::emission`;
+    
+    document.getElementById('mermaidInput').value = defaultCode;
+    renderGraph();
+
+    // 实时渲染图形
+    async function renderGraph() {
+        const code = document.getElementById('mermaidInput').value;
+        const renderArea = document.getElementById('renderArea');
+        if (!code.trim()) return;
+        try {
+            // 使用 Mermaid 较新的渲染 API
+            const { svg } = await mermaid.render('mermaid-svg', code);
+            renderArea.innerHTML = svg;
+        } catch (e) {
+            // 捕获语法错误并忽略，等待用户继续输入正确语法
+            console.error('渲染等待中或语法不完整', e);
+        }
+    }
+
+    // 调用 API 将文字转化为图形代码
+    async function generateFromText() {
+        const text = document.getElementById('textInput').value;
+        const apiKey = document.getElementById('apiKey').value;
+        
+        if (!text) return alert("请先粘贴工艺文字！");
+        if (!apiKey) return alert("配置大模型 API Key 后方可自动解析。目前支持兼容 OpenAI 格式的接口（如 DeepSeek、通义千问等）。");
+
+        const btn = document.querySelector('button');
+        btn.innerText = "解析中...";
+        btn.disabled = true;
+
+        try {
+            // 此处以通用的大模型 API 格式为例，可根据实际申请的模型修改 baseURL
+            const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${apiKey}`
+                },
+                body: JSON.stringify({
+                    model: "deepseek-chat", // 替换为你使用的实际模型名称
+                    messages: [
+                        { role: "system", content: sysPrompt },
+                        { role: "user", content: text }
+                    ],
+                    temperature: 0.1 // 极低的温度保证结构化输出的稳定性
+                })
+            });
+
+            const data = await response.json();
+            let result = data.choices[0].message.content;
+            
+            // 清理模型偶尔带入的 Markdown 标记
+            result = result.replace(/```mermaid/ig, '').replace(/```/g, '').trim();
+            
+            document.getElementById('mermaidInput').value = result;
+            renderGraph();
+        } catch (error) {
+            alert("解析失败，请检查网络或 API Key 状态。");
+            console.error(error);
+        } finally {
+            btn.innerText = "一键生成";
+            btn.disabled = false;
+        }
+    }
+</script>
+
+</body>
+</html>
