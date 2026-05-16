@@ -2,29 +2,29 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>清洁生产工艺与物料平衡制图系统 (Visio专业版)</title>
+    <title>清洁生产工艺与物料平衡制图系统 (Visio专业旗舰版)</title>
     <script src="https://fastly.jsdelivr.net/npm/@antv/x6@1.34.6/dist/x6.js"></script>
     <script src="https://fastly.jsdelivr.net/npm/dagre@0.8.5/dist/dagre.min.js"></script>
     <style>
         :root { --primary: #1890ff; --bg: #f0f2f5; --border: #d9d9d9; }
         body { font-family: 'Microsoft YaHei', sans-serif; margin: 0; padding: 0; display: flex; height: 100vh; background: var(--bg); overflow: hidden; }
         
-        /* 左侧边栏：分为上下两部分（AI模板 + JSON输入） */
+        /* 左侧边栏 */
         .sidebar { width: 340px; background: #fff; display: flex; flex-direction: column; box-shadow: 2px 0 8px rgba(0,0,0,0.08); z-index: 10; border-right: 1px solid var(--border); }
-        .section { padding: 15px; border-bottom: 1px solid var(--border); }
-        .section-title { font-size: 14px; font-weight: bold; color: #333; margin: 0 0 10px 0; display: flex; justify-content: space-between; align-items: center; }
+        .section { padding: 12px 15px; border-bottom: 1px solid var(--border); }
+        .section-title { font-size: 14px; font-weight: bold; color: #333; margin: 0 0 8px 0; display: flex; justify-content: space-between; align-items: center; }
         
-        .ai-prompt { background: #f9fcff; border: 1px dashed #bae0ff; padding: 10px; border-radius: 4px; font-size: 12px; color: #555; height: 160px; overflow-y: auto; line-height: 1.5; }
+        .ai-prompt { background: #f9fcff; border: 1px dashed #bae0ff; padding: 8px; border-radius: 4px; font-size: 12px; color: #555; height: 140px; overflow-y: auto; line-height: 1.5; }
         .ai-recommend { font-size: 12px; color: #d46b08; margin-top: 5px; font-weight: bold; }
         
-        textarea { width: 100%; box-sizing: border-box; height: 120px; resize: none; border: 1px solid var(--border); border-radius: 4px; padding: 8px; font-family: monospace; font-size: 12px; }
+        textarea { width: 100%; box-sizing: border-box; height: 100px; resize: none; border: 1px solid var(--border); border-radius: 4px; padding: 8px; font-family: monospace; font-size: 12px; }
         
         .btn { background: var(--primary); color: #fff; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; width: 100%; font-size: 13px; transition: 0.2s; }
         .btn:hover { background: #40a9ff; opacity: 0.9; }
         
-        /* 形状拖拽区 (Visio Stencil) */
+        /* 组件拖拽区 */
         .stencil-container { padding: 15px; flex: 1; overflow-y: auto; background: #fafafa; }
-        .drag-item { width: 120px; height: 36px; line-height: 36px; text-align: center; border-radius: 4px; border: 2px solid #333; margin-bottom: 12px; font-size: 13px; cursor: grab; user-select: none; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .drag-item { width: 120px; height: 34px; line-height: 34px; text-align: center; border-radius: 4px; border: 2px solid #333; margin-bottom: 10px; font-size: 13px; cursor: grab; user-select: none; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
         .drag-process { font-weight: bold; }
         .drag-material { border-radius: 18px; }
         .drag-emission { border-color: #ff4d4f; background: #fff1f0; color: #d9363e; }
@@ -33,17 +33,24 @@
         /* 右侧工作区 */
         .main-workspace { flex: 1; display: flex; flex-direction: column; position: relative; }
         
-        /* 顶部工具栏 */
-        .toolbar { height: 50px; background: #fff; border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 20px; gap: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); z-index: 5; }
-        .toolbar-group { display: flex; align-items: center; gap: 6px; border-right: 1px solid #eee; padding-right: 15px; }
+        /* 顶部样式与连线工具栏 */
+        .toolbar { height: 50px; background: #fff; border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 15px; gap: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); z-index: 5; flex-wrap: wrap; }
+        .toolbar-group { display: flex; align-items: center; gap: 6px; border-right: 1px solid #eee; padding-right: 12px; }
         .toolbar-group:last-child { border-right: none; }
-        .toolbar label { font-size: 12px; color: #555; }
+        .toolbar label { font-size: 12px; color: #555; display: flex; align-items: center; gap: 4px;}
         .toolbar select, .toolbar input[type="number"] { padding: 4px; border: 1px solid #ccc; border-radius: 4px; font-size: 12px; }
         .toolbar input[type="color"] { width: 24px; height: 24px; padding: 0; border: none; cursor: pointer; }
         
-        #container { flex: 1; width: 100%; }
+        /* 画布区与小地图 */
+        #container { flex: 1; width: 100%; position: relative; }
+        #minimap { position: absolute; right: 20px; bottom: 20px; width: 200px; height: 140px; background: #fff; border: 1px solid #ccc; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 100; border-radius: 4px; overflow: hidden; }
+        
+        /* 浮动视图控制台 */
+        .view-controls { position: absolute; right: 20px; top: 20px; display: flex; gap: 8px; z-index: 100; }
+        .view-controls button { background: #fff; border: 1px solid #ccc; padding: 6px 12px; border-radius: 4px; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.1); font-weight: bold; }
+        .view-controls button:hover { background: #e6f7ff; border-color: #1890ff; color: #1890ff; }
 
-        /* 画布内元素的 CSS 交互：实现鼠标悬停显示四周连接点 */
+        /* 四周连接点显示控制 */
         .x6-node .x6-port-body { visibility: hidden; }
         .x6-node:hover .x6-port-body { visibility: visible; }
         .x6-node-selected .x6-port-body { visibility: visible; }
@@ -51,10 +58,14 @@
         /* 双击编辑弹窗 */
         #editModal { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.3); z-index: 1000; align-items: center; justify-content: center; }
         .modal-content { background: #fff; padding: 20px; border-radius: 8px; width: 300px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
-        .modal-content textarea { height: 80px; margin-bottom: 10px; font-size: 14px; }
+        .modal-content textarea { width: 100%; height: 80px; margin-bottom: 10px; font-size: 14px; box-sizing: border-box; }
         .modal-actions { display: flex; justify-content: flex-end; gap: 10px; }
         .modal-actions button { padding: 6px 15px; border-radius: 4px; cursor: pointer; border: none; }
         .btn-cancel { background: #f5f5f5; border: 1px solid #d9d9d9; }
+
+        /* 选中高亮状态 */
+        .x6-node-selected rect { stroke: #1890ff !important; stroke-width: 3px !important; }
+        .x6-edge-selected path { stroke: #1890ff !important; stroke-width: 3px !important; }
     </style>
 </head>
 <body>
@@ -62,95 +73,103 @@
 <div class="sidebar">
     <div class="section">
         <div class="section-title">
-            1. 复制提示词发给大模型
-            <button onclick="copyPrompt()" style="font-size:12px; padding: 2px 6px; cursor:pointer;">复制全部</button>
+            1. 给 AI 的提示词 (点击复制)
+            <button onclick="copyPrompt()" style="font-size:12px; padding: 2px 6px; cursor:pointer;">复制</button>
         </div>
-        <div class="ai-recommend">推荐工具：Kimi、DeepSeek、腾讯元宝</div>
-        <div class="ai-prompt" id="promptText">你是一个清洁生产审核和环评专家。请解析以下工艺文字，提取节点并输出为JSON格式（不要输出代码块标记如```json，直接输出文本）。
-
-严格要求：
-1. 节点分类(category): material(原辅料)、process(工艺)、emission(产排污)。
-2. 同一工序产生的多个污染物，必须合并到同一个 emission 节点内！用 \n 换行符隔开。如："G1-1 投料废气\nW1-1 废水\nS1 固废"。
-3. type 连线: solid(实线, 设为主物流), dashed(虚线, 工艺指向废弃物)。
-
-JSON模板示例：
+        <div class="ai-prompt" id="promptText">你是一个清洁生产审核专家。请解析以下工艺文字，提取节点并输出为JSON格式（直接输出文本，不要markdown标记）。
+要求：
+1. 分类(category): material(原辅料)、process(工艺)、emission(排污)。
+2. 同一工序的多个污染物必须用 \n 合并到同一个 emission 节点内。如："G1废气\nW1废水"。
+3. type连线: solid(实线主物流), dashed(虚线排污)。
+模板：
 {
   "nodes": [
-    {"id": "n1", "label": "原水/药剂", "category": "material"},
-    {"id": "n2", "label": "电絮凝反应", "category": "process"},
-    {"id": "n3", "label": "G1 电解废气\nS1 电絮凝浮渣", "category": "emission"}
+    {"id": "n1", "label": "原辅料", "category": "material"},
+    {"id": "n2", "label": "工序A", "category": "process"},
+    {"id": "n3", "label": "G1废气\nS1固废", "category": "emission"}
   ],
   "edges": [
-    {"source": "n1", "target": "n2", "type": "solid"},
-    {"source": "n2", "target": "n3", "type": "dashed"}
+    {"source": "n1", "target": "n2", "type": "solid"}
   ]
 }
-
-待解析工艺文字：
-[在此处粘贴]</div>
+待解析文字：
+[在此粘贴]</div>
+        <div class="ai-recommend">适用：Kimi / DeepSeek / 通义千问</div>
     </div>
 
     <div class="section">
-        <div class="section-title">2. 粘贴生成的 JSON</div>
+        <div class="section-title">2. 导入 JSON 自动成图</div>
         <textarea id="jsonInput" placeholder="将 AI 生成的 JSON 粘贴在此处..."></textarea>
-        <button class="btn" onclick="renderFromJSON()" style="margin-top: 10px;">生成 / 刷新图表</button>
+        <button class="btn" onclick="renderFromJSON()" style="margin-top: 8px;">🚀 一键生成/排版流程图</button>
     </div>
 
     <div class="stencil-container">
-        <div class="section-title">3. 画布自定义 (鼠标拖拽添加)</div>
-        <div style="font-size: 11px; color: #888; margin-bottom: 10px;">支持从框体四周的圆点拖出任意连接线</div>
+        <div class="section-title">3. 组件库 (鼠标拖入右侧)</div>
+        <div class="drag-item drag-process" draggable="true" ondragstart="startDrag(event, 'process', '新增工艺')">主工艺框</div>
+        <div class="drag-item drag-process" draggable="true" ondragstart="startDrag(event, 'process', '')">无文字空方框</div>
+        <div class="drag-item drag-material" draggable="true" ondragstart="startDrag(event, 'material', '新增物料')">圆角原辅料</div>
+        <div class="drag-item drag-emission" draggable="true" ondragstart="startDrag(event, 'emission', 'G1 废气')">红色排污框</div>
+        <div class="drag-item drag-text" draggable="true" ondragstart="startDrag(event, 'text', '双击修改文本')">无边框纯文本</div>
         
-        <div class="drag-item drag-process" draggable="true" ondragstart="startDrag(event, 'process', '新增工艺')">矩形 (主工艺)</div>
-        <div class="drag-item drag-material" draggable="true" ondragstart="startDrag(event, 'material', '新增物料')">圆角矩形 (原辅料)</div>
-        <div class="drag-item drag-emission" draggable="true" ondragstart="startDrag(event, 'emission', 'GX 废气\nWX 废水')">红色矩形 (排污)</div>
-        <div class="drag-item drag-text" draggable="true" ondragstart="startDrag(event, 'text', '双击修改备注文本')">纯文本备注</div>
-        
-        <button class="btn" onclick="exportPNG()" style="background: #52c41a; margin-top: 15px;">💾 导出高清 PNG</button>
+        <button class="btn" onclick="exportPNG()" style="background: #52c41a; margin-top: 15px;">💾 导出高清无底色图片</button>
     </div>
 </div>
 
 <div class="main-workspace">
     <div class="toolbar" id="toolbar">
         <div class="toolbar-group">
-            <label>西文字体:</label>
-            <select id="westFont" onchange="updateFont()">
-                <option value="Arial">Arial</option>
-                <option value="Times New Roman">Times New Roman</option>
-                <option value="Tahoma">Tahoma</option>
+            <button class="btn" id="drawModeBtn" onclick="toggleDrawMode()" style="width:auto; padding:4px 10px; background:#fff; color:#333; border:1px solid #ccc;">✏️ 开启任意画线</button>
+            <label>线条类型:</label>
+            <select id="edgeType" onchange="updateSelectedEdge()">
+                <option value="normal">直线</option>
+                <option value="orth">直角折线</option>
+                <option value="smooth">平滑曲线</option>
             </select>
-            <label>中文字体:</label>
-            <select id="eastFont" onchange="updateFont()">
+            <label><input type="checkbox" id="edgeArrow" checked onchange="updateSelectedEdge()">箭头</label>
+            <label><input type="checkbox" id="edgeDashed" onchange="updateSelectedEdge()">虚线</label>
+        </div>
+
+        <div class="toolbar-group">
+            <label>字体:</label>
+            <select id="eastFont" onchange="updateNodeStyle('fontFamily')">
                 <option value="Microsoft YaHei">微软雅黑</option>
-                <option value="SimSun">宋体 (标准报告)</option>
-                <option value="SimHei">黑体</option>
+                <option value="SimSun">宋体</option>
+                <option value="Arial">Arial</option>
             </select>
             <label>字号:</label>
-            <input type="number" id="fontSize" value="13" style="width: 40px;" onchange="updateStyle('text/fontSize', parseInt(this.value))">
+            <input type="number" id="fontSize" value="13" style="width: 40px;" onchange="updateNodeStyle('fontSize')">
         </div>
         
         <div class="toolbar-group">
             <label>填充色:</label>
-            <input type="color" id="bgColor" onchange="updateStyle('body/fill', this.value)">
+            <input type="color" id="bgColor" onchange="updateNodeStyle('fill')">
             <label>边框色:</label>
-            <input type="color" id="strokeColor" onchange="updateStyle('body/stroke', this.value)">
-            <label><input type="checkbox" id="showBorder" checked onchange="toggleBorder(this.checked)"> 显示边框</label>
+            <input type="color" id="strokeColor" onchange="updateNodeStyle('stroke')">
+            <label><input type="checkbox" id="showBorder" checked onchange="updateNodeStyle('borderToggle')"> 显示框</label>
         </div>
-        
+
         <div class="toolbar-group" style="margin-left: auto;">
-            <button class="btn" style="background: #ff4d4f; padding: 4px 10px; font-size: 12px; width: auto;" onclick="deleteSelected()">🗑️ 删除选中项</button>
+            <button class="btn" style="background: #ff4d4f; padding: 4px 10px; width: auto;" onclick="deleteSelected()">🗑️ 删除选中项</button>
         </div>
     </div>
 
+    <div class="view-controls">
+        <button onclick="graph.zoom(0.2)">放大 ➕</button>
+        <button onclick="graph.zoom(-0.2)">缩小 ➖</button>
+        <button onclick="graph.centerContent()">适应屏幕 ⛶</button>
+    </div>
+
     <div id="container"></div>
+    <div id="minimap"></div>
 </div>
 
 <div id="editModal">
     <div class="modal-content">
-        <h3 style="margin-top:0; font-size:14px;">编辑节点文字 (支持回车换行)</h3>
+        <h3 style="margin-top:0; font-size:14px;">编辑内容 (支持回车换行)</h3>
         <textarea id="editModalInput"></textarea>
         <div class="modal-actions">
             <button class="btn-cancel" onclick="closeEditModal()">取消</button>
-            <button class="btn" style="width: auto;" onclick="saveEditModal()">确定修改</button>
+            <button class="btn" style="width: auto;" onclick="saveEditModal()">确定</button>
         </div>
     </div>
 </div>
@@ -158,50 +177,47 @@ JSON模板示例：
 <script>
     function copyPrompt() {
         navigator.clipboard.writeText(document.getElementById('promptText').innerText);
-        alert('提示词已复制！请直接发给 AI。');
+        alert('提示词已复制！');
     }
 
-    // 四周连接锚点配置
-    const portAttrs = {
-        circle: { r: 5, magnet: true, stroke: '#1890ff', strokeWidth: 1.5, fill: '#fff' }
-    };
+    const portAttrs = { circle: { r: 5, magnet: true, stroke: '#1890ff', strokeWidth: 1.5, fill: '#fff' } };
     const defaultPorts = {
-        groups: {
-            top: { position: 'top', attrs: portAttrs },
-            bottom: { position: 'bottom', attrs: portAttrs },
-            left: { position: 'left', attrs: portAttrs },
-            right: { position: 'right', attrs: portAttrs }
-        },
-        items: [ { id: 'port1', group: 'top' }, { id: 'port2', group: 'bottom' }, { id: 'port3', group: 'left' }, { id: 'port4', group: 'right' } ]
+        groups: { top: { position: 'top', attrs: portAttrs }, bottom: { position: 'bottom', attrs: portAttrs }, left: { position: 'left', attrs: portAttrs }, right: { position: 'right', attrs: portAttrs } },
+        items: [ { id: 'p1', group: 'top' }, { id: 'p2', group: 'bottom' }, { id: 'p3', group: 'left' }, { id: 'p4', group: 'right' } ]
     };
 
     let graph;
     let activeCell = null;
     let editTargetNode = null;
+    let isDrawMode = false;
+    let currentEdge = null;
 
     window.onload = function() {
-        // 初始化画布
+        // 初始化画布，开启 selection 插件以支持框选和删除
         graph = new X6.Graph({
             container: document.getElementById('container'),
             grid: { size: 10, visible: true, type: 'dot', args: { color: '#e0e0e0', thickness: 1 } },
             panning: { enabled: true, eventTypes: ['leftMouseDown', 'mouseWheel'] },
-            mousewheel: { enabled: true, zoomAtMousePosition: true, modifiers: 'ctrl', minScale: 0.3, maxScale: 3 },
-            snapline: { enabled: true, sharp: true }, // 对齐辅助线
+            mousewheel: { enabled: true, zoomAtMousePosition: true, modifiers: 'ctrl', minScale: 0.1, maxScale: 4 },
+            snapline: { enabled: true, sharp: true },
+            selecting: { enabled: true, rubberband: true, showNodeSelectionBox: true }, // 核心修复：允许框选
+            minimap: { enabled: true, container: document.getElementById('minimap'), padding: 10 }, // 核心增强：小地图
             connecting: {
-                snap: true, // 自动吸附
-                allowBlank: false,
-                allowLoop: false,
+                snap: true,
+                allowBlank: true, // 允许连接到空白处
+                allowNode: true,
                 highlight: true,
-                createEdge() { return new X6.Shape.Edge({ attrs: { line: { stroke: '#555', strokeWidth: 2, targetMarker: 'block' } } }); }
+                createEdge() { 
+                    return new X6.Shape.Edge({ attrs: getSelectedEdgeAttrs(), router: getSelectedRouter() }); 
+                }
             },
             keyboard: { enabled: true }
         });
 
-        // 绑定删除快捷键
         graph.bindKey(['delete', 'backspace'], deleteSelected);
 
-        // 点击元素同步状态到顶部工具栏
-        graph.on('cell:click', ({ cell }) => {
+        // 选中事件：同步样式到工具栏
+        graph.on('cell:selected', ({ cell }) => {
             activeCell = cell;
             if (cell.isNode()) {
                 const attrs = cell.getAttrs();
@@ -210,160 +226,173 @@ JSON模板示例：
                 document.getElementById('strokeColor').value = attrs.body.stroke || '#333333';
                 document.getElementById('showBorder').checked = attrs.body.strokeWidth !== 0 && attrs.body.stroke !== 'transparent';
                 
-                // 解析双字体组合
-                const fonts = (attrs.text.fontFamily || '').split(',').map(f => f.replace(/['"]/g, '').trim());
-                if(fonts[0]) document.getElementById('westFont').value = fonts[0];
-                if(fonts[1]) document.getElementById('eastFont').value = fonts[1];
+                const font = (attrs.text.fontFamily || '').replace(/['"]/g, '').split(',')[0].trim();
+                if(font) document.getElementById('eastFont').value = font;
+            } else if (cell.isEdge()) {
+                const router = cell.getRouter();
+                document.getElementById('edgeType').value = router ? router.name : 'normal';
+                document.getElementById('edgeArrow').checked = cell.attr('line/targetMarker') === 'block';
+                document.getElementById('edgeDashed').checked = cell.attr('line/strokeDasharray') === '5 5';
             }
         });
 
-        // 【核心交互：双击修改文字】
+        // 取消选中
+        graph.on('cell:unselected', () => { activeCell = null; });
+
+        // 双击编辑文字
         graph.on('node:dblclick', ({ node }) => {
             editTargetNode = node;
-            const currentText = node.attr('text/text');
-            document.getElementById('editModalInput').value = currentText;
+            document.getElementById('editModalInput').value = node.attr('text/text');
             document.getElementById('editModal').style.display = 'flex';
-            setTimeout(() => document.getElementById('editModalInput').focus(), 100);
+            setTimeout(() => document.getElementById('editModalInput').focus(), 50);
         });
 
-        graph.on('blank:click', () => { activeCell = null; });
+        // 自由画线模式核心逻辑 (在画布任意位置点击画线)
+        graph.on('blank:mousedown', ({ x, y }) => {
+            if (!isDrawMode) return;
+            currentEdge = graph.addEdge({ source: { x, y }, target: { x, y }, router: getSelectedRouter(), attrs: getSelectedEdgeAttrs() });
+        });
+        graph.on('node:mousedown', ({ x, y, node }) => {
+            if (!isDrawMode) return;
+            currentEdge = graph.addEdge({ source: { cell: node }, target: { x, y }, router: getSelectedRouter(), attrs: getSelectedEdgeAttrs() });
+        });
+        graph.on('cell:mousemove', ({ x, y }) => { if (isDrawMode && currentEdge) currentEdge.setTarget({ x, y }); });
+        graph.on('blank:mousemove', ({ x, y }) => { if (isDrawMode && currentEdge) currentEdge.setTarget({ x, y }); });
+        
+        graph.on('blank:mouseup', () => { currentEdge = null; });
+        graph.on('cell:mouseup', ({ node }) => {
+            if (isDrawMode && currentEdge && node) { currentEdge.setTarget({ cell: node }); currentEdge = null; }
+        });
     };
 
-    // 弹窗保存逻辑
+    // 自由画线开关
+    window.toggleDrawMode = function() {
+        isDrawMode = !isDrawMode;
+        const btn = document.getElementById('drawModeBtn');
+        if (isDrawMode) {
+            btn.style.background = '#fa8c16'; btn.style.color = '#fff'; btn.innerText = '⏹️ 关闭自由画线';
+            graph.disablePanning(); graph.disableSelection();
+        } else {
+            btn.style.background = '#fff'; btn.style.color = '#333'; btn.innerText = '✏️ 开启任意画线';
+            graph.enablePanning(); graph.enableSelection();
+        }
+    };
+
+    // 线条属性获取与更新
+    function getSelectedRouter() {
+        const type = document.getElementById('edgeType').value;
+        if (type === 'orth') return { name: 'orth' };
+        if (type === 'smooth') return { name: 'smooth' };
+        return null;
+    }
+    function getSelectedEdgeAttrs() {
+        const hasArrow = document.getElementById('edgeArrow').checked;
+        const isDashed = document.getElementById('edgeDashed').checked;
+        return { line: { stroke: '#555', strokeWidth: 2, targetMarker: hasArrow ? 'block' : null, strokeDasharray: isDashed ? '5 5' : '0' } };
+    }
+    window.updateSelectedEdge = function() {
+        const cells = graph.getSelectedCells();
+        cells.forEach(cell => {
+            if (cell.isEdge()) {
+                cell.setRouter(getSelectedRouter());
+                const attrs = getSelectedEdgeAttrs();
+                cell.attr('line/targetMarker', attrs.line.targetMarker);
+                cell.attr('line/strokeDasharray', attrs.line.strokeDasharray);
+            }
+        });
+    };
+
+    // 节点样式更新
+    window.updateNodeStyle = function(type) {
+        if (!activeCell || !activeCell.isNode()) return;
+        if (type === 'fill') activeCell.attr('body/fill', document.getElementById('bgColor').value);
+        if (type === 'stroke') activeCell.attr('body/stroke', document.getElementById('strokeColor').value);
+        if (type === 'fontSize') activeCell.attr('text/fontSize', parseInt(document.getElementById('fontSize').value));
+        if (type === 'fontFamily') activeCell.attr('text/fontFamily', `'${document.getElementById('eastFont').value}', Arial, sans-serif`);
+        if (type === 'borderToggle') {
+            const show = document.getElementById('showBorder').checked;
+            activeCell.attr('body/strokeWidth', show ? 2 : 0);
+            activeCell.attr('body/stroke', show ? document.getElementById('strokeColor').value : 'transparent');
+        }
+    };
+
     window.saveEditModal = function() {
         if (editTargetNode) {
             const newText = document.getElementById('editModalInput').value;
             editTargetNode.attr('text/text', newText);
-            // 自动根据行数调整高度
             const lines = newText.split('\n').length;
             const currentSize = editTargetNode.getSize();
-            editTargetNode.resize(currentSize.width, Math.max(45, lines * 20 + 20));
+            // 如果是清空文字，保留基础高度；如果是多行文本，自动伸缩拉长
+            editTargetNode.resize(currentSize.width, Math.max(40, lines * 18 + 20));
         }
         closeEditModal();
     };
     window.closeEditModal = function() { document.getElementById('editModal').style.display = 'none'; };
-
-    // 拖拽加入画布的实现
-    window.startDrag = function(e, type, defaultLabel) {
-        e.dataTransfer.setData('type', type);
-        e.dataTransfer.setData('label', defaultLabel);
-    };
-
-    // 监听拖拽放入画布区域
-    document.getElementById('container').addEventListener('dragover', e => e.preventDefault());
-    document.getElementById('container').addEventListener('drop', e => {
-        e.preventDefault();
-        const type = e.dataTransfer.getData('type');
-        const label = e.dataTransfer.getData('label');
-        if (!type || !graph) return;
-
-        const coords = graph.clientToLocal(e.clientX, e.clientY);
-        const nodeStyle = getStyleByType(type);
-        
-        graph.addNode({
-            x: coords.x - nodeStyle.width / 2,
-            y: coords.y - nodeStyle.height / 2,
-            width: nodeStyle.width,
-            height: nodeStyle.height,
-            ports: defaultPorts,
-            attrs: {
-                body: { fill: nodeStyle.fill, stroke: nodeStyle.stroke, strokeWidth: nodeStyle.strokeWidth, rx: nodeStyle.rx, ry: nodeStyle.rx, strokeDasharray: nodeStyle.dash || '0' },
-                text: { text: label, fill: nodeStyle.fontColor, fontSize: 13, fontFamily: getFontString() }
-            }
-        });
-    });
-
-    // 获取独立组件样式
-    function getStyleByType(category) {
-        if(category === 'material') return { width: 140, height: 40, fill: '#ffffff', stroke: '#333333', strokeWidth: 2, rx: 20, fontColor: '#333' };
-        if(category === 'emission') return { width: 150, height: 50, fill: '#fff1f0', stroke: '#ff4d4f', strokeWidth: 2, rx: 0, fontColor: '#d9363e' };
-        if(category === 'text') return { width: 140, height: 40, fill: 'transparent', stroke: 'transparent', strokeWidth: 0, rx: 0, fontColor: '#333' };
-        return { width: 150, height: 45, fill: '#f9f9f9', stroke: '#333333', strokeWidth: 2, rx: 0, fontColor: '#333' }; // process default
-    }
-
-    // 字体组合逻辑：严格区分中西文
-    function getFontString() {
-        const west = document.getElementById('westFont').value;
-        const east = document.getElementById('eastFont').value;
-        return `'${west}', '${east}', sans-serif`;
-    }
-
-    window.updateFont = function() {
-        if (activeCell && activeCell.isNode()) {
-            activeCell.attr('text/fontFamily', getFontString());
-        }
-    };
-
-    window.updateStyle = function(path, value) {
-        if (activeCell && activeCell.isNode()) activeCell.attr(path, value);
-    };
-
-    window.toggleBorder = function(checked) {
-        if (activeCell && activeCell.isNode()) {
-            activeCell.attr('body/strokeWidth', checked ? 2 : 0);
-            if(checked) activeCell.attr('body/stroke', document.getElementById('strokeColor').value);
-            else activeCell.attr('body/stroke', 'transparent');
-        }
-    };
 
     window.deleteSelected = function() {
         const cells = graph.getSelectedCells();
         if (cells.length) graph.removeCells(cells);
     };
 
-    // 解析 JSON 并自动排版
+    // 拖拽逻辑
+    window.startDrag = function(e, type, defaultLabel) {
+        e.dataTransfer.setData('type', type); e.dataTransfer.setData('label', defaultLabel);
+    };
+    document.getElementById('container').addEventListener('dragover', e => e.preventDefault());
+    document.getElementById('container').addEventListener('drop', e => {
+        e.preventDefault();
+        const type = e.dataTransfer.getData('type'); const label = e.dataTransfer.getData('label');
+        if (!type || !graph) return;
+
+        const coords = graph.clientToLocal(e.clientX, e.clientY);
+        let style = { width: 140, height: 40, fill: '#f9f9f9', stroke: '#333', rx: 0, color: '#333', strokeWidth: 2 };
+        if(type === 'material') { style.fill = '#fff'; style.rx = 20; }
+        if(type === 'emission') { style.fill = '#fff1f0'; style.stroke = '#ff4d4f'; style.color = '#d9363e'; }
+        if(type === 'text') { style.fill = 'transparent'; style.stroke = 'transparent'; style.strokeWidth = 0; }
+        
+        graph.addNode({
+            x: coords.x - style.width/2, y: coords.y - style.height/2, width: style.width, height: style.height,
+            ports: defaultPorts,
+            attrs: {
+                body: { fill: style.fill, stroke: style.stroke, strokeWidth: style.strokeWidth, rx: style.rx, ry: style.rx },
+                text: { text: label, fill: style.color, fontSize: 13, fontFamily: `'Microsoft YaHei', Arial` }
+            }
+        });
+    });
+
+    // 解析 JSON (带自动尺寸伸缩)
     window.renderFromJSON = function() {
         let jsonStr = document.getElementById('jsonInput').value;
         jsonStr = jsonStr.replace(/```json/gi, '').replace(/```/g, '').trim();
-        if (!jsonStr) return alert("请在左侧填入 JSON 数据");
-
-        let data;
-        try { data = JSON.parse(jsonStr); } catch (e) { return alert("JSON 解析出错，请检查格式！"); }
+        if (!jsonStr) return alert("请填入 JSON 数据");
+        let data; try { data = JSON.parse(jsonStr); } catch (e) { return alert("JSON 格式有误"); }
 
         graph.clearCells();
-        const g = new dagre.graphlib.Graph();
-        g.setGraph({ rankdir: 'TB', nodesep: 40, ranksep: 60 });
-        g.setDefaultEdgeLabel(() => ({}));
+        const g = new dagre.graphlib.Graph(); g.setGraph({ rankdir: 'TB', nodesep: 40, ranksep: 60 }); g.setDefaultEdgeLabel(() => ({}));
 
-        // 计算高度自适应（应对多个排污合并换行）
         data.nodes.forEach(node => {
             const lines = (node.label.match(/\n/g) || []).length + 1;
-            const style = getStyleByType(node.category);
-            style.height = Math.max(style.height, lines * 20 + 20); // 动态计算高度
-            g.setNode(node.id, { width: style.width, height: style.height, ...style, label: node.label });
+            let style = { width: 150, height: Math.max(45, lines * 18 + 20), fill: '#f9f9f9', stroke: '#333', rx: 0, fontColor: '#333', fw: 'bold' };
+            if (node.category === 'material') { style.fill = '#fff'; style.rx = 20; style.width = 140; style.fw = 'normal'; }
+            if (node.category === 'emission') { style.fill = '#fff1f0'; style.stroke = '#ff4d4f'; style.fontColor = '#d9363e'; style.fw = 'normal'; }
+            g.setNode(node.id, { ...style, label: node.label });
         });
-
         if(data.edges) data.edges.forEach(e => g.setEdge(e.source, e.target));
         dagre.layout(g);
 
-        // 渲染节点
         g.nodes().forEach(v => {
-            const n = g.node(v);
-            if(!n) return;
+            const n = g.node(v); if(!n) return;
             graph.addNode({
-                id: v, x: n.x, y: n.y, width: n.width, height: n.height,
-                ports: defaultPorts, // 为所有自动生成的节点加上四周连接点
-                attrs: {
-                    body: { fill: n.fill, stroke: n.stroke, strokeWidth: n.strokeWidth, rx: n.rx, ry: n.rx },
-                    text: { text: n.label, fill: n.fontColor, fontSize: 13, fontFamily: getFontString(), fontWeight: n.category==='process'?'bold':'normal' }
-                }
+                id: v, x: n.x, y: n.y, width: n.width, height: n.height, ports: defaultPorts,
+                attrs: { body: { fill: n.fill, stroke: n.stroke, strokeWidth: 2, rx: n.rx, ry: n.rx }, text: { text: n.label, fill: n.fontColor, fontSize: 13, fontWeight: n.fw } }
             });
         });
 
-        // 渲染连线
         if(data.edges) {
             data.edges.forEach(edge => {
                 graph.addEdge({
-                    source: { cell: edge.source },
-                    target: { cell: edge.target },
-                    attrs: {
-                        line: {
-                            stroke: edge.type === 'dashed' ? '#ff4d4f' : '#555555',
-                            strokeWidth: 2,
-                            strokeDasharray: edge.type === 'dashed' ? '5 5' : '0',
-                            targetMarker: 'block',
-                        }
-                    }
+                    source: { cell: edge.source }, target: { cell: edge.target },
+                    attrs: { line: { stroke: edge.type === 'dashed' ? '#ff4d4f' : '#555', strokeWidth: 2, targetMarker: 'block', strokeDasharray: edge.type === 'dashed' ? '5 5' : '0' } }
                 });
             });
         }
@@ -372,16 +401,11 @@ JSON模板示例：
 
     window.exportPNG = function() {
         if (!graph || graph.getCells().length === 0) return alert("画布为空！");
-        // 导出时暂时隐藏所有连接点
+        graph.cleanSelection();
         const nodes = graph.getNodes();
         nodes.forEach(n => n.getPorts().forEach(p => n.portProp(p.id, 'attrs/circle/style/visibility', 'hidden')));
-        
         graph.toPNG((dataUri) => {
-            const link = document.createElement('a');
-            link.download = '物料平衡及工艺流程图.png';
-            link.href = dataUri;
-            link.click();
-            // 恢复连接点 hover 状态（通过清空内联 style 恢复 css 控制）
+            const link = document.createElement('a'); link.download = '规范工艺流程图.png'; link.href = dataUri; link.click();
             nodes.forEach(n => n.getPorts().forEach(p => n.portProp(p.id, 'attrs/circle/style', {})));
         }, { padding: 40, backgroundColor: '#fff', quality: 1 });
     };
