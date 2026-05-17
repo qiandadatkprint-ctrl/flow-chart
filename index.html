@@ -14,7 +14,6 @@
         .section { padding: 15px; border-bottom: 1px solid var(--border); }
         .section-title { font-size: 13px; font-weight: bold; color: #333; margin: 0 0 10px 0; display: flex; justify-content: space-between; align-items: center; }
         
-        /* 操作说明与提示词区域 */
         .instruction-box { background: #f9fcff; border: 1px solid #bae0ff; padding: 10px; border-radius: 4px; font-size: 12px; color: #555; margin-bottom: 10px; line-height: 1.5; }
         .ai-prompt { background: #fafafa; border: 1px dashed #ccc; padding: 8px; border-radius: 4px; font-size: 12px; color: #333; height: 100px; overflow-y: auto; line-height: 1.4; user-select: all; cursor: text; font-family: monospace; }
         textarea { width: 100%; box-sizing: border-box; height: 100px; resize: none; border: 1px solid var(--border); border-radius: 4px; padding: 8px; font-family: monospace; font-size: 12px; }
@@ -22,7 +21,7 @@
         .btn { background: var(--primary); color: #fff; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; width: 100%; font-size: 13px; transition: 0.2s; }
         .btn:hover { background: #40a9ff; }
         
-        /* 图元库 (去文字版) */
+        /* 图元库 */
         .stencil-container { padding: 15px; flex: 1; overflow-y: auto; background: #fafafa; }
         .stencil-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; justify-items: center; }
         .stencil-item { cursor: grab; padding: 5px; border-radius: 4px; transition: background 0.2s; }
@@ -42,11 +41,13 @@
         .toolbar { height: 50px; background: #fff; border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 15px; gap: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); z-index: 5; flex-wrap: nowrap; overflow-x: auto; }
         .toolbar-group { display: flex; align-items: center; gap: 6px; border-right: 1px solid #eee; padding-right: 10px; flex-shrink: 0; }
         .toolbar-group:last-child { border-right: none; }
-        .toolbar label { font-size: 12px; color: #333; display: flex; align-items: center; gap: 3px;}
-        .toolbar select, .toolbar input[type="number"] { padding: 4px; border: 1px solid #ccc; border-radius: 4px; font-size: 12px; }
-        .toolbar input[type="color"] { width: 22px; height: 22px; padding: 0; border: none; cursor: pointer; border-radius: 2px; }
         
-        .btn-small { background: #fff; border: 1px solid #d9d9d9; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 12px; color: #333; }
+        /* 强化文字说明样式 */
+        .toolbar label { font-size: 12px; color: #333; display: flex; align-items: center; gap: 3px; font-weight: bold; background: #f5f5f5; padding: 3px 6px; border-radius: 4px;}
+        .toolbar select, .toolbar input[type="number"] { padding: 3px; border: 1px solid #ccc; border-radius: 4px; font-size: 12px; }
+        .toolbar input[type="checkbox"] { margin: 0 2px 0 0; }
+        
+        .btn-small { background: #fff; border: 1px solid #d9d9d9; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 12px; color: #333; font-weight: bold; }
         .btn-small:hover { border-color: var(--primary); color: var(--primary); }
 
         #container { flex: 1; width: 100%; position: relative; }
@@ -62,7 +63,8 @@
         .modal-actions { display: flex; justify-content: flex-end; gap: 10px; }
         .modal-actions button { padding: 6px 15px; border-radius: 4px; cursor: pointer; border: none; }
         
-        .x6-node-selected rect, .x6-node-selected polygon, .x6-node-selected ellipse { stroke: #1890ff !important; stroke-width: 3px !important; }
+        /* 选中样式强化 */
+        .x6-node-selected rect, .x6-node-selected polygon, .x6-node-selected ellipse { stroke: #1890ff !important; }
         .x6-edge-selected path { stroke: #1890ff !important; stroke-width: 3px !important; }
     </style>
 </head>
@@ -76,9 +78,9 @@
         </div>
         <div class="instruction-box">
             <b>操作指南：</b><br>
-            ① 复制下方提示词，连同你的工艺说明文字发送给 AI。<br>
+            ① 复制下方提示词，连同工艺文字发送给 AI。<br>
             ② 确保 AI 输出的代码符合规范。<br>
-            ③ 将 AI 生成的 JSON 代码粘贴到第二步的输入框中。
+            ③ 将 AI 生成的代码粘贴到第二步的输入框中。
         </div>
         <div class="ai-prompt" id="promptText">解析以下工艺文字，提取节点并输出为纯JSON格式。
 规则：
@@ -96,59 +98,92 @@
     </div>
 
     <div class="stencil-container">
-        <div class="section-title" style="margin-bottom: 15px;" title="按住图形拖拽到右侧画布空白处即可添加">3. 图元组件库 (拖拽添加)</div>
+        <div class="section-title" style="margin-bottom: 15px;">3. 图元组件库 (拖放至右侧)</div>
         <div class="stencil-grid">
-            <div class="stencil-item" draggable="true" ondragstart="startDrag(event, 'process')" title="主工艺方框 (双击修改文字)"><div class="drag-shape shape-process"></div></div>
-            <div class="stencil-item" draggable="true" ondragstart="startDrag(event, 'material')" title="原辅料圆角框 (双击修改文字)"><div class="drag-shape shape-material"></div></div>
-            <div class="stencil-item" draggable="true" ondragstart="startDrag(event, 'emission')" title="产排污红色方框 (双击修改文字)"><div class="drag-shape shape-emission"></div></div>
+            <div class="stencil-item" draggable="true" ondragstart="startDrag(event, 'process')" title="主工艺方框"><div class="drag-shape shape-process"></div></div>
+            <div class="stencil-item" draggable="true" ondragstart="startDrag(event, 'material')" title="原辅料圆角框"><div class="drag-shape shape-material"></div></div>
+            <div class="stencil-item" draggable="true" ondragstart="startDrag(event, 'emission')" title="产排污红色方框"><div class="drag-shape shape-emission"></div></div>
             <div class="stencil-item" draggable="true" ondragstart="startDrag(event, 'decision')" title="判断/判定菱形"><div class="drag-shape shape-decision"></div></div>
             <div class="stencil-item" draggable="true" ondragstart="startDrag(event, 'ellipse')" title="起止/状态椭圆"><div class="drag-shape shape-ellipse"></div></div>
             <div class="stencil-item" draggable="true" ondragstart="startDrag(event, 'text')" title="无边框纯文本"><div class="drag-shape shape-text"></div></div>
         </div>
         
-        <button class="btn" onclick="exportPNG()" style="background: #52c41a; margin-top: 25px;" title="导出无底色的高清图片格式，可直接插入报告">导出高清图 (PNG)</button>
+        <button class="btn" onclick="exportPNG()" style="background: #52c41a; margin-top: 25px;">导出高清图 (PNG)</button>
     </div>
 </div>
 
 <div class="main-workspace">
     <div class="toolbar" id="toolbar">
         <div class="toolbar-group">
-            <button class="btn-small" id="drawModeBtn" onclick="toggleDrawMode()" title="开启后，可在画布任意位置或图形上按住鼠标左键拉出线条">✏️ 自由连线</button>
-            <select id="edgeType" onchange="updateSelectedEdge()" title="更改当前选中线条或新画线条的走向类型">
-                <option value="orth">折线 (推荐)</option>
-                <option value="normal">直线</option>
-                <option value="smooth">曲线</option>
-            </select>
-            <label title="开启后，折线会自动绕开图形。关闭时，你可以手动拖拽线段转折点"><input type="checkbox" id="smartRoute" onchange="updateSelectedEdge()">智能避让</label>
-            <label title="控制线条末端是否有箭头"><input type="checkbox" id="edgeArrow" checked onchange="updateSelectedEdge()">箭头</label>
-            <label title="将实线切换为虚线"><input type="checkbox" id="edgeDashed" onchange="updateSelectedEdge()">虚线</label>
+            <button class="btn-small" id="drawModeBtn" onclick="toggleDrawMode()" style="margin-right: 5px;">✏️ 自由连线</button>
+            <label>线型: 
+                <select id="edgeType" onchange="updateSelectedEdge()">
+                    <option value="orth">折线 (推荐)</option>
+                    <option value="normal">直线</option>
+                    <option value="smooth">曲线</option>
+                </select>
+            </label>
+            <label>箭头: 
+                <select id="edgeArrow" onchange="updateSelectedEdge()">
+                    <option value="target">正向箭头</option>
+                    <option value="source">反向箭头</option>
+                    <option value="both">双向箭头</option>
+                    <option value="none">无箭头</option>
+                </select>
+            </label>
+            <label style="font-weight: normal;"><input type="checkbox" id="smartRoute" onchange="updateSelectedEdge()">智能避让</label>
+            <label style="font-weight: normal;"><input type="checkbox" id="edgeDashed" onchange="updateSelectedEdge()">虚线</label>
         </div>
 
         <div class="toolbar-group">
-            <label title="选择英文字母和数字的字体">西文:</label>
-            <select id="westFont" onchange="updateNodeStyle('fontFamily')" style="width: 70px;">
-                <option value="Arial">Arial</option>
-                <option value="Times New Roman">Times</option>
-            </select>
-            <label title="选择中文字体">中文:</label>
-            <select id="eastFont" onchange="updateNodeStyle('fontFamily')" style="width: 80px;">
-                <option value="Microsoft YaHei">微软雅黑</option>
-                <option value="SimSun">宋体</option>
-                <option value="SimHei">黑体</option>
-            </select>
-            <label title="调整文字大小">字号:</label>
-            <input type="number" id="globalFontSize" value="13" style="width: 45px;" onchange="updateNodeStyle('fontSize')">
-            <label title="字体加粗"><input type="checkbox" id="fontWeight" onchange="updateNodeStyle('fontWeight')"><b>加粗</b></label>
+            <label>字体: 
+                <select id="westFont" onchange="updateNodeStyle('fontFamily')" style="width: 60px;">
+                    <option value="Arial">Arial</option>
+                    <option value="Times New Roman">Times</option>
+                </select>
+                <select id="eastFont" onchange="updateNodeStyle('fontFamily')" style="width: 70px;">
+                    <option value="Microsoft YaHei">微软雅黑</option>
+                    <option value="SimSun">宋体</option>
+                    <option value="SimHei">黑体</option>
+                </select>
+            </label>
+            <label>字号: <input type="number" id="globalFontSize" value="13" style="width: 40px;" onchange="updateNodeStyle('fontSize')"></label>
+            <label style="font-weight: normal;"><input type="checkbox" id="fontWeight" onchange="updateNodeStyle('fontWeight')"><b>加粗</b></label>
         </div>
         
         <div class="toolbar-group">
-            <input type="color" id="bgColor" onchange="updateNodeStyle('fill')" title="修改图形内部的填充颜色">
-            <input type="color" id="strokeColor" onchange="updateNodeStyle('stroke')" title="修改图形边框的颜色">
-            <label title="隐藏或显示图形的外边框"><input type="checkbox" id="showBorder" checked onchange="updateNodeStyle('borderToggle')">边框</label>
+            <label>背景色: 
+                <select id="bgColor" onchange="updateNodeStyle('fill')">
+                    <option value="#ffffff">纯白</option>
+                    <option value="#f9f9f9">浅灰</option>
+                    <option value="#fff1f0">排污红</option>
+                    <option value="#e6f7ff">标注蓝</option>
+                    <option value="#f6ffed">通过绿</option>
+                    <option value="transparent">透明</option>
+                </select>
+            </label>
+            <label>边框色: 
+                <select id="strokeColor" onchange="updateNodeStyle('stroke')">
+                    <option value="#333333">标准黑</option>
+                    <option value="#555555">深灰</option>
+                    <option value="#ff4d4f">排污红</option>
+                    <option value="#1890ff">标准蓝</option>
+                    <option value="transparent">透明(无边框)</option>
+                </select>
+            </label>
+            <label>边框粗细: 
+                <select id="strokeWidth" onchange="updateNodeStyle('strokeWidth')">
+                    <option value="0">无 (0px)</option>
+                    <option value="1">细 (1px)</option>
+                    <option value="2" selected>中 (2px)</option>
+                    <option value="3">粗 (3px)</option>
+                    <option value="4">极粗 (4px)</option>
+                </select>
+            </label>
         </div>
 
         <div class="toolbar-group" style="margin-left: auto; border-right: none; padding-right: 0;">
-            <button class="btn-small" style="background: #ff4d4f; color: #fff; border:none;" onclick="deleteSelected()" title="删除选中的图形或线条 (快捷键: Delete)">删除选中</button>
+            <button class="btn-small" style="background: #ff4d4f; color: #fff; border:none;" onclick="deleteSelected()">删除选中</button>
         </div>
     </div>
 
@@ -184,24 +219,22 @@
         return `'${document.getElementById('westFont').value}', '${document.getElementById('eastFont').value}', sans-serif`;
     }
 
-    // 精确路由逻辑：回归标准 orth 折线，保留智能避让可选
     function getSelectedRouter() {
         const type = document.getElementById('edgeType').value;
         const smart = document.getElementById('smartRoute').checked;
-        
-        if (type === 'orth') {
-            return smart ? { name: 'manhattan', args: { padding: 15 } } : { name: 'orth' };
-        }
+        if (type === 'orth') return smart ? { name: 'manhattan', args: { padding: 15 } } : { name: 'orth' };
         if (type === 'smooth') return { name: 'smooth' };
         return null;
     }
 
-    // 线条带 20px 抓取层，方便选中与拖拽
     function getSelectedEdgeAttrs() {
+        const arrowDir = document.getElementById('edgeArrow').value;
         return { 
             line: { 
-                stroke: '#555555', strokeWidth: 2, 
-                targetMarker: document.getElementById('edgeArrow').checked ? 'block' : null, 
+                stroke: '#555555', 
+                strokeWidth: 2, 
+                sourceMarker: (arrowDir === 'source' || arrowDir === 'both') ? 'block' : null,
+                targetMarker: (arrowDir === 'target' || arrowDir === 'both') ? 'block' : null,
                 strokeDasharray: document.getElementById('edgeDashed').checked ? '5 5' : '0' 
             },
             wrap: { strokeWidth: 20 } 
@@ -217,6 +250,8 @@
             snapline: { enabled: true, sharp: true },
             selecting: { enabled: true, rubberband: true, showNodeSelectionBox: true, showEdgeSelectionBox: true }, 
             minimap: { enabled: true, container: document.getElementById('minimap'), padding: 10 },
+            // 解锁节点四周拉伸缩放功能
+            resizing: { enabled: true, minWidth: 30, minHeight: 30 },
             connecting: {
                 snap: true, allowBlank: true, allowNode: true, highlight: true,
                 createEdge() { return new X6.Shape.Edge({ attrs: getSelectedEdgeAttrs(), router: getSelectedRouter() }); }
@@ -226,17 +261,14 @@
 
         graph.bindKey(['delete', 'backspace'], deleteSelected);
 
-        // 核心突破：线条悬停显示控制段，支持直接拖拽线段改道
         graph.on('edge:mouseenter', ({ edge }) => {
             if (document.getElementById('edgeType').value === 'orth' && !document.getElementById('smartRoute').checked) {
-                edge.addTools(['segments']); // 允许手动拖动折线段
+                edge.addTools(['segments']);
             } else {
                 edge.addTools(['vertices']); 
             }
         });
-        graph.on('edge:mouseleave', ({ edge }) => {
-            edge.removeTools();
-        });
+        graph.on('edge:mouseleave', ({ edge }) => { edge.removeTools(); });
 
         graph.on('cell:selected', ({ cell }) => {
             activeCell = cell;
@@ -244,23 +276,35 @@
                 const attrs = cell.getAttrs();
                 document.getElementById('globalFontSize').value = attrs.text.fontSize || 13;
                 document.getElementById('fontWeight').checked = attrs.text.fontWeight === 'bold';
-                document.getElementById('bgColor').value = attrs.body.fill || '#ffffff';
-                document.getElementById('strokeColor').value = attrs.body.stroke || '#333333';
-                document.getElementById('showBorder').checked = attrs.body.strokeWidth !== 0 && attrs.body.stroke !== 'transparent';
                 
+                // 智能匹配下拉框颜色
+                const fill = attrs.body.fill || '#ffffff';
+                const stroke = attrs.body.stroke || '#333333';
+                const strokeW = attrs.body.strokeWidth;
+                
+                if (document.querySelector(`#bgColor option[value="${fill}"]`)) document.getElementById('bgColor').value = fill;
+                if (document.querySelector(`#strokeColor option[value="${stroke}"]`)) document.getElementById('strokeColor').value = stroke;
+                
+                if (stroke === 'transparent' || strokeW === 0) document.getElementById('strokeWidth').value = "0";
+                else document.getElementById('strokeWidth').value = strokeW || "2";
+
                 const fonts = (attrs.text.fontFamily || '').replace(/['"]/g, '').split(',').map(f => f.trim());
                 if(fonts[0]) document.getElementById('westFont').value = fonts[0];
                 if(fonts[1]) document.getElementById('eastFont').value = fonts[1];
             } else if (cell.isEdge()) {
                 const router = cell.getRouter();
-                document.getElementById('edgeArrow').checked = cell.attr('line/targetMarker') === 'block';
                 document.getElementById('edgeDashed').checked = cell.attr('line/strokeDasharray') === '5 5';
                 
-                if (!router) {
-                    document.getElementById('edgeType').value = 'normal';
-                } else if (router.name === 'smooth') {
-                    document.getElementById('edgeType').value = 'smooth';
-                } else {
+                const sm = cell.attr('line/sourceMarker');
+                const tm = cell.attr('line/targetMarker');
+                if (sm && tm) document.getElementById('edgeArrow').value = 'both';
+                else if (sm) document.getElementById('edgeArrow').value = 'source';
+                else if (tm) document.getElementById('edgeArrow').value = 'target';
+                else document.getElementById('edgeArrow').value = 'none';
+
+                if (!router) document.getElementById('edgeType').value = 'normal';
+                else if (router.name === 'smooth') document.getElementById('edgeType').value = 'smooth';
+                else {
                     document.getElementById('edgeType').value = 'orth';
                     document.getElementById('smartRoute').checked = (router.name === 'manhattan');
                 }
@@ -309,6 +353,7 @@
         targets.forEach(cell => {
             cell.setRouter(getSelectedRouter());
             const attrs = getSelectedEdgeAttrs();
+            cell.attr('line/sourceMarker', attrs.line.sourceMarker);
             cell.attr('line/targetMarker', attrs.line.targetMarker);
             cell.attr('line/strokeDasharray', attrs.line.strokeDasharray);
         });
@@ -323,10 +368,11 @@
             if (type === 'fontSize') node.attr('text/fontSize', parseInt(document.getElementById('globalFontSize').value));
             if (type === 'fontFamily') node.attr('text/fontFamily', getCombinedFont());
             if (type === 'fontWeight') node.attr('text/fontWeight', document.getElementById('fontWeight').checked ? 'bold' : 'normal');
-            if (type === 'borderToggle') {
-                const show = document.getElementById('showBorder').checked;
-                node.attr('body/strokeWidth', show ? 2 : 0);
-                node.attr('body/stroke', show ? document.getElementById('strokeColor').value : 'transparent');
+            if (type === 'strokeWidth') {
+                const w = parseInt(document.getElementById('strokeWidth').value);
+                node.attr('body/strokeWidth', w);
+                if (w === 0) node.attr('body/stroke', 'transparent');
+                else node.attr('body/stroke', document.getElementById('strokeColor').value);
             }
         });
     };
@@ -336,9 +382,12 @@
             let newText = document.getElementById('editModalInput').value;
             if (newText.trim() === '') newText = ' '; 
             editTargetNode.attr('text/text', newText);
+            
+            // 防遮挡自适应：只扩大高度，不缩小用户手动拉大的高度
             const lines = newText.split('\n').length;
             const currentSize = editTargetNode.getSize();
-            editTargetNode.resize(currentSize.width, Math.max(40, lines * 18 + 20));
+            const minRequiredHeight = Math.max(40, lines * 18 + 20);
+            editTargetNode.resize(currentSize.width, Math.max(currentSize.height, minRequiredHeight));
         }
         document.getElementById('editModal').style.display='none';
     };
@@ -348,9 +397,7 @@
         if (cells.length) graph.removeCells(cells);
     };
 
-    window.startDrag = function(e, type) {
-        e.dataTransfer.setData('type', type);
-    };
+    window.startDrag = function(e, type) { e.dataTransfer.setData('type', type); };
     
     document.getElementById('container').addEventListener('dragover', e => e.preventDefault());
     document.getElementById('container').addEventListener('drop', e => {
@@ -387,7 +434,6 @@
         let data; try { data = JSON.parse(jsonStr); } catch (e) { return alert("JSON 格式有误，请检查是否遗漏了逗号或引号。"); }
 
         graph.clearCells();
-        // 提升初始排版精度：增加节点横向距离避免线条交叉，严格居中对齐
         const g = new dagre.graphlib.Graph(); 
         g.setGraph({ rankdir: 'TB', nodesep: 60, ranksep: 70, align: 'UL' }); 
         g.setDefaultEdgeLabel(() => ({}));
