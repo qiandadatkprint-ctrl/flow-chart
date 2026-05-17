@@ -10,7 +10,7 @@
         body { font-family: 'Microsoft YaHei', sans-serif; margin: 0; padding: 0; display: flex; height: 100vh; background: var(--bg); overflow: hidden; }
         
         /* 左侧边栏 */
-        .sidebar { width: 320px; background: #fff; display: flex; flex-direction: column; box-shadow: 2px 0 8px rgba(0,0,0,0.08); z-index: 10; border-right: 1px solid var(--border); }
+        .sidebar { width: 320px; background: #fff; display: flex; flex-direction: column; box-shadow: 2px 0 8px rgba(0,0,0,0.08); z-index: 20; border-right: 1px solid var(--border); }
         .section { padding: 15px; border-bottom: 1px solid var(--border); }
         .section-title { font-size: 13px; font-weight: bold; color: #333; margin: 0 0 10px 0; display: flex; justify-content: space-between; align-items: center; }
         
@@ -38,23 +38,34 @@
         /* 工作区与工具栏 */
         .main-workspace { flex: 1; display: flex; flex-direction: column; position: relative; min-width: 0; }
         
-        /* 工具栏改为可折行布局，容纳更多明晰的控件 */
-        .toolbar { background: #fff; border-bottom: 1px solid var(--border); display: flex; padding: 10px 15px; gap: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); z-index: 5; flex-wrap: wrap; }
+        .toolbar { background: #fff; border-bottom: 1px solid var(--border); display: flex; padding: 10px 15px; gap: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); z-index: 15; flex-wrap: wrap; }
         .toolbar-group { display: flex; align-items: center; gap: 6px; border-right: 1px solid #eee; padding-right: 12px; }
         .toolbar-group:last-child { border-right: none; }
-        .toolbar-label { font-size: 12px; color: #1890ff; font-weight: bold; margin-right: 2px; }
         .toolbar label { font-size: 12px; color: #333; display: flex; align-items: center; gap: 3px;}
         .toolbar select, .toolbar input[type="number"] { padding: 4px; border: 1px solid #ccc; border-radius: 4px; font-size: 12px; }
         
-        /* 直观的色卡设计 */
-        .color-swatch { display: inline-block; width: 18px; height: 18px; border-radius: 3px; border: 1px solid #ccc; cursor: pointer; vertical-align: middle; transition: 0.1s; }
-        .color-swatch:hover { transform: scale(1.15); box-shadow: 0 2px 5px rgba(0,0,0,0.2); border-color: #999; }
-        
-        .btn-small { background: #fff; border: 1px solid #d9d9d9; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 12px; color: #333; }
+        .btn-small { background: #fff; border: 1px solid #d9d9d9; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 12px; color: #333; display: flex; align-items: center; gap: 4px;}
         .btn-small:hover { border-color: var(--primary); color: var(--primary); }
 
-        #container { flex: 1; width: 100%; position: relative; }
-        #minimap { position: absolute; right: 20px; bottom: 20px; width: 180px; height: 120px; background: #fff; border: 1px solid #ccc; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 100; border-radius: 4px; overflow: hidden; }
+        /* ======== 悬浮色板交互样式 ======== */
+        .color-dropdown { position: relative; display: inline-block; }
+        .color-menu { 
+            display: none; position: absolute; top: 100%; left: 0; margin-top: 4px;
+            background: #fff; border: 1px solid #d9d9d9; border-radius: 6px; padding: 10px; 
+            box-shadow: 0 6px 16px rgba(0,0,0,0.15); z-index: 100; width: 140px; 
+            flex-wrap: wrap; gap: 8px; 
+        }
+        /* 鼠标移入按钮或菜单区域时，显示菜单 */
+        .color-dropdown:hover .color-menu { display: flex; }
+        
+        .color-swatch { width: 22px; height: 22px; border-radius: 4px; border: 1px solid #ddd; cursor: pointer; transition: transform 0.1s; box-sizing: border-box; }
+        .color-swatch:hover { transform: scale(1.15); border-color: #1890ff; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .color-transparent { background: #fff; position: relative; overflow: hidden; }
+        .color-transparent::after { content: ''; position: absolute; top: 50%; left: -20%; width: 140%; height: 2px; background: #ff4d4f; transform: rotate(45deg); }
+        /* ================================== */
+
+        #container { flex: 1; width: 100%; position: relative; z-index: 1; }
+        #minimap { position: absolute; right: 20px; bottom: 20px; width: 180px; height: 120px; background: #fff; border: 1px solid #ccc; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 10; border-radius: 4px; overflow: hidden; }
         
         .x6-node .x6-port-body { visibility: hidden; }
         .x6-node:hover .x6-port-body { visibility: visible; }
@@ -66,7 +77,6 @@
         .modal-actions { display: flex; justify-content: flex-end; gap: 10px; }
         .modal-actions button { padding: 6px 15px; border-radius: 4px; cursor: pointer; border: none; }
         
-        /* 选中态样式增强 */
         .x6-node-selected rect, .x6-node-selected polygon, .x6-node-selected ellipse { stroke: #1890ff !important; stroke-width: 2px !important; stroke-dasharray: 5 5; }
         .x6-edge-selected path { stroke: #1890ff !important; stroke-width: 3px !important; }
     </style>
@@ -83,7 +93,7 @@
             <b>操作指南：</b><br>
             ① 复制下方提示词，连同工艺文字发给 AI。<br>
             ② 确保 AI 仅输出纯 JSON 代码。<br>
-            ③ 将生成的 JSON 粘贴到下方输入框生成排版。
+            ③ 将生成的 JSON 粘贴到下方输入框生成图表。
         </div>
         <div class="ai-prompt" id="promptText">解析以下工艺文字，提取节点并输出为纯JSON格式。
 规则：
@@ -119,59 +129,63 @@
     <div class="toolbar" id="toolbar">
         <div class="toolbar-group">
             <button class="btn-small" id="drawModeBtn" onclick="toggleDrawMode()" style="border-color:#1890ff; color:#1890ff;">✏️ 自由连线</button>
-            <select id="edgeType" onchange="updateSelectedEdge()">
+            <select id="edgeType" onchange="updateSelectedEdge()" title="线条类型">
                 <option value="orth">折线 (推荐)</option>
                 <option value="normal">直线</option>
                 <option value="smooth">曲线</option>
             </select>
-            <label title="开启后，折线会自动绕开图形。关闭时，你可以手动拖拽线段转折点"><input type="checkbox" id="smartRoute" onchange="updateSelectedEdge()">智能避让</label>
-            <label title="更改箭头指向">方向:</label>
-            <select id="arrowDir" onchange="updateSelectedEdge()" style="width: 75px;">
+            <label title="折线自动绕开图形"><input type="checkbox" id="smartRoute" onchange="updateSelectedEdge()">智能避让</label>
+            <label title="更改箭头指向">箭头:</label>
+            <select id="arrowDir" onchange="updateSelectedEdge()" style="width: 70px;">
                 <option value="target">正向 ➞</option>
                 <option value="source">反向 ⟵</option>
                 <option value="both">双向 ↔</option>
                 <option value="none">无 ─</option>
             </select>
-            <label title="将实线切换为虚线"><input type="checkbox" id="edgeDashed" onchange="updateSelectedEdge()">虚线</label>
+            <label title="切换虚实线"><input type="checkbox" id="edgeDashed" onchange="updateSelectedEdge()">虚线</label>
         </div>
 
         <div class="toolbar-group">
             <label>西文:</label><select id="westFont" onchange="updateNodeStyle('fontFamily')" style="width: 65px;"><option value="Arial">Arial</option><option value="Times New Roman">Times</option></select>
             <label>中文:</label><select id="eastFont" onchange="updateNodeStyle('fontFamily')" style="width: 75px;"><option value="Microsoft YaHei">微软雅黑</option><option value="SimSun">宋体</option><option value="SimHei">黑体</option></select>
-            <label>字号:</label><input type="number" id="globalFontSize" value="13" style="width: 45px;" onchange="updateNodeStyle('fontSize')">
+            <label>字号:</label><input type="number" id="globalFontSize" value="13" style="width: 40px;" onchange="updateNodeStyle('fontSize')">
             <label title="字体加粗"><input type="checkbox" id="fontWeight" onchange="updateNodeStyle('fontWeight')"><b>加粗</b></label>
         </div>
         
         <div class="toolbar-group">
-            <span class="toolbar-label">背景颜色:</span>
-            <div class="color-swatch" style="background:#ffffff;" onclick="updateColor('fill', '#ffffff')" title="纯白"></div>
-            <div class="color-swatch" style="background:#f9f9f9;" onclick="updateColor('fill', '#f9f9f9')" title="浅灰 (工艺默认)"></div>
-            <div class="color-swatch" style="background:#fff1f0;" onclick="updateColor('fill', '#fff1f0')" title="浅红 (排污默认)"></div>
-            <div class="color-swatch" style="background:#e6f7ff;" onclick="updateColor('fill', '#e6f7ff')" title="浅蓝"></div>
-            <div class="color-swatch" style="background:#f6ffed;" onclick="updateColor('fill', '#f6ffed')" title="浅绿"></div>
-            <div class="color-swatch" style="background:#fffbe6;" onclick="updateColor('fill', '#fffbe6')" title="浅黄"></div>
-            <div class="color-swatch" style="background:transparent; border-style: dashed;" onclick="updateColor('fill', 'transparent')" title="透明无填充"></div>
-        </div>
+            <div class="color-dropdown">
+                <button class="btn-small">🎨 背景颜色 ▾</button>
+                <div class="color-menu">
+                    <div class="color-swatch" style="background:#ffffff;" onclick="updateColor('fill', '#ffffff')" title="纯白"></div>
+                    <div class="color-swatch" style="background:#f9f9f9;" onclick="updateColor('fill', '#f9f9f9')" title="浅灰 (工艺默认)"></div>
+                    <div class="color-swatch" style="background:#fff1f0;" onclick="updateColor('fill', '#fff1f0')" title="浅红 (排污默认)"></div>
+                    <div class="color-swatch" style="background:#e6f7ff;" onclick="updateColor('fill', '#e6f7ff')" title="浅蓝"></div>
+                    <div class="color-swatch" style="background:#f6ffed;" onclick="updateColor('fill', '#f6ffed')" title="浅绿"></div>
+                    <div class="color-swatch" style="background:#fffbe6;" onclick="updateColor('fill', '#fffbe6')" title="浅黄"></div>
+                    <div class="color-swatch color-transparent" onclick="updateColor('fill', 'transparent')" title="透明无填充"></div>
+                </div>
+            </div>
 
-        <div class="toolbar-group">
-            <span class="toolbar-label">线条/边框颜色:</span>
-            <div class="color-swatch" style="background:#333333;" onclick="updateColor('stroke', '#333333')" title="深黑"></div>
-            <div class="color-swatch" style="background:#555555;" onclick="updateColor('stroke', '#555555')" title="灰黑"></div>
-            <div class="color-swatch" style="background:#ff4d4f;" onclick="updateColor('stroke', '#ff4d4f')" title="警示红"></div>
-            <div class="color-swatch" style="background:#1890ff;" onclick="updateColor('stroke', '#1890ff')" title="科技蓝"></div>
-            <div class="color-swatch" style="background:#52c41a;" onclick="updateColor('stroke', '#52c41a')" title="环保绿"></div>
-            <div class="color-swatch" style="background:#fa8c16;" onclick="updateColor('stroke', '#fa8c16')" title="活力橙"></div>
-            <div class="color-swatch" style="background:transparent; border-style: dashed;" onclick="updateColor('stroke', 'transparent')" title="透明无边框"></div>
-        </div>
+            <div class="color-dropdown">
+                <button class="btn-small">🖍️ 线条/边框色 ▾</button>
+                <div class="color-menu">
+                    <div class="color-swatch" style="background:#333333;" onclick="updateColor('stroke', '#333333')" title="深黑"></div>
+                    <div class="color-swatch" style="background:#555555;" onclick="updateColor('stroke', '#555555')" title="灰黑 (连线默认)"></div>
+                    <div class="color-swatch" style="background:#ff4d4f;" onclick="updateColor('stroke', '#ff4d4f')" title="警示红"></div>
+                    <div class="color-swatch" style="background:#1890ff;" onclick="updateColor('stroke', '#1890ff')" title="科技蓝"></div>
+                    <div class="color-swatch" style="background:#52c41a;" onclick="updateColor('stroke', '#52c41a')" title="环保绿"></div>
+                    <div class="color-swatch" style="background:#fa8c16;" onclick="updateColor('stroke', '#fa8c16')" title="活力橙"></div>
+                    <div class="color-swatch color-transparent" onclick="updateColor('stroke', 'transparent')" title="透明无边框"></div>
+                </div>
+            </div>
 
-        <div class="toolbar-group">
-            <span class="toolbar-label">边框粗细:</span>
-            <select id="borderWidth" onchange="updateBorderWidth()" style="width: 80px;">
-                <option value="0">0 (无边框)</option>
-                <option value="1">1 (细线)</option>
-                <option value="2" selected>2 (标准)</option>
-                <option value="3">3 (粗线)</option>
-                <option value="4">4 (极粗)</option>
+            <label title="调节边框或线条的粗细程度">粗细:</label>
+            <select id="borderWidth" onchange="updateBorderWidth()" style="width: 50px;">
+                <option value="0">0</option>
+                <option value="1">1</option>
+                <option value="2" selected>2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
             </select>
         </div>
 
@@ -249,7 +263,6 @@
             mousewheel: { enabled: true, zoomAtMousePosition: true, modifiers: 'ctrl', minScale: 0.1, maxScale: 4 },
             snapline: { enabled: true, sharp: true },
             selecting: { enabled: true, rubberband: true, showNodeSelectionBox: true, showEdgeSelectionBox: true }, 
-            // 核心突破：开启原生 Resizing 引擎，允许框体拖拽缩放
             resizing: { enabled: true, minWidth: 40, minHeight: 20 },
             minimap: { enabled: true, container: document.getElementById('minimap'), padding: 10 },
             connecting: {
@@ -268,9 +281,7 @@
                 edge.addTools(['vertices']); 
             }
         });
-        graph.on('edge:mouseleave', ({ edge }) => {
-            edge.removeTools();
-        });
+        graph.on('edge:mouseleave', ({ edge }) => { edge.removeTools(); });
 
         graph.on('cell:selected', ({ cell }) => {
             activeCell = cell;
@@ -279,7 +290,6 @@
                 document.getElementById('globalFontSize').value = attrs.text.fontSize || 13;
                 document.getElementById('fontWeight').checked = attrs.text.fontWeight === 'bold';
                 
-                // 同步粗细
                 const sw = attrs.body.strokeWidth;
                 document.getElementById('borderWidth').value = sw !== undefined ? sw : 2;
                 
@@ -290,7 +300,6 @@
                 const router = cell.getRouter();
                 const line = cell.attr('line');
                 
-                // 判断箭头方向同步到 UI
                 if (line.targetMarker && line.sourceMarker) document.getElementById('arrowDir').value = 'both';
                 else if (line.targetMarker) document.getElementById('arrowDir').value = 'target';
                 else if (line.sourceMarker) document.getElementById('arrowDir').value = 'source';
@@ -357,7 +366,6 @@
         });
     };
 
-    // 一键换色核心逻辑
     window.updateColor = function(type, color) {
         if (!graph) return;
         const targets = activeCell ? [activeCell] : [...graph.getNodes(), ...graph.getEdges()];
@@ -366,7 +374,6 @@
                 if (type === 'fill') cell.attr('body/fill', color);
                 if (type === 'stroke') {
                     cell.attr('body/stroke', color);
-                    // 保证透明边框时宽度归零
                     if (color === 'transparent') cell.attr('body/strokeWidth', 0);
                     else if (cell.attr('body/strokeWidth') === 0) cell.attr('body/strokeWidth', parseInt(document.getElementById('borderWidth').value) || 2);
                 }
@@ -401,7 +408,6 @@
             let newText = document.getElementById('editModalInput').value;
             if (newText.trim() === '') newText = ' '; 
             editTargetNode.attr('text/text', newText);
-            // 这里不再强制改变节点高度，尊重用户的拖拽拉伸
         }
         document.getElementById('editModal').style.display='none';
     };
