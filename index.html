@@ -14,7 +14,7 @@
         .section-title { font-size: 13px; font-weight: bold; color: #333; margin: 0 0 10px 0; display: flex; justify-content: space-between; align-items: center; }
         
         .instruction-box { background: #f9fcff; border: 1px solid #bae0ff; padding: 10px; border-radius: 4px; font-size: 12px; color: #555; margin-bottom: 10px; line-height: 1.5; }
-        .ai-prompt { background: #fafafa; border: 1px dashed #ccc; padding: 8px; border-radius: 4px; font-size: 12px; color: #333; height: 100px; overflow-y: auto; line-height: 1.4; user-select: all; cursor: text; font-family: monospace; }
+        .ai-prompt { background: #fafafa; border: 1px dashed #ccc; padding: 8px; border-radius: 4px; font-size: 12px; color: #333; height: 120px; overflow-y: auto; line-height: 1.4; user-select: all; cursor: text; font-family: monospace; white-space: pre-wrap;}
         textarea { width: 100%; box-sizing: border-box; height: 100px; resize: none; border: 1px solid var(--border); border-radius: 4px; padding: 8px; font-family: monospace; font-size: 12px; }
         
         .btn { background: var(--primary); color: #fff; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; width: 100%; font-size: 13px; transition: 0.2s; }
@@ -89,11 +89,20 @@
             ② 确保 AI 仅输出纯 JSON 代码。<br>
             ③ 将生成的 JSON 粘贴到下方输入框生成图表。
         </div>
-        <div class="ai-prompt" id="promptText">解析以下工艺文字，提取节点并输出为纯JSON格式。
-规则：
+        <div class="ai-prompt" id="promptText">解析以下工艺文字，提取工艺节点及连线关系，并严格按照指定结构输出为纯JSON格式。
+
+【数据结构规则】
+必须且只能包含 "nodes" 和 "edges" 两个数组：
+{"nodes": [{"id": "标识", "label": "名称", "category": "分类"}], "edges": [{"source": "起点id", "target": "终点id"}]}
+
+【分类提取规则】
 1. category仅限: material(原辅料)、process(工艺)、emission(排污)。
-2. 合并项：同一工序的多个【排污物】须用 \n 合并到一个emission节点；同一工序的多个【原辅料】须用 \n 合并到一个material节点。如:"G1废气\nW1废水"。
-3. type: solid(实线主物流), dashed(虚线排污)。
+2. 合并项：同一工序的多个【排污物】须用 \n 合并到一个emission节点；同一工序的多个【原辅料】须用 \n 合并到一个material节点。
+3. 提取连线(edges):
+   - 投入原辅料 -> 指向 -> 对应工艺
+   - 前道工艺 -> 指向 -> 后道工艺
+   - 工艺 -> 指向 -> 产生的排污物
+
 待解析文字：
 [将你的工艺说明粘贴在此处]</div>
     </div>
@@ -468,9 +477,33 @@
 
     window.renderFromJSON = function() {
         let jsonStr = document.getElementById('jsonInput').value;
-        jsonStr = jsonStr.replace(/```json/gi, '').replace(/```/g, '').trim();
+        jsonStr = jsonStr.replace(/```json/gi, '').replace(/
+```/g, '').trim();
         if (!jsonStr) return alert("请填入 JSON 数据");
-        let data; try { data = JSON.parse(jsonStr); } catch (e) { return alert("JSON 格式有误，请检查是否遗漏了逗号或引号。"); }
+        
+        let data; 
+        try { 
+            data = JSON.parse(jsonStr); 
+        } catch (e) { 
+            return alert("JSON 格式有误，请检查是否遗漏了逗号或引号。"); 
+        }
+
+        // ==========================================
+        // 核心修改：新增容错处理机制
+        // 应对 AI 依然输出 materials/processes/emissions 数组的情况
+        // ==========================================
+        if (!data.nodes) {
+            data.nodes = [];
+            if (data.materials) data.nodes.push(...data.materials);
+            if (data.processes) data.nodes.push(...data.processes);
+            if (data.emissions) data.nodes.push(...data.emissions);
+        }
+        
+        // 检查组装后是否依然为空
+        if (!data.nodes || !Array.isArray(data.nodes) || data.nodes.length === 0) {
+            return alert("解析失败：未能找到有效的节点(nodes)数据。请检查 AI 返回的 JSON 内容。");
+        }
+        // ==========================================
 
         graph.clearCells();
         const g = new dagre.graphlib.Graph(); 
