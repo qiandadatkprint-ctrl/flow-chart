@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>工艺流程图绘制系统</title>
+    <title>工艺流程图绘制系统 </title>
     <script src="https://fastly.jsdelivr.net/npm/@antv/x6@1.34.6/dist/x6.js"></script>
     <script src="https://fastly.jsdelivr.net/npm/dagre@0.8.5/dist/dagre.min.js"></script>
     <style>
@@ -44,7 +44,6 @@
         .btn-small { background: #fff; border: 1px solid #d9d9d9; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 12px; color: #333; display: flex; align-items: center; gap: 4px;}
         .btn-small:hover { border-color: var(--primary); color: var(--primary); }
 
-        /* 点击唤出的色板样式 */
         .color-dropdown { position: relative; display: inline-block; }
         .color-menu { 
             display: none; position: absolute; top: calc(100% + 5px); left: 0;
@@ -85,9 +84,9 @@
         </div>
         <div class="instruction-box">
             <b>操作指南：</b><br>
-            ① 复制下方提示词，连同工艺文字发给 AI。<br>
-            ② 确保 AI 仅输出纯 JSON 代码。<br>
-            ③ 将生成的 JSON 粘贴到下方输入框生成图表。
+            ① 复制下方提示词，连同文字发给 AI。<br>
+            ② 把返回结果(包含大括号即可)贴入下方。<br>
+            ③ 无视 AI 说废话，系统会自动过滤。
         </div>
         <div class="ai-prompt" id="promptText">解析以下工艺文字，提取工艺节点及连线关系，并严格按照指定结构输出为纯JSON格式。
 
@@ -109,7 +108,7 @@
 
     <div class="section">
         <div class="section-title">2. 图表生成</div>
-        <textarea id="jsonInput" placeholder="将 AI 返回的完整 JSON 数据粘贴在这里..."></textarea>
+        <textarea id="jsonInput" placeholder="将 AI 返回的内容粘贴在这里（哪怕带有废话也没关系）..."></textarea>
         <button class="btn" onclick="renderFromJSON()" style="margin-top: 8px;">一键生成排版</button>
     </div>
 
@@ -218,20 +217,13 @@
         event.stopPropagation();
         const menus = document.querySelectorAll('.color-menu');
         menus.forEach(menu => {
-            if (menu.id === menuId) {
-                menu.style.display = (menu.style.display === 'flex') ? 'none' : 'flex';
-            } else {
-                menu.style.display = 'none';
-            }
+            menu.style.display = (menu.id === menuId && menu.style.display !== 'flex') ? 'flex' : 'none';
         });
     }
 
-    // 点击页面空白处收起菜单
-    document.addEventListener('click', function(event) {
+    document.addEventListener('click', event => {
         if (!event.target.closest('.color-dropdown')) {
-            document.querySelectorAll('.color-menu').forEach(menu => {
-                menu.style.display = 'none';
-            });
+            document.querySelectorAll('.color-menu').forEach(menu => menu.style.display = 'none');
         }
     });
 
@@ -241,15 +233,9 @@
         items: [ { id: 'p1', group: 'top' }, { id: 'p2', group: 'bottom' }, { id: 'p3', group: 'left' }, { id: 'p4', group: 'right' } ]
     };
 
-    let graph;
-    let activeCell = null;
-    let editTargetNode = null;
-    let isDrawMode = false;
-    let currentEdge = null;
+    let graph, activeCell = null, editTargetNode = null, isDrawMode = false, currentEdge = null;
 
-    function getCombinedFont() {
-        return `'${document.getElementById('westFont').value}', '${document.getElementById('eastFont').value}', sans-serif`;
-    }
+    function getCombinedFont() { return `'${document.getElementById('westFont').value}', '${document.getElementById('eastFont').value}', sans-serif`; }
 
     function getSelectedRouter() {
         const type = document.getElementById('edgeType').value;
@@ -261,23 +247,12 @@
 
     function getSelectedEdgeAttrs() {
         const dir = document.getElementById('arrowDir').value;
-        let sourceMarker = null;
-        let targetMarker = null;
+        let sourceMarker = null, targetMarker = null;
         if (dir === 'target' || dir === 'both') targetMarker = 'block';
         if (dir === 'source' || dir === 'both') sourceMarker = 'block';
-
         const isDashed = document.getElementById('edgeDashed').checked;
         const width = parseInt(document.getElementById('borderWidth').value) || 2;
-        
-        return { 
-            line: { 
-                stroke: '#555555', strokeWidth: width, 
-                sourceMarker: sourceMarker,
-                targetMarker: targetMarker, 
-                strokeDasharray: isDashed ? '5 5' : '0' 
-            },
-            wrap: { strokeWidth: 20 } 
-        };
+        return { line: { stroke: '#555555', strokeWidth: width, sourceMarker, targetMarker, strokeDasharray: isDashed ? '5 5' : '0' }, wrap: { strokeWidth: 20 } };
     }
 
     window.onload = function() {
@@ -290,22 +265,13 @@
             selecting: { enabled: true, rubberband: true, showNodeSelectionBox: true, showEdgeSelectionBox: true }, 
             resizing: { enabled: true, minWidth: 40, minHeight: 20 },
             minimap: { enabled: true, container: document.getElementById('minimap'), padding: 10 },
-            connecting: {
-                snap: true, allowBlank: true, allowNode: true, highlight: true,
-                createEdge() { return new X6.Shape.Edge({ attrs: getSelectedEdgeAttrs(), router: getSelectedRouter() }); }
-            },
+            connecting: { snap: true, allowBlank: true, allowNode: true, highlight: true, createEdge() { return new X6.Shape.Edge({ attrs: getSelectedEdgeAttrs(), router: getSelectedRouter() }); } },
             keyboard: { enabled: true }
         });
 
         graph.bindKey(['delete', 'backspace'], deleteSelected);
 
-        graph.on('edge:mouseenter', ({ edge }) => {
-            if (document.getElementById('edgeType').value === 'orth' && !document.getElementById('smartRoute').checked) {
-                edge.addTools(['segments']); 
-            } else {
-                edge.addTools(['vertices']); 
-            }
-        });
+        graph.on('edge:mouseenter', ({ edge }) => { edge.addTools(document.getElementById('edgeType').value === 'orth' && !document.getElementById('smartRoute').checked ? ['segments'] : ['vertices']); });
         graph.on('edge:mouseleave', ({ edge }) => { edge.removeTools(); });
 
         graph.on('cell:selected', ({ cell }) => {
@@ -314,17 +280,12 @@
                 const attrs = cell.getAttrs();
                 document.getElementById('globalFontSize').value = attrs.text.fontSize || 13;
                 document.getElementById('fontWeight').checked = attrs.text.fontWeight === 'bold';
-                
-                const sw = attrs.body.strokeWidth;
-                document.getElementById('borderWidth').value = sw !== undefined ? sw : 2;
-                
+                document.getElementById('borderWidth').value = attrs.body.strokeWidth !== undefined ? attrs.body.strokeWidth : 2;
                 const fonts = (attrs.text.fontFamily || '').replace(/['"]/g, '').split(',').map(f => f.trim());
                 if(fonts[0]) document.getElementById('westFont').value = fonts[0];
                 if(fonts[1]) document.getElementById('eastFont').value = fonts[1];
             } else if (cell.isEdge()) {
-                const router = cell.getRouter();
-                const line = cell.attr('line');
-                
+                const router = cell.getRouter(), line = cell.attr('line');
                 if (line.targetMarker && line.sourceMarker) document.getElementById('arrowDir').value = 'both';
                 else if (line.targetMarker) document.getElementById('arrowDir').value = 'target';
                 else if (line.sourceMarker) document.getElementById('arrowDir').value = 'source';
@@ -333,33 +294,17 @@
                 document.getElementById('edgeDashed').checked = line.strokeDasharray === '5 5';
                 document.getElementById('borderWidth').value = line.strokeWidth || 2;
                 
-                if (!router) { document.getElementById('edgeType').value = 'normal'; } 
-                else if (router.name === 'smooth') { document.getElementById('edgeType').value = 'smooth'; } 
-                else {
-                    document.getElementById('edgeType').value = 'orth';
-                    document.getElementById('smartRoute').checked = (router.name === 'manhattan');
-                }
+                if (!router) document.getElementById('edgeType').value = 'normal';
+                else if (router.name === 'smooth') document.getElementById('edgeType').value = 'smooth';
+                else { document.getElementById('edgeType').value = 'orth'; document.getElementById('smartRoute').checked = (router.name === 'manhattan'); }
             }
         });
 
         graph.on('cell:unselected', () => { activeCell = null; });
+        graph.on('node:dblclick', ({ node }) => { editTargetNode = node; document.getElementById('editModalInput').value = node.attr('text/text') === '双击修改' ? '' : node.attr('text/text'); document.getElementById('editModal').style.display = 'flex'; setTimeout(() => document.getElementById('editModalInput').focus(), 50); });
 
-        graph.on('node:dblclick', ({ node }) => {
-            editTargetNode = node;
-            const currentText = node.attr('text/text');
-            document.getElementById('editModalInput').value = (currentText === '双击修改') ? '' : currentText;
-            document.getElementById('editModal').style.display = 'flex';
-            setTimeout(() => document.getElementById('editModalInput').focus(), 50);
-        });
-
-        graph.on('blank:mousedown', ({ x, y }) => {
-            if (!isDrawMode) return;
-            currentEdge = graph.addEdge({ source: { x, y }, target: { x, y }, router: getSelectedRouter(), attrs: getSelectedEdgeAttrs() });
-        });
-        graph.on('node:mousedown', ({ x, y, node }) => {
-            if (!isDrawMode) return;
-            currentEdge = graph.addEdge({ source: { cell: node }, target: { x, y }, router: getSelectedRouter(), attrs: getSelectedEdgeAttrs() });
-        });
+        graph.on('blank:mousedown', ({ x, y }) => { if (isDrawMode) currentEdge = graph.addEdge({ source: { x, y }, target: { x, y }, router: getSelectedRouter(), attrs: getSelectedEdgeAttrs() }); });
+        graph.on('node:mousedown', ({ x, y, node }) => { if (isDrawMode) currentEdge = graph.addEdge({ source: { cell: node }, target: { x, y }, router: getSelectedRouter(), attrs: getSelectedEdgeAttrs() }); });
         graph.on('cell:mousemove', ({ x, y }) => { if (isDrawMode && currentEdge) currentEdge.setTarget({ x, y }); });
         graph.on('blank:mousemove', ({ x, y }) => { if (isDrawMode && currentEdge) currentEdge.setTarget({ x, y }); });
         graph.on('blank:mouseup', () => { currentEdge = null; });
@@ -369,82 +314,48 @@
     window.toggleDrawMode = function() {
         isDrawMode = !isDrawMode;
         const btn = document.getElementById('drawModeBtn');
-        if (isDrawMode) {
-            btn.style.background = '#fa8c16'; btn.style.color = '#fff'; btn.style.borderColor = '#fa8c16'; btn.innerText = '⏹️ 停止连线';
-            graph.disablePanning();
-        } else {
-            btn.style.background = '#fff'; btn.style.color = '#1890ff'; btn.style.borderColor = '#1890ff'; btn.innerText = '✏️ 自由连线';
-            graph.enablePanning();
-        }
+        if (isDrawMode) { btn.style.background = '#fa8c16'; btn.style.color = '#fff'; btn.style.borderColor = '#fa8c16'; btn.innerText = '⏹️ 停止连线'; graph.disablePanning(); } 
+        else { btn.style.background = '#fff'; btn.style.color = '#1890ff'; btn.style.borderColor = '#1890ff'; btn.innerText = '✏️ 自由连线'; graph.enablePanning(); }
     };
 
     window.updateSelectedEdge = function() {
         if (!graph) return;
-        const targets = activeCell && activeCell.isEdge() ? [activeCell] : graph.getEdges();
-        targets.forEach(cell => {
+        (activeCell && activeCell.isEdge() ? [activeCell] : graph.getEdges()).forEach(cell => {
             cell.setRouter(getSelectedRouter());
             const attrs = getSelectedEdgeAttrs();
-            cell.attr('line/targetMarker', attrs.line.targetMarker);
-            cell.attr('line/sourceMarker', attrs.line.sourceMarker);
-            cell.attr('line/strokeDasharray', attrs.line.strokeDasharray);
-            cell.attr('line/strokeWidth', attrs.line.strokeWidth);
+            cell.attr('line/targetMarker', attrs.line.targetMarker); cell.attr('line/sourceMarker', attrs.line.sourceMarker);
+            cell.attr('line/strokeDasharray', attrs.line.strokeDasharray); cell.attr('line/strokeWidth', attrs.line.strokeWidth);
         });
     };
 
     window.updateColor = function(type, color) {
         if (!graph) return;
-        const targets = activeCell ? [activeCell] : [...graph.getNodes(), ...graph.getEdges()];
-        targets.forEach(cell => {
+        (activeCell ? [activeCell] : [...graph.getNodes(), ...graph.getEdges()]).forEach(cell => {
             if (cell.isNode()) {
                 if (type === 'fill') cell.attr('body/fill', color);
-                if (type === 'stroke') {
-                    cell.attr('body/stroke', color);
-                    if (color === 'transparent') cell.attr('body/strokeWidth', 0);
-                    else if (cell.attr('body/strokeWidth') === 0) cell.attr('body/strokeWidth', parseInt(document.getElementById('borderWidth').value) || 2);
-                }
-            } else if (cell.isEdge() && type === 'stroke') {
-                cell.attr('line/stroke', color);
-            }
+                if (type === 'stroke') { cell.attr('body/stroke', color); if (color === 'transparent') cell.attr('body/strokeWidth', 0); else if (cell.attr('body/strokeWidth') === 0) cell.attr('body/strokeWidth', parseInt(document.getElementById('borderWidth').value) || 2); }
+            } else if (cell.isEdge() && type === 'stroke') { cell.attr('line/stroke', color); }
         });
-        
-        // 点击后自动收起菜单
         document.querySelectorAll('.color-menu').forEach(menu => menu.style.display = 'none');
     };
 
     window.updateBorderWidth = function() {
         if (!graph) return;
         const width = parseInt(document.getElementById('borderWidth').value);
-        const targets = activeCell ? [activeCell] : [...graph.getNodes(), ...graph.getEdges()];
-        targets.forEach(cell => {
-            if (cell.isNode()) cell.attr('body/strokeWidth', width);
-            else if (cell.isEdge()) cell.attr('line/strokeWidth', width);
-        });
+        (activeCell ? [activeCell] : [...graph.getNodes(), ...graph.getEdges()]).forEach(cell => { if (cell.isNode()) cell.attr('body/strokeWidth', width); else if (cell.isEdge()) cell.attr('line/strokeWidth', width); });
     };
 
     window.updateNodeStyle = function(type) {
         if (!graph) return;
-        const targets = activeCell && activeCell.isNode() ? [activeCell] : graph.getNodes();
-        targets.forEach(node => {
+        (activeCell && activeCell.isNode() ? [activeCell] : graph.getNodes()).forEach(node => {
             if (type === 'fontSize') node.attr('text/fontSize', parseInt(document.getElementById('globalFontSize').value));
             if (type === 'fontFamily') node.attr('text/fontFamily', getCombinedFont());
             if (type === 'fontWeight') node.attr('text/fontWeight', document.getElementById('fontWeight').checked ? 'bold' : 'normal');
         });
     };
 
-    window.saveEditModal = function() {
-        if (editTargetNode) {
-            let newText = document.getElementById('editModalInput').value;
-            if (newText.trim() === '') newText = ' '; 
-            editTargetNode.attr('text/text', newText);
-        }
-        document.getElementById('editModal').style.display='none';
-    };
-
-    window.deleteSelected = function() {
-        const cells = graph.getSelectedCells();
-        if (cells.length) graph.removeCells(cells);
-    };
-
+    window.saveEditModal = function() { if (editTargetNode) { let newText = document.getElementById('editModalInput').value; editTargetNode.attr('text/text', newText.trim() === '' ? ' ' : newText); } document.getElementById('editModal').style.display='none'; };
+    window.deleteSelected = function() { const cells = graph.getSelectedCells(); if (cells.length) graph.removeCells(cells); };
     window.startDrag = function(e, type) { e.dataTransfer.setData('type', type); };
     
     document.getElementById('container').addEventListener('dragover', e => e.preventDefault());
@@ -463,35 +374,33 @@
         else if(type === 'decision') { shape = 'polygon'; style.refPoints = '10,0 20,10 10,20 0,10'; style.width = 100; style.height = 70; }
         else if(type === 'ellipse') { shape = 'ellipse'; style.width = 120; style.height = 50; }
         
-        graph.addNode({
-            shape: shape,
-            x: coords.x - (style.width || 140)/2, y: coords.y - (style.height || 40)/2, 
-            width: style.width || 140, height: style.height || 40,
-            ports: defaultPorts,
-            attrs: {
-                body: { fill: style.fill, stroke: style.stroke, strokeWidth: style.strokeWidth, rx: style.rx, ry: style.rx, refPoints: style.refPoints },
-                text: { text: '双击修改', fill: style.color, fontSize: parseInt(document.getElementById('globalFontSize').value), fontFamily: getCombinedFont(), fontWeight: document.getElementById('fontWeight').checked ? 'bold' : 'normal' }
-            }
-        });
+        graph.addNode({ shape: shape, x: coords.x - (style.width || 140)/2, y: coords.y - (style.height || 40)/2, width: style.width || 140, height: style.height || 40, ports: defaultPorts, attrs: { body: { fill: style.fill, stroke: style.stroke, strokeWidth: style.strokeWidth, rx: style.rx, ry: style.rx, refPoints: style.refPoints }, text: { text: '双击修改', fill: style.color, fontSize: parseInt(document.getElementById('globalFontSize').value), fontFamily: getCombinedFont(), fontWeight: document.getElementById('fontWeight').checked ? 'bold' : 'normal' } } });
     });
 
+    // 核心渲染逻辑：重构后的防弹版解析引擎
     window.renderFromJSON = function() {
-        let jsonStr = document.getElementById('jsonInput').value;
+        let rawText = document.getElementById('jsonInput').value;
+        if (!rawText.trim()) return alert("请填入数据");
+        
+        // 1. 智能剥离废话：从 AI 的长篇大论中，精确抠出 JSON 核心部分
+        let startIndex = rawText.indexOf('{');
+        let endIndex = rawText.lastIndexOf('}');
+        if (startIndex === -1 || endIndex === -1 || endIndex < startIndex) {
+            return alert("解析失败：未能从文字中找到有效的大括号 {} 结构。");
+        }
+        
+        let jsonStr = rawText.substring(startIndex, endIndex + 1);
         jsonStr = jsonStr.replace(/```json/gi, '').replace(/
 ```/g, '').trim();
-        if (!jsonStr) return alert("请填入 JSON 数据");
-        
+
         let data; 
         try { 
             data = JSON.parse(jsonStr); 
         } catch (e) { 
-            return alert("JSON 格式有误，请检查是否遗漏了逗号或引号。"); 
+            return alert("解析崩溃！AI 生成的 JSON 格式有语法错误（通常是因为多余的逗号、或者它生成了物理换行）。\n\n建议直接让 AI：'请输出严格格式化的纯净JSON代码'。"); 
         }
 
-        // ==========================================
-        // 核心修改：新增容错处理机制
-        // 应对 AI 依然输出 materials/processes/emissions 数组的情况
-        // ==========================================
+        // 2. 结构容错补全
         if (!data.nodes) {
             data.nodes = [];
             if (data.materials) data.nodes.push(...data.materials);
@@ -499,50 +408,73 @@
             if (data.emissions) data.nodes.push(...data.emissions);
         }
         
-        // 检查组装后是否依然为空
-        if (!data.nodes || !Array.isArray(data.nodes) || data.nodes.length === 0) {
-            return alert("解析失败：未能找到有效的节点(nodes)数据。请检查 AI 返回的 JSON 内容。");
+        if (!Array.isArray(data.nodes) || data.nodes.length === 0) {
+            return alert("解析失败：在数据中未能找到任何有效的图形节点 (nodes)。");
         }
-        // ==========================================
 
-        graph.clearCells();
-        const g = new dagre.graphlib.Graph(); 
-        g.setGraph({ rankdir: 'TB', nodesep: 60, ranksep: 70, align: 'UL' }); 
-        g.setDefaultEdgeLabel(() => ({}));
-        
-        const currentFont = getCombinedFont();
-        const currentSize = parseInt(document.getElementById('globalFontSize').value);
-        const currentWeight = document.getElementById('fontWeight').checked ? 'bold' : 'normal';
-        const currentStrokeW = parseInt(document.getElementById('borderWidth').value) || 2;
+        // 3. 开始执行带防护的图形绘制流程
+        try {
+            graph.clearCells();
+            const g = new dagre.graphlib.Graph(); 
+            g.setGraph({ rankdir: 'TB', nodesep: 60, ranksep: 70, align: 'UL' }); 
+            g.setDefaultEdgeLabel(() => ({}));
+            
+            const currentFont = getCombinedFont();
+            const currentSize = parseInt(document.getElementById('globalFontSize').value) || 13;
+            const currentWeight = document.getElementById('fontWeight').checked ? 'bold' : 'normal';
+            const currentStrokeW = parseInt(document.getElementById('borderWidth').value) || 2;
 
-        data.nodes.forEach(node => {
-            const lines = (node.label.match(/\n/g) || []).length + 1;
-            let style = { width: 160, height: Math.max(45, lines * 18 + 20), fill: '#f9f9f9', stroke: '#333333', rx: 0, fontColor: '#333', fw: currentWeight, sw: currentStrokeW };
-            if (node.category === 'material') { style.fill = '#ffffff'; style.rx = 20; style.width = 140; }
-            if (node.category === 'emission') { style.fill = '#fff1f0'; style.stroke = '#ff4d4f'; style.fontColor = '#d9363e'; }
-            g.setNode(node.id, { ...style, label: node.label });
-        });
-        
-        if(data.edges) data.edges.forEach(e => g.setEdge(e.source, e.target));
-        dagre.layout(g);
+            const validNodeIds = new Set(); // 用于登记合法身份证的集合
 
-        g.nodes().forEach(v => {
-            const n = g.node(v); if(!n) return;
-            graph.addNode({
-                id: v, x: n.x, y: n.y, width: n.width, height: n.height, ports: defaultPorts,
-                attrs: { body: { fill: n.fill, stroke: n.stroke, strokeWidth: n.sw, rx: n.rx, ry: n.rx }, text: { text: n.label, fill: n.fontColor, fontSize: currentSize, fontFamily: currentFont, fontWeight: n.fw } }
+            data.nodes.forEach(node => {
+                if (!node || !node.id) return; // 剔除脏数据
+                const label = node.label || '未知工序';
+                const lines = (label.match(/\n/g) || []).length + 1;
+                let style = { width: 160, height: Math.max(45, lines * 18 + 20), fill: '#f9f9f9', stroke: '#333333', rx: 0, fontColor: '#333', fw: currentWeight, sw: currentStrokeW };
+                
+                if (node.category === 'material') { style.fill = '#ffffff'; style.rx = 20; style.width = 140; }
+                if (node.category === 'emission') { style.fill = '#fff1f0'; style.stroke = '#ff4d4f'; style.fontColor = '#d9363e'; }
+                
+                g.setNode(node.id, { ...style, label: label });
+                validNodeIds.add(node.id); // 登记合法的节点ID
             });
-        });
+            
+            if (data.edges && Array.isArray(data.edges)) {
+                data.edges.forEach(e => {
+                    // 幽灵连线拦截器：只允许那些真正在 nodes 里登记过的 ID 进行连线
+                    if (validNodeIds.has(e.source) && validNodeIds.has(e.target)) {
+                        g.setEdge(e.source, e.target);
+                    }
+                });
+            }
+            
+            dagre.layout(g);
 
-        if(data.edges) {
-            data.edges.forEach(edge => {
-                graph.addEdge({
-                    source: { cell: edge.source }, target: { cell: edge.target },
-                    attrs: getSelectedEdgeAttrs(), router: getSelectedRouter()
+            g.nodes().forEach(v => {
+                const n = g.node(v); if(!n) return;
+                graph.addNode({
+                    id: v, x: n.x, y: n.y, width: n.width, height: n.height, ports: defaultPorts,
+                    attrs: { body: { fill: n.fill, stroke: n.stroke, strokeWidth: n.sw, rx: n.rx, ry: n.rx }, text: { text: n.label, fill: n.fontColor, fontSize: currentSize, fontFamily: currentFont, fontWeight: n.fw } }
                 });
             });
+
+            if (data.edges && Array.isArray(data.edges)) {
+                data.edges.forEach(edge => {
+                    // 再次拦截，防止向 X6 引擎注入无效连线导致脚本死亡
+                    if (validNodeIds.has(edge.source) && validNodeIds.has(edge.target)) {
+                        graph.addEdge({
+                            source: { cell: edge.source }, target: { cell: edge.target },
+                            attrs: getSelectedEdgeAttrs(), router: getSelectedRouter()
+                        });
+                    }
+                });
+            }
+            graph.centerContent({ padding: 60 });
+            
+        } catch (err) {
+            alert("绘制图表过程中后台抛出异常：\n" + err.message);
+            console.error(err);
         }
-        graph.centerContent({ padding: 60 });
     };
 
     window.exportPNG = function() {
