@@ -13,7 +13,7 @@
         .section-title { font-size: 13px; font-weight: bold; color: #333; margin: 0 0 10px 0; display: flex; justify-content: space-between; align-items: center; }
         
         .instruction-box { background: #f9fcff; border: 1px solid #bae0ff; padding: 10px; border-radius: 4px; font-size: 12px; color: #555; margin-bottom: 10px; line-height: 1.5; }
-        .ai-prompt { background: #fafafa; border: 1px dashed #ccc; padding: 8px; border-radius: 4px; font-size: 12px; color: #333; height: 120px; overflow-y: auto; line-height: 1.4; user-select: all; cursor: text; font-family: monospace; white-space: pre-wrap;}
+        .ai-prompt { background: #fafafa; border: 1px dashed #ccc; padding: 8px; border-radius: 4px; font-size: 12px; color: #333; height: 130px; overflow-y: auto; line-height: 1.4; user-select: all; cursor: text; font-family: monospace; white-space: pre-wrap;}
         textarea { width: 100%; box-sizing: border-box; height: 100px; resize: none; border: 1px solid var(--border); border-radius: 4px; padding: 8px; font-family: monospace; font-size: 12px; }
         
         .btn { background: var(--primary); color: #fff; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; width: 100%; font-size: 13px; transition: 0.2s; }
@@ -50,7 +50,7 @@
             display: none; position: absolute; top: calc(100% + 5px); left: 0;
             background: #fff; border: 1px solid #d9d9d9; border-radius: 6px; padding: 10px; 
             box-shadow: 0 6px 16px rgba(0,0,0,0.15); z-index: 100; 
-            width: 255px; /* 加宽色板以容纳更多颜色 */
+            width: 255px;
             flex-wrap: wrap; gap: 6px; 
         }
         
@@ -97,10 +97,11 @@
 必须且只能包含 "nodes" 和 "edges" 两个数组：
 {"nodes": [{"id": "标识", "label": "名称", "category": "分类"}], "edges": [{"source": "起点id", "target": "终点id"}]}
 
-【分类提取规则】
+【分类与合并严控规则】（非常重要！）
 1. category仅限: material(原辅料)、process(工艺)、emission(排污)。
-2. 合并项：同一工序的多个【排污物】须用 \n 合并到一个emission节点；同一工序的多个【原辅料】须用 \n 合并到一个material节点。
-3. 提取连线(edges):
+2. 绝不跨工序合并：【不同工序】的原辅料必须拆分为独立的 material 节点！严禁把整个流程的所有原料打包成一个大节点！
+3. 仅限同工序合并：只有【同一个工序】投入的多个原料（或排污）才用 \n 合并到一个节点。
+4. 提取连线(edges):
    - 投入原辅料 -> 指向 -> 对应工艺
    - 前道工艺 -> 指向 -> 后道工艺
    - 工艺 -> 指向 -> 产生的排污物
@@ -272,7 +273,6 @@
             items: [ { id: 'p1', group: 'top' }, { id: 'p2', group: 'bottom' }, { id: 'p3', group: 'left' }, { id: 'p4', group: 'right' } ]
         };
 
-        // 恢复并整合中西文字体
         window.getCombinedFont = function() { 
             return `'${document.getElementById('westFont').value}', '${document.getElementById('eastFont').value}', sans-serif`; 
         }
@@ -307,7 +307,6 @@
 
         graph.bindKey(['delete', 'backspace'], window.deleteSelected);
         
-        // 选中元素时，同步工具栏状态
         graph.on('cell:selected', ({ cell }) => { 
             window.activeCell = cell; 
             if (cell.isNode()) {
@@ -316,7 +315,6 @@
                 document.getElementById('fontWeight').checked = attrs.text.fontWeight === 'bold';
                 document.getElementById('borderWidth').value = attrs.body.strokeWidth !== undefined ? attrs.body.strokeWidth : 2;
                 
-                // 同步下拉框显示的字体
                 const fonts = (attrs.text.fontFamily || '').replace(/['"]/g, '').split(',').map(f => f.trim());
                 if(fonts[0]) document.getElementById('westFont').value = fonts[0];
                 if(fonts[1]) document.getElementById('eastFont').value = fonts[1];
