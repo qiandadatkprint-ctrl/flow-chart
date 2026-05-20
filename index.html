@@ -13,7 +13,7 @@
         .section-title { font-size: 13px; font-weight: bold; color: #333; margin: 0 0 10px 0; display: flex; justify-content: space-between; align-items: center; }
         
         .instruction-box { background: #f9fcff; border: 1px solid #bae0ff; padding: 10px; border-radius: 4px; font-size: 12px; color: #555; margin-bottom: 10px; line-height: 1.5; }
-        .ai-prompt { background: #fafafa; border: 1px dashed #ccc; padding: 8px; border-radius: 4px; font-size: 12px; color: #333; height: 130px; overflow-y: auto; line-height: 1.4; user-select: all; cursor: text; font-family: monospace; white-space: pre-wrap;}
+        .ai-prompt { background: #fafafa; border: 1px dashed #ccc; padding: 8px; border-radius: 4px; font-size: 12px; color: #333; height: 160px; overflow-y: auto; line-height: 1.4; user-select: all; cursor: text; font-family: monospace; white-space: pre-wrap;}
         textarea { width: 100%; box-sizing: border-box; height: 100px; resize: none; border: 1px solid var(--border); border-radius: 4px; padding: 8px; font-family: monospace; font-size: 12px; }
         
         .btn { background: var(--primary); color: #fff; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; width: 100%; font-size: 13px; transition: 0.2s; }
@@ -99,10 +99,13 @@
 
 【分类与合并严控规则】（非常重要！）
 1. category仅限: material(原辅料)、process(工艺)、emission(排污)。
-2. 绝不跨工序合并：【不同工序】的原辅料必须拆分为独立的 material 节点！严禁把整个流程的所有原料打包成一个大节点！
-3. 仅限同工序合并：只有【同一个工序】投入的多个原料（或排污）才用 \n 合并到一个节点。
+2. 同工序必须强制合并：
+   - 同一个工艺投入的【所有】原辅料，必须合并为【1个】material节点，名称用 \n 换行！绝不能输出多个连向同一工艺的 material。
+   - 同一个工艺产生的【所有】排污物，必须合并为【1个】emission节点，名称用 \n 换行！绝不能输出多个从同一工艺连出的 emission。
+   - 正确示范：只输出1个material节点，label为“外购件\n螺丝\n胶水”。
+3. 排污物名称需保留代号（如：G1 废气\nS1 边角料）。
 4. 提取连线(edges):
-   - 投入原辅料 -> 指向 -> 对应工艺
+   - 原辅料 -> 指向 -> 对应工艺
    - 前道工艺 -> 指向 -> 后道工艺
    - 工艺 -> 指向 -> 产生的排污物
 
@@ -284,6 +287,7 @@
             if (type === 'smooth') return { name: 'smooth' };
             return null;
         }
+        
         window.getSelectedEdgeAttrs = function() {
             const width = parseInt(document.getElementById('borderWidth').value) || 2;
             return { line: { stroke: '#555555', strokeWidth: width, targetMarker: 'block', strokeDasharray: '0' }, wrap: { strokeWidth: 20 } };
@@ -353,6 +357,26 @@
             graph.addNode({ shape: shape, x: coords.x - 70, y: coords.y - 20, width: style.width || 140, height: style.height || 40, ports: defaultPorts, data: { category: type, originalLabel: '双击修改' }, attrs: { body: { fill: style.fill, stroke: style.stroke, strokeWidth: style.strokeWidth, rx: style.rx, ry: style.rx, refPoints: style.refPoints }, text: { text: '双击修改', fill: style.color, fontSize: parseInt(document.getElementById('globalFontSize').value), fontFamily: getCombinedFont(), fontWeight: document.getElementById('fontWeight').checked ? 'bold' : 'normal' } } });
         });
     });
+    
+    // UI 交互功能
+    let isDrawMode = false;
+    window.toggleDrawMode = function() {
+        isDrawMode = !isDrawMode;
+        const btn = document.getElementById('drawModeBtn');
+        if(isDrawMode) {
+            btn.style.background = '#1890ff'; btn.style.color = '#fff';
+        } else {
+            btn.style.background = '#fff'; btn.style.color = '#1890ff';
+        }
+    };
+
+    window.updateSelectedEdge = function() {
+        if (!window.graph) return;
+        const router = window.getSelectedRouter();
+        if (window.activeCell && window.activeCell.isEdge()) {
+            window.activeCell.setRouter(router);
+        }
+    };
 
     window.toggleMenu = function(menuId, event) {
         event.stopPropagation();
@@ -398,10 +422,11 @@
         });
     };
 
+    // 智能提取排污代号（正则匹配英文字母+数字的组合，比如 G1, W-1, S3）
     function formatEmissionLabel(fullText, isShort) {
         if (!isShort) return fullText;
         return fullText.split('\n').map(line => {
-            const match = line.match(/^[A-Za-z0-9-]+/);
+            const match = line.match(/[A-Za-z]+[-_]?\d+/);
             return match ? match[0] : line; 
         }).join('\n');
     }
@@ -439,7 +464,8 @@
             let endIndex = rawText.lastIndexOf('}');
             if (startIndex === -1 || endIndex === -1) return alert("解析失败：没有找到 JSON 结构 {}。");
             
-            let jsonStr = rawText.substring(startIndex, endIndex + 1).replace(/```json/gi, '').replace(/```/g, '').trim();
+            let jsonStr = rawText.substring(startIndex, endIndex + 1).replace(/```json/gi, '').replace(/
+```/g, '').trim();
             let data = JSON.parse(jsonStr); 
 
             if (!data.nodes) {
