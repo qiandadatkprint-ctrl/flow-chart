@@ -62,7 +62,6 @@
         #container { flex: 1; width: 100%; height: 100%; position: relative; z-index: 1; outline: none; }
         #minimap { position: absolute; right: 20px; bottom: 20px; width: 180px; height: 120px; background: #fff; border: 1px solid #ccc; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 10; border-radius: 4px; overflow: hidden; }
         
-        /* 独立出来的错误提示窗 */
         #error-msg { 
             display: none; position: absolute; top: 20px; left: 50%; transform: translateX(-50%);
             background: #fff1f0; border: 1px solid #ff4d4f; padding: 15px 25px; border-radius: 8px; 
@@ -107,7 +106,7 @@
 必须且只能包含 "nodes" 和 "edges" 两个数组：
 {"nodes": [{"id": "标识", "label": "名称", "category": "分类"}], "edges": [{"source": "起点id", "target": "终点id"}]}
 
-【分类与合并严控规则】（非常重要！）
+【分类与合并严控规则】
 1. category仅限: material(原辅料)、process(工艺)、emission(排污)。
 2. 同工序必须强制合并：
    - 同一个工艺投入的【所有】原辅料，必须合并为【1个】material节点，名称用 \n 换行！绝不能输出多个连向同一工艺的 material。
@@ -148,8 +147,16 @@
     <div id="error-msg"><span class="close-error" onclick="hideError()">✖</span><span id="error-text"></span></div>
 
     <div class="toolbar" id="toolbar">
+        <div class="toolbar-group" style="background: #fffbe6; padding: 2px 8px; border-radius: 4px; border: 1px solid #ffe58f;">
+            <label>节点宽:</label><input type="number" id="globalW" value="140" style="width: 45px;">
+            <label>高:</label><input type="number" id="globalH" value="45" style="width: 40px;">
+            <label>横向距:</label><input type="number" id="globalGapX" value="300" style="width: 45px;">
+            <label>纵向距:</label><input type="number" id="globalGapY" value="120" style="width: 45px;">
+            <button class="btn-small" onclick="applyGlobalLayout()" style="border-color:#faad14; color:#d48806;">📐 一键排版</button>
+        </div>
+
         <div class="toolbar-group">
-            <button class="btn-small" onclick="showToast('💡 提示：将鼠标悬停在图元上，直接拖拽四周出现的【蓝色圆点】即可自由连线！');" style="border-color:#1890ff; color:#1890ff;">✏️ 自由连线提示</button>
+            <button class="btn-small" onclick="showToast('💡 提示：将鼠标悬停在图元上，直接拖拽四周出现的【蓝色圆点】即可自由连线！选中图元也可拖拽四周控制点【自由缩放】大小！');" style="border-color:#1890ff; color:#1890ff;">✏️ 操作提示</button>
             <select id="edgeType" onchange="updateSelectedEdge()" title="线条类型">
                 <option value="orth">折线</option>
                 <option value="normal">直线</option>
@@ -244,15 +251,12 @@
 </div>
 
 <script>
-    // 错误提示控制函数
     function showError(htmlMsg) {
         const errBox = document.getElementById('error-msg');
         document.getElementById('error-text').innerHTML = htmlMsg;
         errBox.style.display = 'block';
     }
-    function hideError() {
-        document.getElementById('error-msg').style.display = 'none';
-    }
+    function hideError() { document.getElementById('error-msg').style.display = 'none'; }
     function showToast(msg) {
         showError(`<span style="color:#1890ff">${msg}</span>`);
         setTimeout(hideError, 3000);
@@ -265,7 +269,6 @@
             return;
         }
 
-        // 引擎加载成功，移除提示文字
         document.getElementById('loading-tip').style.display = 'none';
 
         const portAttrs = { circle: { r: 5, magnet: true, stroke: '#1890ff', strokeWidth: 1.5, fill: '#fff' } };
@@ -293,7 +296,6 @@
 
         const containerElem = document.getElementById('container');
         
-        // 初始化画布
         window.graph = new X6.Graph({
             container: containerElem,
             grid: { size: 10, visible: true, type: 'dot', args: { color: '#e0e0e0', thickness: 1 } },
@@ -301,6 +303,8 @@
             mousewheel: { enabled: true, zoomAtMousePosition: true, modifiers: 'ctrl', minScale: 0.1, maxScale: 4 },
             snapline: { enabled: true, sharp: true },
             selecting: { enabled: true, rubberband: true, showNodeSelectionBox: true, showEdgeSelectionBox: true }, 
+            // 【核心配置】启用节点自由缩放插件
+            resizing: { enabled: true, minWidth: 20, minHeight: 20, maxWidth: 800, maxHeight: 800 },
             minimap: { enabled: true, container: document.getElementById('minimap'), padding: 10 },
             connecting: { 
                 snap: true, allowBlank: true, allowNode: true, highlight: true, 
@@ -338,7 +342,6 @@
             setTimeout(() => document.getElementById('editModalInput').focus(), 50); 
         });
 
-        // 绑定手动拖拽事件 (解决画布无法手动绘制的问题)
         containerElem.addEventListener('dragenter', e => e.preventDefault());
         containerElem.addEventListener('dragover', e => e.preventDefault());
         containerElem.addEventListener('drop', e => {
@@ -346,11 +349,13 @@
             const type = e.dataTransfer.getData('component_type');
             if (!type || !graph) return;
             
-            // 计算放入画布的正确坐标
             const coords = graph.clientToLocal(e.clientX, e.clientY);
             const borderW = parseInt(document.getElementById('borderWidth').value) || 2;
+            // 获取用户设置的默认宽高
+            const defaultW = parseInt(document.getElementById('globalW').value) || 140;
+            const defaultH = parseInt(document.getElementById('globalH').value) || 45;
             
-            let style = { width: 140, height: 40, fill: '#f9f9f9', stroke: '#333333', rx: 0, color: '#333333', strokeWidth: borderW };
+            let style = { width: defaultW, height: defaultH, fill: '#f9f9f9', stroke: '#333333', rx: 0, color: '#333333', strokeWidth: borderW };
             let shape = 'rect';
             
             if(type === 'material') { style.fill = '#ffffff'; style.rx = 20; }
@@ -371,7 +376,119 @@
         });
     });
     
-    // UI 交互功能
+    // 【新增】一键应用全局排版与尺寸功能
+    window.applyGlobalLayout = function() {
+        if (!window.graph) return;
+        const allNodes = window.graph.getNodes();
+        const allEdges = window.graph.getEdges();
+
+        if (allNodes.length === 0) return showToast("画布为空，无需调整！");
+
+        const width = parseInt(document.getElementById('globalW').value) || 140;
+        const height = parseInt(document.getElementById('globalH').value) || 45;
+        const gapX = parseInt(document.getElementById('globalGapX').value) || 300;
+        const gapY = parseInt(document.getElementById('globalGapY').value) || 120;
+
+        // 1. 调整所有普通节点尺寸 (跳过纯文本节点)
+        allNodes.forEach(node => {
+            const data = node.getData() || {};
+            if (data.category !== 'text') {
+                node.resize(width, height);
+            }
+        });
+
+        // 2. 梳理节点逻辑关系进行排版
+        const processNodes = []; const materialNodes = []; const emissionNodes = [];
+        allNodes.forEach(n => {
+            const data = n.getData() || {};
+            if(data.category === 'process') processNodes.push(n);
+            else if(data.category === 'material') materialNodes.push(n);
+            else if(data.category === 'emission') emissionNodes.push(n);
+        });
+
+        const outEdges = {}; const inEdges = {};
+        allEdges.forEach(e => {
+            const src = e.getSourceCellId();
+            const tgt = e.getTargetCellId();
+            if(!outEdges[src]) outEdges[src] = [];
+            if(!inEdges[tgt]) inEdges[tgt] = [];
+            outEdges[src].push(tgt);
+            inEdges[tgt].push(src);
+        });
+
+        const processIds = new Set(processNodes.map(p => p.id));
+        let sortedProcesses = []; let visited = new Set();
+        
+        let startProcesses = processNodes.filter(p => {
+            const incoming = inEdges[p.id] || [];
+            return !incoming.some(id => processIds.has(id));
+        });
+
+        let queue = [...startProcesses];
+        while(queue.length > 0) {
+            let curr = queue.shift();
+            if(!visited.has(curr.id)) {
+                visited.add(curr.id);
+                sortedProcesses.push(curr);
+                let outgoings = outEdges[curr.id] || [];
+                let nextProcs = outgoings.filter(id => processIds.has(id));
+                queue.push(...nextProcs);
+            }
+        }
+        processNodes.forEach(p => { if(!visited.has(p.id)) sortedProcesses.push(p); });
+
+        const nodeCoords = {};
+        const X_CENTER = 450; 
+        const X_LEFT = X_CENTER - gapX; 
+        const X_RIGHT = X_CENTER + gapX; 
+
+        sortedProcesses.forEach((p, index) => { nodeCoords[p.id] = { x: X_CENTER, y: 100 + index * gapY }; });
+
+        materialNodes.forEach(m => {
+            let targetId = (outEdges[m.id] || []).find(id => processIds.has(id));
+            if (!targetId && sortedProcesses.length > 0) targetId = sortedProcesses[0].id; 
+            let yPos = targetId && nodeCoords[targetId] ? nodeCoords[targetId].y : 100;
+            nodeCoords[m.id] = { x: X_LEFT, y: yPos };
+        });
+
+        emissionNodes.forEach(e => {
+            let sourceId = (inEdges[e.id] || []).find(id => processIds.has(id));
+            if (!sourceId && sortedProcesses.length > 0) sourceId = sortedProcesses[sortedProcesses.length-1].id;
+            let yPos = sourceId && nodeCoords[sourceId] ? nodeCoords[sourceId].y : 100;
+            nodeCoords[e.id] = { x: X_RIGHT, y: yPos };
+        });
+
+        // 调整重叠坐标
+        const adjustOverlap = (nodesArr) => {
+            const groupedByY = {};
+            nodesArr.forEach(n => {
+                let y = nodeCoords[n.id].y;
+                if(!groupedByY[y]) groupedByY[y] = [];
+                groupedByY[y].push(n.id);
+            });
+            for (let y in groupedByY) {
+                let ids = groupedByY[y];
+                if (ids.length > 1) {
+                    // 以新设置的高加少量边距作为重叠偏移量
+                    const offset = height + 10;
+                    let startY = parseInt(y) - ((ids.length - 1) * offset) / 2;
+                    ids.forEach((id, idx) => { nodeCoords[id].y = startY + idx * offset; });
+                }
+            }
+        };
+        adjustOverlap(materialNodes); adjustOverlap(emissionNodes);
+
+        // 应用计算后的坐标
+        allNodes.forEach(n => {
+            if (nodeCoords[n.id]) {
+                n.position(nodeCoords[n.id].x - n.getSize().width/2, nodeCoords[n.id].y - n.getSize().height/2);
+            }
+        });
+        
+        window.graph.centerContent({ padding: 60 });
+        showToast("✅ 全局排版及大小已应用！");
+    };
+
     window.updateSelectedEdge = function() {
         if (!window.graph) return;
         const router = window.getSelectedRouter();
@@ -457,38 +574,23 @@
         document.getElementById('editModal').style.display='none'; 
     };
 
-    // 修复后的更健壮的 JSON 解析器
+    // AI 生成绘制
     window.renderFromJSON = function() {
         hideError();
         try {
             let rawText = document.getElementById('jsonInput').value;
-            if (!rawText.trim()) {
-                return showError("❌ 请先在输入框中粘贴数据！");
-            }
+            if (!rawText.trim()) return showError("❌ 请先在输入框中粘贴数据！");
             
             let startIndex = rawText.indexOf('{');
             let endIndex = rawText.lastIndexOf('}');
-            
-            if (startIndex === -1 || endIndex === -1) {
-                return showError("❌ 解析失败：您粘贴的数据不是完整的 JSON 格式。<br>必须包含外层的大括号 <b>{}</b>。请完整复制 AI 返回的内容。");
-            }
+            if (startIndex === -1 || endIndex === -1) return showError("❌ 解析失败：未找到完整的 JSON 大括号结构。");
             
             let jsonStr = rawText.substring(startIndex, endIndex + 1).replace(/```json/gi, '').replace(/```/g, '').trim();
-            
             let data;
-            try {
-                data = JSON.parse(jsonStr); 
-            } catch (parseError) {
-                return showError("❌ JSON 数据存在语法错误，无法解析！<br>常见原因：标点符号遗失或格式残缺。<br><br>系统报错：" + parseError.message);
-            }
+            try { data = JSON.parse(jsonStr); } catch (e) { return showError("❌ JSON 语法错误，无法解析！<br>" + e.message); }
 
-            // 校验核心字段
-            if (!data.nodes && !data.edges) {
-                return showError("❌ 数据结构不匹配：找不到 <b>nodes</b> 或 <b>edges</b> 字段。<br>请核对 AI 是否严格按照了您的提示词格式输出。");
-            }
-            
-            if (!data.nodes) data.nodes = [];
-            if (!data.edges) data.edges = [];
+            if (!data.nodes && !data.edges) return showError("❌ 数据结构不匹配：找不到 <b>nodes</b> 或 <b>edges</b>。");
+            if (!data.nodes) data.nodes = []; if (!data.edges) data.edges = [];
 
             window.graph.clearCells();
 
@@ -497,6 +599,10 @@
             const currentWeight = document.getElementById('fontWeight').checked ? 'bold' : 'normal';
             const currentStrokeW = parseInt(document.getElementById('borderWidth').value) || 2;
             const isShortMode = document.getElementById('shortLabel').checked;
+
+            // 读取工具栏中的宽高，但在生成阶段仍允许随行数略微扩展
+            const baseW = parseInt(document.getElementById('globalW').value) || 140;
+            const baseH = parseInt(document.getElementById('globalH').value) || 45;
             
             const defaultPorts = {
                 groups: { 
@@ -508,85 +614,12 @@
                 items: [ { id: 'p1', group: 'top' }, { id: 'p2', group: 'bottom' }, { id: 'p3', group: 'left' }, { id: 'p4', group: 'right' } ]
             };
 
-            const processNodes = []; const materialNodes = []; const emissionNodes = [];
+            // 创建节点
             data.nodes.forEach(n => {
-                if(n.category === 'process') processNodes.push(n);
-                else if(n.category === 'material') materialNodes.push(n);
-                else emissionNodes.push(n);
-            });
-
-            const outEdges = {}; const inEdges = {};
-            if(data.edges) {
-                data.edges.forEach(e => {
-                    if(!outEdges[e.source]) outEdges[e.source] = [];
-                    if(!inEdges[e.target]) inEdges[e.target] = [];
-                    outEdges[e.source].push(e.target);
-                    inEdges[e.target].push(e.source);
-                });
-            }
-
-            const processIds = new Set(processNodes.map(p => p.id));
-            let sortedProcesses = []; let visited = new Set();
-            
-            let startProcesses = processNodes.filter(p => {
-                const incoming = inEdges[p.id] || [];
-                return !incoming.some(id => processIds.has(id));
-            });
-
-            let queue = [...startProcesses];
-            while(queue.length > 0) {
-                let curr = queue.shift();
-                if(!visited.has(curr.id)) {
-                    visited.add(curr.id);
-                    sortedProcesses.push(curr);
-                    let outgoings = outEdges[curr.id] || [];
-                    let nextProcs = outgoings.filter(id => processIds.has(id));
-                    queue.push(...nextProcs);
-                }
-            }
-            processNodes.forEach(p => { if(!visited.has(p.id)) sortedProcesses.push(p); });
-
-            const nodeCoords = {};
-            const X_CENTER = 450; const X_LEFT = 150; const X_RIGHT = 750; const SPACING_Y = 120; 
-
-            sortedProcesses.forEach((p, index) => { nodeCoords[p.id] = { x: X_CENTER, y: 100 + index * SPACING_Y }; });
-
-            materialNodes.forEach(m => {
-                let targetId = (outEdges[m.id] || []).find(id => processIds.has(id));
-                if (!targetId && sortedProcesses.length > 0) targetId = sortedProcesses[0].id; 
-                let yPos = targetId && nodeCoords[targetId] ? nodeCoords[targetId].y : 100;
-                nodeCoords[m.id] = { x: X_LEFT, y: yPos };
-            });
-
-            emissionNodes.forEach(e => {
-                let sourceId = (inEdges[e.id] || []).find(id => processIds.has(id));
-                if (!sourceId && sortedProcesses.length > 0) sourceId = sortedProcesses[sortedProcesses.length-1].id;
-                let yPos = sourceId && nodeCoords[sourceId] ? nodeCoords[sourceId].y : 100;
-                nodeCoords[e.id] = { x: X_RIGHT, y: yPos };
-            });
-
-            const adjustOverlap = (nodesArr) => {
-                const groupedByY = {};
-                nodesArr.forEach(n => {
-                    let y = nodeCoords[n.id].y;
-                    if(!groupedByY[y]) groupedByY[y] = [];
-                    groupedByY[y].push(n.id);
-                });
-                for (let y in groupedByY) {
-                    let ids = groupedByY[y];
-                    if (ids.length > 1) {
-                        let startY = parseInt(y) - ((ids.length - 1) * 50) / 2;
-                        ids.forEach((id, idx) => { nodeCoords[id].y = startY + idx * 50; });
-                    }
-                }
-            };
-            adjustOverlap(materialNodes); adjustOverlap(emissionNodes);
-
-            data.nodes.forEach(n => {
-                if(!nodeCoords[n.id]) return;
                 const label = n.label || '未命名';
+                // 动态计算高度，防止文字过多溢出，如果不想要自适应可以把下面这行改成 lines = 1
                 const lines = (label.match(/\n/g) || []).length + 1;
-                let style = { width: 140, height: Math.max(45, lines * 18 + 20), fill: '#f9f9f9', stroke: '#333333', rx: 0, fontColor: '#333', sw: currentStrokeW };
+                let style = { width: baseW, height: Math.max(baseH, lines * 18 + 20), fill: '#f9f9f9', stroke: '#333333', rx: 0, fontColor: '#333', sw: currentStrokeW };
                 let displayText = label;
 
                 if (n.category === 'material') { style.fill = '#ffffff'; style.rx = 20; }
@@ -595,32 +628,33 @@
                     displayText = isShortMode ? formatEmissionLabel(label, true) : label;
                 }
                 
+                // 将节点先堆叠在原点(0,0)，稍后调用 applyGlobalLayout 统筹排版
                 window.graph.addNode({ 
-                    id: n.id, x: nodeCoords[n.id].x - style.width/2, y: nodeCoords[n.id].y - style.height/2, 
-                    width: style.width, height: style.height, ports: defaultPorts, 
+                    id: n.id, x: 0, y: 0, width: style.width, height: style.height, ports: defaultPorts, 
                     data: { category: n.category, originalLabel: label },
                     attrs: { body: { fill: style.fill, stroke: style.stroke, strokeWidth: style.sw, rx: style.rx, ry: style.rx }, text: { text: displayText, fill: style.fontColor, fontSize: currentSize, fontFamily: currentFont, fontWeight: currentWeight } } 
                 });
             });
 
+            // 创建连线
             if (data.edges) {
                 data.edges.forEach(edge => {
                     let srcNode = data.nodes.find(n => n.id === edge.source);
                     let tgtNode = data.nodes.find(n => n.id === edge.target);
                     if(!srcNode || !tgtNode) return;
-
                     let srcPort = 'p2'; let tgtPort = 'p1';
-
                     if (srcNode.category === 'material' && tgtNode.category === 'process') { srcPort = 'p4'; tgtPort = 'p3'; } 
                     else if (srcNode.category === 'process' && tgtNode.category === 'emission') { srcPort = 'p4'; tgtPort = 'p3'; }
 
                     window.graph.addEdge({ 
                         source: { cell: edge.source, port: srcPort }, target: { cell: edge.target, port: tgtPort }, 
-                        attrs: window.getSelectedEdgeAttrs(), router: { name: 'orth' } 
+                        attrs: window.getSelectedEdgeAttrs(), router: window.getSelectedRouter() 
                     });
                 });
             }
-            window.graph.centerContent({ padding: 60 });
+            
+            // 自动调用刚刚写好的全局排版函数
+            window.applyGlobalLayout();
             
         } catch (fatalError) { 
             showError("❌ 排版引擎运行崩溃：" + fatalError.message); 
