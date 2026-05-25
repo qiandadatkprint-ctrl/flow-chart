@@ -96,9 +96,9 @@
         </div>
         <div class="instruction-box">
             <b>操作指南：</b><br>
-            ① 右键拖动画布，左键框选元素<br>
-            ② 双击图元修改文字<br>
-            ③ 连线选中后可智能避让或改样式
+            ① 框选元素：在空白处直接<b>左键拖动</b><br>
+            ② 拖动画布：按住 <b>空格键</b> + <b>左键拖动</b><br>
+            ③ 连线选中后可智能避让或改线型样式
         </div>
         <div class="ai-prompt" id="promptText">解析以下工艺文字，提取节点及连线关系，严格输出纯JSON格式。
 【结构要求】必须包含 "nodes" 和 "edges"：
@@ -259,7 +259,6 @@
         setTimeout(hideError, 2500);
     }
 
-    // 动态计算文本实际所需宽高的算法
     window.calculateNodeSize = function(text, minW, minH) {
         if (!text) return { width: minW, height: minH };
         const lines = text.split('\n');
@@ -319,22 +318,20 @@
         }
 
         const containerElem = document.getElementById('container');
-        
-        // 屏蔽右键菜单以支持右键拖动画布
-        containerElem.addEventListener('contextmenu', e => e.preventDefault());
 
         window.graph = new X6.Graph({
             container: containerElem,
-            history: { enabled: true }, // 开启撤销/重做
-            clipboard: { enabled: true }, // 开启剪贴板
+            history: { enabled: true }, 
+            clipboard: { enabled: true }, 
             grid: { size: 10, visible: true, type: 'dot', args: { color: '#e0e0e0', thickness: 1 } },
-            // 解决框选冲突：将画布平移改为鼠标右键！释放左键用于纯粹的框选
-            panning: { enabled: true, eventTypes: ['rightMouseDown', 'mouseWheel'] }, 
+            // 平移绑定：按住空格键即可通过左键拖动平移
+            panning: { enabled: true, modifiers: 'space' }, 
             mousewheel: { enabled: true, zoomAtMousePosition: true, modifiers: 'ctrl', minScale: 0.1, maxScale: 4 },
             snapline: { enabled: true, sharp: true },
+            // 框选：解放左键，现在左键直接就是框选
             selecting: { 
                 enabled: true, rubberband: true, showNodeSelectionBox: true, showEdgeSelectionBox: true,
-                modifiers: ['shift', 'ctrl', 'meta'] // 支持按住键盘多选
+                modifiers: ['shift', 'ctrl', 'meta'] 
             }, 
             resizing: { enabled: true, minWidth: 20, minHeight: 20, maxWidth: 800, maxHeight: 800 },
             minimap: { enabled: true, container: document.getElementById('minimap'), padding: 10 },
@@ -348,7 +345,6 @@
             keyboard: { enabled: true }
         });
 
-        // 快捷键绑定
         graph.bindKey(['delete', 'backspace'], window.deleteSelected);
         graph.bindKey(['ctrl+c', 'meta+c'], () => {
             const cells = graph.getSelectedCells();
@@ -562,9 +558,28 @@
     window.deleteSelected = function() { if(window.graph){ const cells = window.graph.getSelectedCells(); if (cells.length) window.graph.removeCells(cells); }};
     window.clearCanvas = function() { if(confirm("确定要清空整张画布吗？")) { window.graph.clearCells(); } };
     
-    // 图层控制
-    window.bringToFront = function() { window.graph.getSelectedCells().forEach(c => c.toFront()); }
-    window.sendToBack = function() { window.graph.getSelectedCells().forEach(c => c.toBack()); }
+    // 强制接管底层 zIndex 逻辑确保置顶置底生效
+    window.bringToFront = function() { 
+        if(!window.graph) return;
+        const cells = window.graph.getSelectedCells();
+        if(!cells.length) return;
+        const maxZ = Math.max(...window.graph.getCells().map(c => c.getZIndex() || 0));
+        cells.forEach(c => {
+            c.toFront();
+            c.setZIndex(maxZ + 1);
+        });
+    };
+    
+    window.sendToBack = function() { 
+        if(!window.graph) return;
+        const cells = window.graph.getSelectedCells();
+        if(!cells.length) return;
+        const minZ = Math.min(...window.graph.getCells().map(c => c.getZIndex() || 0));
+        cells.forEach(c => {
+            c.toBack();
+            c.setZIndex(minZ - 1);
+        });
+    };
 
     window.updateColor = function(type, color) {
         if (!window.graph) return;
@@ -620,7 +635,6 @@
             if (type === 'fontFamily') node.attr('text/fontFamily', window.getCombinedFont());
             if (type === 'fontWeight') node.attr('text/fontWeight', document.getElementById('fontWeight').checked ? 'bold' : 'normal');
             
-            // 实时自适应调整单节点大小，不再全局排版
             const text = node.attr('text/text') || '';
             const baseW = parseInt(document.getElementById('globalW').value) || 130;
             const baseH = parseInt(document.getElementById('globalH').value) || 45;
@@ -646,7 +660,6 @@
                 const newText = formatEmissionLabel(data.originalLabel, isShort);
                 node.attr('text/text', newText);
                 
-                // 仅对该节点进行自适应尺寸调整
                 const baseW = parseInt(document.getElementById('globalW').value) || 130;
                 const baseH = parseInt(document.getElementById('globalH').value) || 45;
                 const size = window.calculateNodeSize(newText, baseW, baseH);
@@ -666,7 +679,6 @@
             const displayText = data.category === 'emission' ? formatEmissionLabel(newText, isShort) : newText;
             window.editTargetNode.attr('text/text', displayText);
             
-            // 【关键修复】只调整当前编辑框的大小，不再调用全局排版打乱用户布局
             const baseW = parseInt(document.getElementById('globalW').value) || 130;
             const baseH = parseInt(document.getElementById('globalH').value) || 45;
             const size = window.calculateNodeSize(displayText, baseW, baseH);
@@ -755,7 +767,6 @@
                 });
             }
             
-            // 只有初始生成或点击排版按钮时才调用全局排版
             window.applyGlobalLayout();
             showToast("✨ 图表生成成功！长宽已根据文字自适应。");
         } catch (fatalError) { 
