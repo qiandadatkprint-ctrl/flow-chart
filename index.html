@@ -13,7 +13,7 @@
         .section-title { font-size: 13px; font-weight: bold; color: #333; margin: 0 0 10px 0; display: flex; justify-content: space-between; align-items: center; }
         
         .instruction-box { background: #f9fcff; border: 1px solid #bae0ff; padding: 10px; border-radius: 4px; font-size: 12px; color: #555; margin-bottom: 10px; line-height: 1.5; }
-        .ai-prompt { background: #fafafa; border: 1px dashed #ccc; padding: 8px; border-radius: 4px; font-size: 12px; color: #333; height: 180px; overflow-y: auto; line-height: 1.4; user-select: all; cursor: text; font-family: monospace; white-space: pre-wrap;}
+        .ai-prompt { background: #fafafa; border: 1px dashed #ccc; padding: 8px; border-radius: 4px; font-size: 12px; color: #333; height: 160px; overflow-y: auto; line-height: 1.4; user-select: all; cursor: text; font-family: monospace; white-space: pre-wrap;}
         textarea { width: 100%; box-sizing: border-box; height: 100px; resize: none; border: 1px solid var(--border); border-radius: 4px; padding: 8px; font-family: monospace; font-size: 12px; }
         
         .btn { background: var(--primary); color: #fff; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; width: 100%; font-size: 13px; transition: 0.2s; }
@@ -36,22 +36,21 @@
 
         .main-workspace { flex: 1; display: flex; flex-direction: column; position: relative; min-width: 0; background: #fff;}
         
-        .toolbar { background: #fff; border-bottom: 1px solid var(--border); display: flex; padding: 10px 15px; gap: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); z-index: 15; flex-wrap: wrap; flex-shrink: 0; }
-        .toolbar-group { display: flex; align-items: center; gap: 6px; border-right: 1px solid #eee; padding-right: 12px; }
+        .toolbar { background: #fff; border-bottom: 1px solid var(--border); display: flex; padding: 10px 15px; gap: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); z-index: 15; flex-wrap: wrap; flex-shrink: 0; align-items: center;}
+        .toolbar-group { display: flex; align-items: center; gap: 6px; border-right: 1px solid #eee; padding-right: 10px; }
         .toolbar-group:last-child { border-right: none; }
         .toolbar label { font-size: 12px; color: #333; display: flex; align-items: center; gap: 3px;}
         .toolbar select, .toolbar input[type="number"] { padding: 4px; border: 1px solid #ccc; border-radius: 4px; font-size: 12px; }
         
-        .btn-small { background: #fff; border: 1px solid #d9d9d9; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 12px; color: #333; display: flex; align-items: center; gap: 4px;}
-        .btn-small:hover { border-color: var(--primary); color: var(--primary); }
+        .btn-small { background: #fff; border: 1px solid #d9d9d9; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 12px; color: #333; display: flex; align-items: center; gap: 4px; transition: 0.2s;}
+        .btn-small:hover { border-color: var(--primary); color: var(--primary); background: #f0f5ff; }
 
         .color-dropdown { position: relative; display: inline-block; }
         .color-menu { 
             display: none; position: absolute; top: calc(100% + 5px); left: 0;
             background: #fff; border: 1px solid #d9d9d9; border-radius: 6px; padding: 10px; 
             box-shadow: 0 6px 16px rgba(0,0,0,0.15); z-index: 100; 
-            width: 255px;
-            flex-wrap: wrap; gap: 6px; 
+            width: 255px; flex-wrap: wrap; gap: 6px; 
         }
         
         .color-swatch { width: 22px; height: 22px; border-radius: 4px; border: 1px solid #c0c0c0; cursor: pointer; transition: transform 0.1s; box-sizing: border-box; }
@@ -97,21 +96,18 @@
         </div>
         <div class="instruction-box">
             <b>操作指南：</b><br>
-            ① 复制下方提示词，连同文字发给 AI。<br>
-            ② 把返回结果(包含大括号)贴入下方。<br>
+            ① 右键拖动画布，左键框选元素<br>
+            ② 双击图元修改文字<br>
+            ③ 连线选中后可智能避让或改样式
         </div>
         <div class="ai-prompt" id="promptText">解析以下工艺文字，提取节点及连线关系，严格输出纯JSON格式。
 【结构要求】必须包含 "nodes" 和 "edges"：
 {"nodes": [{"id": "标识", "label": "名称", "category": "分类"}], "edges": [{"source": "起点id", "target": "终点id"}]}
 
-【绝对不可违反的合并规则（非常重要！）】
+【绝对不可违反的合并规则】
 1. category仅限: material(原辅料)、process(工艺)、emission(排污)。
-2. 【同工序】投入的多个原辅料，必须合并为一个 material 节点（用 \n 换行）！
-   ❌错误示范：输出3个不同的material节点连向同一个工序。
-   ✅正确示范：只输出1个material节点，label为"原料A\n原料B\n原料C"。
-3. 【同工序】产生的多个排污物，必须合并为一个 emission 节点（用 \n 换行，保留G1/S1等代号）！
-   ❌错误示范：从一个工序引出多个独立的emission节点。
-   ✅正确示范：只输出1个emission节点，label为"G1 废气\nS1 边角料"。
+2. 【同工序】投入的多个原辅料，合并为一个 material 节点（用 \n 换行）！
+3. 【同工序】产生的多个排污物，合并为一个 emission 节点（用 \n 换行）！
 
 待解析文字：
 [将你的工艺说明粘贴在此处]</div>
@@ -142,89 +138,93 @@
     <div id="error-msg"><span class="close-error" onclick="hideError()">✖</span><span id="error-text"></span></div>
 
     <div class="toolbar" id="toolbar">
-        <div class="toolbar-group" style="background: #fffbe6; padding: 2px 8px; border-radius: 4px; border: 1px solid #ffe58f;">
-            <label>框底宽:</label><input type="number" id="globalW" value="130" style="width: 45px;" oninput="applyGlobalLayout()">
-            <label>底高:</label><input type="number" id="globalH" value="45" style="width: 40px;" oninput="applyGlobalLayout()">
-            <label>横距:</label><input type="number" id="globalGapX" value="300" style="width: 45px;" oninput="applyGlobalLayout()">
-            <label>纵距:</label><input type="number" id="globalGapY" value="120" style="width: 45px;" oninput="applyGlobalLayout()">
-            <button class="btn-small" onclick="applyGlobalLayout()" style="border-color:#faad14; color:#d48806;" title="手动打乱后可点此恢复整理">📐 一键排版</button>
+        <div class="toolbar-group">
+            <button class="btn-small" onclick="window.graph.history.undo()" title="撤销 (Ctrl+Z)">↩️</button>
+            <button class="btn-small" onclick="window.graph.history.redo()" title="重做 (Ctrl+Y)">↪️</button>
+            <button class="btn-small" onclick="bringToFront()" title="图层置顶">⬆️置顶</button>
+            <button class="btn-small" onclick="sendToBack()" title="图层置底">⬇️置底</button>
         </div>
 
+        <div class="toolbar-group" style="background: #fffbe6; padding: 2px 8px; border-radius: 4px; border: 1px solid #ffe58f;">
+            <label>框底宽:</label><input type="number" id="globalW" value="130" style="width: 45px;">
+            <label>底高:</label><input type="number" id="globalH" value="45" style="width: 40px;">
+            <button class="btn-small" onclick="applyGlobalLayout()" style="border-color:#faad14; color:#d48806;" title="手动打乱后可点此恢复整理">📐 智能排版</button>
+        </div>
+
+        <div class="toolbar-group" style="background: #e6f7ff; padding: 2px 8px; border-radius: 4px; border: 1px solid #91d5ff;">
+            <label style="color:#096dd9; font-weight:bold; cursor:pointer;">
+                <input type="checkbox" id="shortLabel" onchange="toggleEmissionLabels()"> 仅排污代号
+            </label>
+        </div>
+
+        <div class="toolbar-group">
+            <div class="color-dropdown">
+                <button class="btn-small" id="btnBgColor" onclick="toggleMenu('bgMenu', event)">🎨 色彩</button>
+                <div class="color-menu" id="bgMenu">
+                    <div class="color-swatch color-transparent" onclick="updateColor('fill', 'transparent')" title="透明"></div>
+                    <div class="color-swatch" style="background-color:#ffffff;" onclick="updateColor('fill', '#ffffff')"></div>
+                    <div class="color-swatch" style="background-color:#fafafa;" onclick="updateColor('fill', '#fafafa')"></div>
+                    <div class="color-swatch" style="background-color:#f5f5f5;" onclick="updateColor('fill', '#f5f5f5')"></div>
+                    <div class="color-swatch" style="background-color:#d9d9d9;" onclick="updateColor('fill', '#d9d9d9')"></div>
+                    <div class="color-swatch" style="background-color:#fff1f0;" onclick="updateColor('fill', '#fff1f0')"></div>
+                    <div class="color-swatch" style="background-color:#ffccc7;" onclick="updateColor('fill', '#ffccc7')"></div>
+                    <div class="color-swatch" style="background-color:#fffbe6;" onclick="updateColor('fill', '#fffbe6')"></div>
+                    <div class="color-swatch" style="background-color:#f6ffed;" onclick="updateColor('fill', '#f6ffed')"></div>
+                    <div class="color-swatch" style="background-color:#e6f7ff;" onclick="updateColor('fill', '#e6f7ff')"></div>
+                    <div class="color-swatch" style="background-color:#bae0ff;" onclick="updateColor('fill', '#bae0ff')"></div>
+                </div>
+            </div>
+            <div class="color-dropdown">
+                <button class="btn-small" id="btnStrokeColor" onclick="toggleMenu('strokeMenu', event)">🖍️ 线色</button>
+                <div class="color-menu" id="strokeMenu">
+                    <div class="color-swatch color-transparent" onclick="updateColor('stroke', 'transparent')" title="无边框"></div>
+                    <div class="color-swatch" style="background-color:#000000;" onclick="updateColor('stroke', '#000000')"></div>
+                    <div class="color-swatch" style="background-color:#333333;" onclick="updateColor('stroke', '#333333')"></div>
+                    <div class="color-swatch" style="background-color:#555555;" onclick="updateColor('stroke', '#555555')"></div>
+                    <div class="color-swatch" style="background-color:#ff4d4f;" onclick="updateColor('stroke', '#ff4d4f')"></div>
+                    <div class="color-swatch" style="background-color:#fa8c16;" onclick="updateColor('stroke', '#fa8c16')"></div>
+                    <div class="color-swatch" style="background-color:#52c41a;" onclick="updateColor('stroke', '#52c41a')"></div>
+                    <div class="color-swatch" style="background-color:#1890ff;" onclick="updateColor('stroke', '#1890ff')"></div>
+                </div>
+            </div>
+            <label style="margin-left:5px;">线宽:</label>
+            <select id="borderWidth" onchange="updateStyleProperty('strokeWidth')" style="width: 45px;">
+                <option value="1">1</option><option value="2" selected>2</option><option value="3">3</option><option value="4">4</option>
+            </select>
+            <label>线型:</label>
+            <select id="lineStyle" onchange="updateLineStyle()" style="width: 60px;">
+                <option value="solid">实线</option>
+                <option value="dashed">虚线</option>
+                <option value="dotted">点线</option>
+            </select>
+        </div>
+        
         <div class="toolbar-group">
             <select id="edgeType" onchange="updateSelectedEdge()" title="线条类型">
                 <option value="orth">折线</option>
                 <option value="normal">直线</option>
                 <option value="smooth">曲线</option>
             </select>
-            <label><input type="checkbox" id="smartRoute" onchange="updateSelectedEdge()">智能避让</label>
-        </div>
-
-        <div class="toolbar-group" style="background: #e6f7ff; padding: 2px 8px; border-radius: 4px; border: 1px solid #91d5ff;">
-            <label style="color:#096dd9; font-weight:bold; cursor:pointer;" title="勾选后自动隐藏汉字，如 'G1废气' 变成 'G1'">
-                <input type="checkbox" id="shortLabel" onchange="toggleEmissionLabels()"> 仅排污代号
-            </label>
+            <label><input type="checkbox" id="smartRoute" onchange="updateSelectedEdge()">智能连线</label>
         </div>
 
         <div class="toolbar-group">
-            <label>西文:</label>
             <select id="westFont" onchange="updateNodeStyle('fontFamily')" style="width: 70px;">
                 <option value="Arial">Arial</option>
                 <option value="Times New Roman">Times</option>
-                <option value="Tahoma">Tahoma</option>
-                <option value="Verdana">Verdana</option>
             </select>
-            <label>中文:</label>
             <select id="eastFont" onchange="updateNodeStyle('fontFamily')" style="width: 75px;">
                 <option value="Microsoft YaHei">微软雅黑</option>
                 <option value="SimSun">宋体</option>
                 <option value="SimHei">黑体</option>
-                <option value="KaiTi">楷体</option>
             </select>
-            <label>字号:</label><input type="number" id="globalFontSize" value="13" style="width: 40px;" oninput="updateNodeStyle('fontSize')">
-            <label><input type="checkbox" id="fontWeight" onchange="updateNodeStyle('fontWeight')"><b>粗</b></label>
-        </div>
-        
-        <div class="toolbar-group">
-            <div class="color-dropdown">
-                <button class="btn-small" id="btnBgColor" onclick="toggleMenu('bgMenu', event)">🎨 背景色</button>
-                <div class="color-menu" id="bgMenu">
-                    <div class="color-swatch color-transparent" onclick="updateColor('fill', 'transparent')" title="透明"></div>
-                    <div class="color-swatch" style="background-color:#ffffff;" onclick="updateColor('fill', '#ffffff')" title="纯白"></div>
-                    <div class="color-swatch" style="background-color:#fafafa;" onclick="updateColor('fill', '#fafafa')" title="极浅灰"></div>
-                    <div class="color-swatch" style="background-color:#f5f5f5;" onclick="updateColor('fill', '#f5f5f5')" title="浅灰"></div>
-                    <div class="color-swatch" style="background-color:#d9d9d9;" onclick="updateColor('fill', '#d9d9d9')" title="深灰"></div>
-                    
-                    <div class="color-swatch" style="background-color:#fff1f0;" onclick="updateColor('fill', '#fff1f0')" title="浅红"></div>
-                    <div class="color-swatch" style="background-color:#ffccc7;" onclick="updateColor('fill', '#ffccc7')" title="柔红"></div>
-                    <div class="color-swatch" style="background-color:#fffbe6;" onclick="updateColor('fill', '#fffbe6')" title="浅黄"></div>
-                    
-                    <div class="color-swatch" style="background-color:#f6ffed;" onclick="updateColor('fill', '#f6ffed')" title="浅绿"></div>
-                    <div class="color-swatch" style="background-color:#e6f7ff;" onclick="updateColor('fill', '#e6f7ff')" title="浅蓝"></div>
-                    <div class="color-swatch" style="background-color:#bae0ff;" onclick="updateColor('fill', '#bae0ff')" title="柔蓝"></div>
-                </div>
-            </div>
-            <div class="color-dropdown">
-                <button class="btn-small" id="btnStrokeColor" onclick="toggleMenu('strokeMenu', event)">🖍️ 边框/线色</button>
-                <div class="color-menu" id="strokeMenu">
-                    <div class="color-swatch color-transparent" onclick="updateColor('stroke', 'transparent')" title="无边框"></div>
-                    <div class="color-swatch" style="background-color:#000000;" onclick="updateColor('stroke', '#000000')" title="纯黑"></div>
-                    <div class="color-swatch" style="background-color:#333333;" onclick="updateColor('stroke', '#333333')" title="黑灰"></div>
-                    <div class="color-swatch" style="background-color:#555555;" onclick="updateColor('stroke', '#555555')" title="中深灰"></div>
-                    
-                    <div class="color-swatch" style="background-color:#ff4d4f;" onclick="updateColor('stroke', '#ff4d4f')" title="鲜红"></div>
-                    <div class="color-swatch" style="background-color:#fa8c16;" onclick="updateColor('stroke', '#fa8c16')" title="鲜橙"></div>
-                    <div class="color-swatch" style="background-color:#52c41a;" onclick="updateColor('stroke', '#52c41a')" title="鲜绿"></div>
-                    <div class="color-swatch" style="background-color:#1890ff;" onclick="updateColor('stroke', '#1890ff')" title="亮蓝"></div>
-                </div>
-            </div>
-            <label style="margin-left:5px;">线粗:</label>
-            <select id="borderWidth" onchange="updateBorderWidth()" style="width: 45px;">
-                <option value="1">1</option><option value="2" selected>2</option><option value="3">3</option><option value="4">4</option>
-            </select>
+            <input type="number" id="globalFontSize" value="13" style="width: 40px;" oninput="updateNodeStyle('fontSize')">
+            <label><input type="checkbox" id="fontWeight" onchange="updateNodeStyle('fontWeight')"><b>加粗</b></label>
         </div>
 
         <div class="toolbar-group" style="margin-left: auto; border-right: none; padding-right: 0;">
-            <button class="btn-small" style="background: #ff4d4f; color: #fff; border:none;" onclick="deleteSelected()">🗑️ 删除</button>
+            <button class="btn-small" style="color: #666;" onclick="clearCanvas()">清空画布</button>
+            <button class="btn-small" style="background: #ff4d4f; color: #fff; border:none;" onclick="deleteSelected()">🗑️ 删除 (Del)</button>
         </div>
     </div>
 
@@ -243,6 +243,9 @@
         </div>
     </div>
 </div>
+
+<input type="hidden" id="globalGapX" value="300">
+<input type="hidden" id="globalGapY" value="120">
 
 <script>
     function showError(htmlMsg) {
@@ -264,12 +267,11 @@
         lines.forEach(l => {
             let len = 0;
             for(let i=0; i<l.length; i++) {
-                len += l.charCodeAt(i) > 255 ? 2 : 1; // 汉字占2，英文数字占1
+                len += l.charCodeAt(i) > 255 ? 2 : 1; 
             }
             if(len > maxChars) maxChars = len;
         });
         const fontSize = parseInt(document.getElementById('globalFontSize').value) || 13;
-        // 留出边距: 宽边距30，高边距20
         const calcW = Math.max(minW, (maxChars * fontSize * 0.6) + 30);
         const calcH = Math.max(minH, (lines.length * fontSize * 1.5) + 20);
         return { width: calcW, height: calcH };
@@ -278,7 +280,6 @@
     window.addEventListener('DOMContentLoaded', (event) => {
         if (typeof window.X6 === 'undefined') {
             document.getElementById('loading-tip').innerText = "🛑 核心绘图代码库未能下载，请检查网络。";
-            showError("<b>绘图引擎加载失败！</b><br>请按 Ctrl+F5 强制刷新页面。");
             return;
         }
 
@@ -309,23 +310,36 @@
         
         window.getSelectedEdgeAttrs = function() {
             const width = parseInt(document.getElementById('borderWidth').value) || 2;
-            return { line: { stroke: '#555555', strokeWidth: width, targetMarker: 'block', strokeDasharray: '0' }, wrap: { strokeWidth: 20 } };
+            const style = document.getElementById('lineStyle').value;
+            let dash = '0';
+            if (style === 'dashed') dash = '5 5';
+            if (style === 'dotted') dash = '2 2';
+
+            return { line: { stroke: '#555555', strokeWidth: width, targetMarker: 'block', strokeDasharray: dash }, wrap: { strokeWidth: 20 } };
         }
 
         const containerElem = document.getElementById('container');
         
+        // 屏蔽右键菜单以支持右键拖动画布
+        containerElem.addEventListener('contextmenu', e => e.preventDefault());
+
         window.graph = new X6.Graph({
             container: containerElem,
+            history: { enabled: true }, // 开启撤销/重做
+            clipboard: { enabled: true }, // 开启剪贴板
             grid: { size: 10, visible: true, type: 'dot', args: { color: '#e0e0e0', thickness: 1 } },
-            panning: { enabled: true, eventTypes: ['leftMouseDown', 'mouseWheel'] },
+            // 解决框选冲突：将画布平移改为鼠标右键！释放左键用于纯粹的框选
+            panning: { enabled: true, eventTypes: ['rightMouseDown', 'mouseWheel'] }, 
             mousewheel: { enabled: true, zoomAtMousePosition: true, modifiers: 'ctrl', minScale: 0.1, maxScale: 4 },
             snapline: { enabled: true, sharp: true },
-            selecting: { enabled: true, rubberband: true, showNodeSelectionBox: true, showEdgeSelectionBox: true }, 
+            selecting: { 
+                enabled: true, rubberband: true, showNodeSelectionBox: true, showEdgeSelectionBox: true,
+                modifiers: ['shift', 'ctrl', 'meta'] // 支持按住键盘多选
+            }, 
             resizing: { enabled: true, minWidth: 20, minHeight: 20, maxWidth: 800, maxHeight: 800 },
             minimap: { enabled: true, container: document.getElementById('minimap'), padding: 10 },
             connecting: { 
                 snap: true, allowBlank: true, allowNode: true, highlight: true, 
-                // 添加圆角连接器，消除因为1像素对齐误差带来的线段锯齿扭曲
                 connector: { name: 'rounded', args: { radius: 3 } },
                 createEdge() { 
                     return new X6.Shape.Edge({ attrs: window.getSelectedEdgeAttrs(), router: window.getSelectedRouter(), connector: { name: 'rounded', args: { radius: 3 } } }); 
@@ -334,7 +348,23 @@
             keyboard: { enabled: true }
         });
 
+        // 快捷键绑定
         graph.bindKey(['delete', 'backspace'], window.deleteSelected);
+        graph.bindKey(['ctrl+c', 'meta+c'], () => {
+            const cells = graph.getSelectedCells();
+            if (cells.length) graph.copy(cells);
+            return false;
+        });
+        graph.bindKey(['ctrl+v', 'meta+v'], () => {
+            if (!graph.isClipboardEmpty()) {
+                const cells = graph.paste({ offset: 32 });
+                graph.cleanSelection();
+                graph.select(cells);
+            }
+            return false;
+        });
+        graph.bindKey(['ctrl+z', 'meta+z'], () => { graph.history.undo(); return false; });
+        graph.bindKey(['ctrl+y', 'meta+y'], () => { graph.history.redo(); return false; });
         
         graph.on('cell:selected', ({ cell }) => { 
             window.activeCell = cell; 
@@ -344,12 +374,17 @@
                 document.getElementById('fontWeight').checked = attrs.text.fontWeight === 'bold';
                 document.getElementById('borderWidth').value = attrs.body.strokeWidth !== undefined ? attrs.body.strokeWidth : 2;
                 
+                const dash = attrs.body.strokeDasharray;
+                document.getElementById('lineStyle').value = dash === '5 5' ? 'dashed' : (dash === '2 2' ? 'dotted' : 'solid');
+
                 const fonts = (attrs.text.fontFamily || '').replace(/['"]/g, '').split(',').map(f => f.trim());
                 if(fonts[0]) document.getElementById('westFont').value = fonts[0];
                 if(fonts[1]) document.getElementById('eastFont').value = fonts[1];
             } else if (cell.isEdge()) {
                 const line = cell.attr('line');
                 document.getElementById('borderWidth').value = line.strokeWidth || 2;
+                const dash = line.strokeDasharray;
+                document.getElementById('lineStyle').value = dash === '5 5' ? 'dashed' : (dash === '2 2' ? 'dotted' : 'solid');
             }
         });
         graph.on('cell:unselected', () => { window.activeCell = null; });
@@ -373,14 +408,18 @@
             const coords = graph.clientToLocal(e.clientX, e.clientY);
             const borderW = parseInt(document.getElementById('borderWidth').value) || 2;
             
+            const lineStyle = document.getElementById('lineStyle').value;
+            let dash = '0';
+            if (lineStyle === 'dashed') dash = '5 5';
+            if (lineStyle === 'dotted') dash = '2 2';
+
             const minW = parseInt(document.getElementById('globalW').value) || 130;
             const minH = parseInt(document.getElementById('globalH').value) || 45;
             
-            // 动态计算初始文本的尺寸
             const initialText = '双击修改';
             const size = window.calculateNodeSize(initialText, minW, minH);
             
-            let style = { fill: '#f9f9f9', stroke: '#333333', rx: 0, color: '#333333', strokeWidth: borderW };
+            let style = { fill: '#f9f9f9', stroke: '#333333', rx: 0, color: '#333333', strokeWidth: borderW, dash: dash };
             let shape = 'rect';
             
             if(type === 'material') { style.fill = '#ffffff'; style.rx = 20; }
@@ -394,14 +433,13 @@
                 width: size.width, height: size.height, ports: defaultPorts, 
                 data: { category: type, originalLabel: initialText }, 
                 attrs: { 
-                    body: { fill: style.fill, stroke: style.stroke, strokeWidth: style.strokeWidth, rx: style.rx, ry: style.rx, refPoints: style.refPoints }, 
+                    body: { fill: style.fill, stroke: style.stroke, strokeWidth: style.strokeWidth, strokeDasharray: style.dash, rx: style.rx, ry: style.rx, refPoints: style.refPoints }, 
                     text: { text: initialText, fill: style.color, fontSize: parseInt(document.getElementById('globalFontSize').value), fontFamily: getCombinedFont(), fontWeight: document.getElementById('fontWeight').checked ? 'bold' : 'normal' } 
                 } 
             });
         });
     });
     
-    // 一键及实时排版（文本自适应防溢出 + 坐标取整防折线扭曲）
     window.applyGlobalLayout = function() {
         if (!window.graph) return;
         const allNodes = window.graph.getNodes();
@@ -413,7 +451,6 @@
         const gapX = parseInt(document.getElementById('globalGapX').value) || 300;
         const gapY = parseInt(document.getElementById('globalGapY').value) || 120;
 
-        // 1. 动态自适应所有节点尺寸（文本绝不超出框）
         allNodes.forEach(node => {
             const data = node.getData() || {};
             if (data.category !== 'text' && data.category !== 'decision' && data.category !== 'ellipse') {
@@ -423,7 +460,6 @@
             }
         });
 
-        // 2. 关系推导与坐标计算
         const processNodes = []; const materialNodes = []; const emissionNodes = [];
         allNodes.forEach(n => {
             const data = n.getData() || {};
@@ -486,7 +522,6 @@
             for (let y in groupedByY) {
                 let ids = groupedByY[y];
                 if (ids.length > 1) {
-                    // 如果堆叠，给予一定垂直偏移避免重叠
                     const offset = baseH + 15;
                     let startY = parseInt(y) - ((ids.length - 1) * offset) / 2;
                     ids.forEach((id, idx) => { nodeCoords[id].y = startY + idx * offset; });
@@ -495,7 +530,6 @@
         };
         adjustOverlap(materialNodes); adjustOverlap(emissionNodes);
 
-        // 3. 应用绝对取整的坐标，防止 fractional 像素带来的连线扭曲
         allNodes.forEach(n => {
             if (nodeCoords[n.id]) {
                 const finalX = Math.round(nodeCoords[n.id].x - n.getSize().width/2);
@@ -510,9 +544,11 @@
     window.updateSelectedEdge = function() {
         if (!window.graph) return;
         const router = window.getSelectedRouter();
-        if (window.activeCell && window.activeCell.isEdge()) {
-            window.activeCell.setRouter(router);
-        }
+        const cells = window.graph.getSelectedCells();
+        const targetCells = cells.length ? cells : window.graph.getEdges();
+        targetCells.forEach(cell => {
+            if (cell.isEdge()) cell.setRouter(router);
+        });
     };
 
     window.toggleMenu = function(menuId, event) {
@@ -521,12 +557,18 @@
     };
     
     document.addEventListener('click', event => { if (!event.target.closest('.color-dropdown')) document.querySelectorAll('.color-menu').forEach(menu => menu.style.display = 'none'); });
+    
     window.startDrag = function(e, type) { e.dataTransfer.setData('component_type', type); };
     window.deleteSelected = function() { if(window.graph){ const cells = window.graph.getSelectedCells(); if (cells.length) window.graph.removeCells(cells); }};
+    window.clearCanvas = function() { if(confirm("确定要清空整张画布吗？")) { window.graph.clearCells(); } };
     
+    // 图层控制
+    window.bringToFront = function() { window.graph.getSelectedCells().forEach(c => c.toFront()); }
+    window.sendToBack = function() { window.graph.getSelectedCells().forEach(c => c.toBack()); }
+
     window.updateColor = function(type, color) {
         if (!window.graph) return;
-        (window.activeCell ? [window.activeCell] : [...window.graph.getNodes(), ...window.graph.getEdges()]).forEach(cell => {
+        (window.graph.getSelectedCells().length ? window.graph.getSelectedCells() : [...window.graph.getNodes(), ...window.graph.getEdges()]).forEach(cell => {
             if (cell.isNode()) { 
                 if (type === 'fill') cell.attr('body/fill', color); 
                 if (type === 'stroke') {
@@ -542,24 +584,49 @@
         document.querySelectorAll('.color-menu').forEach(menu => menu.style.display = 'none');
     };
     
-    window.updateBorderWidth = function() {
+    window.updateStyleProperty = function(property) {
         if (!window.graph) return;
-        const width = parseInt(document.getElementById('borderWidth').value);
-        (window.activeCell ? [window.activeCell] : [...window.graph.getNodes(), ...window.graph.getEdges()]).forEach(cell => { 
-            if (cell.isNode()) cell.attr('body/strokeWidth', width); 
-            else if (cell.isEdge()) cell.attr('line/strokeWidth', width); 
+        const val = parseInt(document.getElementById('borderWidth').value);
+        const cells = window.graph.getSelectedCells();
+        const targetCells = cells.length ? cells : [...window.graph.getNodes(), ...window.graph.getEdges()];
+        targetCells.forEach(cell => { 
+            if (cell.isNode()) cell.attr('body/' + property, val); 
+            else if (cell.isEdge()) cell.attr('line/' + property, val); 
+        });
+    };
+
+    window.updateLineStyle = function() {
+        if (!window.graph) return;
+        const val = document.getElementById('lineStyle').value;
+        let dash = '0';
+        if (val === 'dashed') dash = '5 5';
+        if (val === 'dotted') dash = '2 2';
+        
+        const cells = window.graph.getSelectedCells();
+        const targetCells = cells.length ? cells : [...window.graph.getNodes(), ...window.graph.getEdges()];
+        targetCells.forEach(cell => { 
+            if (cell.isNode()) cell.attr('body/strokeDasharray', dash); 
+            else if (cell.isEdge()) cell.attr('line/strokeDasharray', dash); 
         });
     };
     
     window.updateNodeStyle = function(type) {
         if (!window.graph) return;
-        (window.activeCell && window.activeCell.isNode() ? [window.activeCell] : window.graph.getNodes()).forEach(node => {
+        const cells = window.graph.getSelectedCells();
+        const targetNodes = cells.length ? cells.filter(c => c.isNode()) : window.graph.getNodes();
+        
+        targetNodes.forEach(node => {
             if (type === 'fontSize') node.attr('text/fontSize', parseInt(document.getElementById('globalFontSize').value));
             if (type === 'fontFamily') node.attr('text/fontFamily', window.getCombinedFont());
             if (type === 'fontWeight') node.attr('text/fontWeight', document.getElementById('fontWeight').checked ? 'bold' : 'normal');
+            
+            // 实时自适应调整单节点大小，不再全局排版
+            const text = node.attr('text/text') || '';
+            const baseW = parseInt(document.getElementById('globalW').value) || 130;
+            const baseH = parseInt(document.getElementById('globalH').value) || 45;
+            const size = window.calculateNodeSize(text, baseW, baseH);
+            node.resize(size.width, size.height);
         });
-        // 字体改变时重新排版以自适应框大小
-        window.applyGlobalLayout();
     };
 
     function formatEmissionLabel(fullText, isShort) {
@@ -576,10 +643,16 @@
         window.graph.getNodes().forEach(node => {
             const data = node.getData() || {};
             if (data.category === 'emission' && data.originalLabel) {
-                node.attr('text/text', formatEmissionLabel(data.originalLabel, isShort));
+                const newText = formatEmissionLabel(data.originalLabel, isShort);
+                node.attr('text/text', newText);
+                
+                // 仅对该节点进行自适应尺寸调整
+                const baseW = parseInt(document.getElementById('globalW').value) || 130;
+                const baseH = parseInt(document.getElementById('globalH').value) || 45;
+                const size = window.calculateNodeSize(newText, baseW, baseH);
+                node.resize(size.width, size.height);
             }
         });
-        window.applyGlobalLayout();
     };
 
     window.saveEditModal = function() { 
@@ -590,11 +663,16 @@
             window.editTargetNode.setData(data);
             
             const isShort = document.getElementById('shortLabel').checked;
-            window.editTargetNode.attr('text/text', data.category === 'emission' ? formatEmissionLabel(newText, isShort) : newText);
+            const displayText = data.category === 'emission' ? formatEmissionLabel(newText, isShort) : newText;
+            window.editTargetNode.attr('text/text', displayText);
+            
+            // 【关键修复】只调整当前编辑框的大小，不再调用全局排版打乱用户布局
+            const baseW = parseInt(document.getElementById('globalW').value) || 130;
+            const baseH = parseInt(document.getElementById('globalH').value) || 45;
+            const size = window.calculateNodeSize(displayText, baseW, baseH);
+            window.editTargetNode.resize(size.width, size.height);
         } 
         document.getElementById('editModal').style.display='none'; 
-        // 更改文字后自动触发布局，自适应变大/变小
-        window.applyGlobalLayout();
     };
 
     window.renderFromJSON = function() {
@@ -621,6 +699,11 @@
             const currentWeight = document.getElementById('fontWeight').checked ? 'bold' : 'normal';
             const currentStrokeW = parseInt(document.getElementById('borderWidth').value) || 2;
             const isShortMode = document.getElementById('shortLabel').checked;
+            
+            const currentLineStyle = document.getElementById('lineStyle').value;
+            let currentDash = '0';
+            if (currentLineStyle === 'dashed') currentDash = '5 5';
+            if (currentLineStyle === 'dotted') currentDash = '2 2';
 
             const baseW = parseInt(document.getElementById('globalW').value) || 130;
             const baseH = parseInt(document.getElementById('globalH').value) || 45;
@@ -638,7 +721,7 @@
             data.nodes.forEach(n => {
                 const label = n.label || '未命名';
                 let displayText = label;
-                let style = { fill: '#f9f9f9', stroke: '#333333', rx: 0, fontColor: '#333', sw: currentStrokeW };
+                let style = { fill: '#f9f9f9', stroke: '#333333', rx: 0, fontColor: '#333', sw: currentStrokeW, dash: currentDash };
 
                 if (n.category === 'material') { style.fill = '#ffffff'; style.rx = 20; }
                 if (n.category === 'emission') { 
@@ -646,13 +729,12 @@
                     displayText = isShortMode ? formatEmissionLabel(label, true) : label;
                 }
                 
-                // 实例化时计算文字最小包围盒
                 const size = window.calculateNodeSize(displayText, baseW, baseH);
 
                 window.graph.addNode({ 
                     id: n.id, x: 0, y: 0, width: size.width, height: size.height, ports: defaultPorts, 
                     data: { category: n.category, originalLabel: label },
-                    attrs: { body: { fill: style.fill, stroke: style.stroke, strokeWidth: style.sw, rx: style.rx, ry: style.rx }, text: { text: displayText, fill: style.fontColor, fontSize: currentSize, fontFamily: currentFont, fontWeight: currentWeight } } 
+                    attrs: { body: { fill: style.fill, stroke: style.stroke, strokeWidth: style.sw, strokeDasharray: style.dash, rx: style.rx, ry: style.rx }, text: { text: displayText, fill: style.fontColor, fontSize: currentSize, fontFamily: currentFont, fontWeight: currentWeight } } 
                 });
             });
 
@@ -668,12 +750,12 @@
                     window.graph.addEdge({ 
                         source: { cell: edge.source, port: srcPort }, target: { cell: edge.target, port: tgtPort }, 
                         attrs: window.getSelectedEdgeAttrs(), router: window.getSelectedRouter(),
-                        connector: { name: 'rounded', args: { radius: 3 } } // 加圆角防扭曲
+                        connector: { name: 'rounded', args: { radius: 3 } }
                     });
                 });
             }
             
-            // 生成后自动排布
+            // 只有初始生成或点击排版按钮时才调用全局排版
             window.applyGlobalLayout();
             showToast("✨ 图表生成成功！长宽已根据文字自适应。");
         } catch (fatalError) { 
