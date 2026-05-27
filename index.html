@@ -5,7 +5,7 @@
     <title>工艺流程绘制系统</title>
     <script src="https://unpkg.com/@antv/x6@1.34.6/dist/x6.js"></script>
     <style>
-        /* 企业级规范色板 */
+        /* 严谨的工业级色板 */
         :root { 
             --primary: #0052d9; 
             --primary-hover: #266bf0;
@@ -46,7 +46,7 @@
         
         .msg-avatar { width: 36px; height: 32px; border-radius: 4px; display: flex; justify-content: center; align-items: center; font-size: 12px; font-weight: bold; flex-shrink: 0; margin: 0 12px; font-family: Arial, sans-serif;}
         .msg-row.user .msg-avatar { background: #e0e7ff; color: var(--primary); }
-        .msg-row.ai .msg-avatar { background: #00a870; color: #fff; }
+        .msg-row.ai .msg-avatar { background: #0052d9; color: #fff; }
         
         .msg-bubble { padding: 12px 16px; border-radius: 6px; font-size: 13px; line-height: 1.6; word-wrap: break-word; white-space: pre-wrap; box-shadow: 0 2px 6px rgba(0,0,0,0.03);}
         .msg-row.user .msg-bubble { background: var(--primary); color: #fff; }
@@ -123,13 +123,13 @@
 <div class="sidebar">
     <div class="sidebar-header">
         <div class="sidebar-title">工艺流程绘制系统</div>
-        <button class="text-btn" onclick="toggleConfig()">[接口配置]</button>
+        <button class="text-btn" onclick="toggleConfig()">系统配置</button>
     </div>
 
     <div class="config-panel" id="configPanel">
         <div class="config-header">
-            <span>接口鉴权 (初次部署需配置)</span>
-            <button class="btn-small" onclick="saveConfig()" style="background:var(--primary); color:#fff; border:none; padding:2px 10px;">保存设定</button>
+            <span>接口鉴权 (首次部署需配置)</span>
+            <button class="btn-small" onclick="saveConfig()" style="background:var(--primary); color:#fff; border:none; padding:2px 10px;">保存</button>
         </div>
         <div class="form-group">
             <label>API Key (安全密钥):</label>
@@ -151,7 +151,7 @@
         
         <div class="chat-input-area">
             <textarea id="chatInput" placeholder="在此输入工艺流程描述..."></textarea>
-            <button class="send-btn" id="sendBtn" onclick="sendMessage()">执行解析与排版</button>
+            <button class="send-btn" id="sendBtn" onclick="sendMessage()">执行解析</button>
         </div>
     </div>
 
@@ -177,16 +177,15 @@
         </div>
         
         <div class="toolbar-group">
-            <button class="btn-small" onclick="window.graph.history.undo()" title="撤销上一步操作">撤销</button>
-            <button class="btn-small" onclick="saveProject()" title="保存当前图纸至本地文件">保存工程</button>
-            <button class="btn-small" onclick="document.getElementById('fileInput').click()" title="加载本地 .json 工程文件">加载工程</button>
+            <button class="btn-small" onclick="window.graph.history.undo()" title="撤销操作">撤销</button>
+            <button class="btn-small" onclick="saveProject()" title="保存当前工程">保存工程</button>
+            <button class="btn-small" onclick="document.getElementById('fileInput').click()" title="加载本地工程">加载工程</button>
             <input type="file" id="fileInput" style="display:none" accept=".json" onchange="loadProject(event)">
         </div>
 
         <div class="toolbar-group" style="background: #fbfbfc; padding: 2px 10px; border-radius: 4px; border: 1px solid #e3e6eb;">
-            <label>宽:</label><input type="number" id="globalW" value="130" style="width: 45px;">
-            <label>高:</label><input type="number" id="globalH" value="45" style="width: 40px;">
-            <button class="btn-small" onclick="applyGlobalLayout()" style="border-color:#0052d9; color:#0052d9; margin-left: 5px;">一键排版</button>
+            <label>框宽:</label><input type="number" id="globalW" value="130" style="width: 45px;" onchange="applyGlobalLayout()">
+            <label>框高:</label><input type="number" id="globalH" value="45" style="width: 40px;" onchange="applyGlobalLayout()">
         </div>
 
         <div class="toolbar-group">
@@ -199,23 +198,19 @@
                 <option value="SimSun">宋体</option>
                 <option value="SimHei">黑体</option>
             </select>
-            <input type="number" id="globalFontSize" value="13" style="width: 40px;" oninput="updateNodeStyle('fontSize')" title="字号调整">
+            <input type="number" id="globalFontSize" value="13" style="width: 40px;" onchange="updateNodeStyle('fontSize')" title="字号调节">
             <label style="cursor:pointer;" title="文字加粗"><input type="checkbox" id="fontWeight" onchange="updateNodeStyle('fontWeight')"><b>B</b></label>
         </div>
         
         <div class="toolbar-group">
-            <select id="edgeType" onchange="updateSelectedEdge()" title="连线策略">
-                <option value="normal">直线连接</option>
-                <option value="orth">折线连接</option>
-            </select>
-            <label style="color:#0052d9; cursor:pointer; font-weight: 500; margin-left: 5px;">
+            <label style="color:#0052d9; cursor:pointer; font-weight: 500;">
                 <input type="checkbox" id="shortLabel" onchange="toggleEmissionLabels()"> 排污简写
             </label>
         </div>
 
         <div class="toolbar-group" style="margin-left: auto; border-right: none; padding-right: 0;">
-            <button class="btn-small" style="color: var(--text-sub);" onclick="clearCanvas()">清空</button>
-            <button class="btn-small" style="color: #d54941;" onclick="deleteSelected()">删除</button>
+            <button class="btn-small" style="color: var(--text-sub);" onclick="clearCanvas()">清空画布</button>
+            <button class="btn-small" style="color: #d54941;" onclick="deleteSelected()">删除选区</button>
             <button class="btn-small" style="background:#00a870; color:#fff; border:none;" onclick="exportPNG()">导出 PNG</button>
         </div>
     </div>
@@ -264,7 +259,7 @@
         if (!apiKeyInput.value.trim() || !epIdInput.value.trim()) { showToast("鉴权信息不可为空"); return; }
         localStorage.setItem('doubaoApiKey', apiKeyInput.value.trim());
         localStorage.setItem('doubaoEpId', epIdInput.value.trim());
-        configPanel.style.display = 'none'; showToast("接口参数已保存至本地");
+        configPanel.style.display = 'none'; showToast("接口配置保存成功");
     }
 
     function appendMessage(role, content) {
@@ -291,9 +286,9 @@
         if (!apiKey || !epId) { configPanel.style.display = 'block'; showError("系统缺少接口鉴权配置"); return; }
 
         appendMessage('user', text); inputElem.value = ''; document.getElementById('sendBtn').disabled = true;
-        const aiMsgId = appendMessage('ai', `<div class="typing-indicator">引擎正在解析结构数据<span></span><span></span><span></span></div>`);
+        const aiMsgId = appendMessage('ai', `<div class="typing-indicator">引擎解析中<span></span><span></span><span></span></div>`);
 
-        const statusSteps = ["正在分析主干工序链路...", "正在匹配原辅料投入约束...", "正在整合排污输出拓扑...", "最终渲染指令生成中..."];
+        const statusSteps = ["正在分析主干工序...", "匹配原辅料投入节点...", "整合排污输出拓扑...", "渲染指令生成中..."];
         let stepIdx = 0;
         const progressInterval = setInterval(() => {
             updateMessage(aiMsgId, `<div class="typing-indicator">${statusSteps[stepIdx]}<span></span><span></span><span></span></div>`);
@@ -304,13 +299,13 @@
 请严格分析用户提供的工艺描述，并提取为标准 JSON 数据格式（必须用 \`\`\`json 和 \`\`\` 包裹）。
 
 【核心拓扑法则】(极其重要，必须严格执行)：
-1. 【主干工序串联】：必须提取所有的主工序步骤，并且在 JSON 的 \`edges\` 中，生成将工序按先后顺序相连的连线数据。缺失工序之间的连线属于严重错误！
-2. 【一对一：原辅料】：同一个工序投入的多种物料必须合并在一个物料节点中（内部用 \\n 换行）。即使同一种物料在多道工序用到，也必须为每道工序创建各自独立的原辅料节点，绝不可复用！原辅料必须通过 edge 精确指向其投入的工序。
-3. 【一对一：产排污】：工序产生的多种污染物必须合并在一个节点（用 \\n 换行，名称和代号写在一起）。严禁为同一工序拆分出多个排污节点！工序必须通过 edge 精确指向其产生的污染物。
+1. 【主干串联】：必须提取所有的主工序步骤，并在 \`edges\` 中，生成将工序按先后顺序相连的连线数据。
+2. 【原辅料】：同一个工序投入的多种物料必须合并在一个物料节点中（内部用 \\n 换行）。同一种物料在多道工序用到，必须为每道工序创建各自独立的原辅料节点，绝不可复用！原辅料必须通过 edge 指向工序。
+3. 【产排污】：工序产生的多种污染物必须合并在一个节点（用 \\n 换行，名称和代号写在一起）。严禁为同一工序拆分出多个排污节点！工序必须通过 edge 指向污染物。
 
-【JSON 数据规范】：
+【JSON 规范】：
 {"nodes": [{"id": "唯一标识", "label": "名称", "category": "分类"}], "edges": [{"source": "起点id", "target": "终点id"}]}
-* category 仅限: process(主工序), material(原辅料), emission(产排污)。
+* category 仅限: process, material, emission。
 * label 禁止使用 Markdown 符号，多项内容使用 \\n 换行。`;
 
         try {
@@ -325,7 +320,7 @@
             });
 
             clearInterval(progressInterval);
-            if (!response.ok) throw new Error("接口调用失败，请检查网络或参数配置。");
+            if (!response.ok) throw new Error("调用失败，请检查网络或参数。");
             
             const data = await response.json();
             const reply = data.choices[0].message.content;
@@ -335,11 +330,11 @@
 
             if (jsonMatch) {
                 const jsonStr = jsonMatch[1].trim();
-                chatText += `<br><br><span style="color:#00a870; font-weight:500;">解析指令执行完毕，画布已自动排版。</span>`;
+                chatText += `<br><br><span style="color:#00a870; font-weight:500;">解析指令执行完毕，画布已更新。</span>`;
                 updateMessage(aiMsgId, chatText);
                 renderFromJSON(jsonStr);
             } else {
-                updateMessage(aiMsgId, chatText + "\n\n(异常：未能提取到标准化数据)");
+                updateMessage(aiMsgId, chatText + "\n\n(未能提取标准化数据)");
             }
         } catch (error) {
             clearInterval(progressInterval);
@@ -350,7 +345,7 @@
     }
 
     /* =========================================================
-       2. 画布核心渲染与功能拓展 (完全剥离颜色菜单，固化边框逻辑)
+       2. 底层图形渲染逻辑 (强制对齐与防歪斜)
        ========================================================= */
     function showError(msg) { document.getElementById('error-text').innerHTML = msg; document.getElementById('error-msg').style.display = 'block'; }
     function hideError() { document.getElementById('error-msg').style.display = 'none'; }
@@ -360,12 +355,18 @@
         return `'${document.getElementById('westFont').value}', '${document.getElementById('eastFont').value}', sans-serif`; 
     }
 
+    // 核心对齐修复：保证宽高始终为偶数像素，防止 0.5 像素差导致连线变歪
     window.calculateNodeSize = function(text, minW, minH) {
         if (!text) return { width: minW, height: minH };
         const lines = text.split('\n'); let maxChars = 0;
         lines.forEach(l => { let len = 0; for(let i=0; i<l.length; i++) { len += l.charCodeAt(i) > 255 ? 2 : 1; } if(len > maxChars) maxChars = len; });
         const fontSize = parseInt(document.getElementById('globalFontSize').value) || 13;
-        return { width: Math.max(minW, (maxChars * fontSize * 0.6) + 30), height: Math.max(minH, (lines.length * fontSize * 1.6) + 24) };
+        
+        let w = Math.max(minW, Math.ceil(maxChars * fontSize * 0.6) + 30);
+        let h = Math.max(minH, Math.ceil(lines.length * fontSize * 1.6) + 24);
+        if (w % 2 !== 0) w += 1;
+        if (h % 2 !== 0) h += 1;
+        return { width: w, height: h };
     }
 
     window.addEventListener('DOMContentLoaded', () => {
@@ -378,14 +379,9 @@
             items: [ { id: 'p1', group: 'top' }, { id: 'p2', group: 'bottom' }, { id: 'p3', group: 'left' }, { id: 'p4', group: 'right' } ]
         };
 
-        window.getSelectedRouter = function() {
-            const type = document.getElementById('edgeType').value;
-            if (type === 'orth') return { name: 'manhattan', args: { padding: 15 } };
-            return { name: 'normal' };
-        }
-        window.getSelectedEdgeAttrs = function() {
-            return { line: { stroke: '#5f6471', strokeWidth: 2, targetMarker: 'block' } };
-        }
+        // 核心对齐修复：使用正交路由，连线绝对横平竖直
+        window.getSelectedRouter = function() { return { name: 'manhattan', args: { padding: 15 } }; }
+        window.getSelectedEdgeAttrs = function() { return { line: { stroke: '#5f6471', strokeWidth: 2, targetMarker: 'block' } }; }
 
         const containerElem = document.getElementById('container');
         window.graph = new X6.Graph({
@@ -423,10 +419,10 @@
             const minW = parseInt(document.getElementById('globalW').value) || 130; const minH = parseInt(document.getElementById('globalH').value) || 45;
             const initialText = '双击录入文本'; const size = window.calculateNodeSize(initialText, minW, minH);
             
-            // 【底层样式强约束：不可通过 UI 随意改变属性】
+            // 样式锁定
             let style = { fill: '#f4f5f7', stroke: '#18191c', rx: 0, color: '#18191c', strokeWidth: 2, dash: '0' }; let shape = 'rect';
-            if(type === 'material') { style.fill = '#ffffff'; style.rx = 20; style.strokeWidth = 0; style.stroke = 'transparent'; } // 原辅料强制无边线
-            else if(type === 'emission') { style.fill = '#fff1f0'; style.stroke = '#d54941'; style.color = '#d54941'; style.dash = '5 5'; } // 排污强制红色虚线
+            if(type === 'material') { style.fill = '#ffffff'; style.rx = 20; style.strokeWidth = 0; style.stroke = 'transparent'; } 
+            else if(type === 'emission') { style.fill = '#fff1f0'; style.stroke = '#d54941'; style.color = '#d54941'; style.dash = '5 5'; } 
             else if(type === 'text') { style.fill = 'transparent'; style.stroke = 'transparent'; style.strokeWidth = 0; } 
             else if(type === 'decision') { shape = 'polygon'; style.refPoints = '10,0 20,10 10,20 0,10'; size.width = Math.max(100, size.width); size.height = Math.max(70, size.height); } 
             else if(type === 'ellipse') { shape = 'ellipse'; size.width = Math.max(120, size.width); size.height = Math.max(50, size.height); style.rx=50; }
@@ -435,6 +431,7 @@
         });
     });
 
+    // 核心排版：精确无浮点数对齐
     window.applyGlobalLayout = function() {
         if (!window.graph) return;
         const allNodes = window.graph.getNodes(); const allEdges = window.graph.getEdges(); if (allNodes.length === 0) return;
@@ -472,67 +469,47 @@
         };
         adjustOverlap(materialNodes); adjustOverlap(emissionNodes);
 
-        allNodes.forEach(n => { if (nodeCoords[n.id]) { const finalX = Math.round(nodeCoords[n.id].x - n.getSize().width/2); const finalY = Math.round(nodeCoords[n.id].y - n.getSize().height/2); n.position(finalX, finalY); } });
+        // 使用非浮点计算，确保接口绝对对齐
+        allNodes.forEach(n => { 
+            if (nodeCoords[n.id]) { 
+                const finalX = nodeCoords[n.id].x - n.getSize().width / 2; 
+                const finalY = nodeCoords[n.id].y - n.getSize().height / 2; 
+                n.position(finalX, finalY); 
+            } 
+        });
         window.graph.centerContent({ padding: 60 });
     };
 
     /* =========================================================
-       3. 工程存取与文字排版拓展 (新功能)
+       3. 工程化控制与即时响应绑定
        ========================================================= */
-    
-    // 【新增】保存项目为 JSON 文件
     window.saveProject = function() {
         if(!window.graph) return;
-        const data = window.graph.toJSON();
-        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data));
-        const downloadAnchorNode = document.createElement('a');
-        downloadAnchorNode.setAttribute("href", dataStr);
-        downloadAnchorNode.setAttribute("download", "工艺拓扑工程图.json");
-        document.body.appendChild(downloadAnchorNode);
-        downloadAnchorNode.click();
-        downloadAnchorNode.remove();
-        showToast("已导出工程文件");
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(window.graph.toJSON()));
+        const a = document.createElement('a'); a.setAttribute("href", dataStr); a.setAttribute("download", "工艺流程工程文件.json");
+        document.body.appendChild(a); a.click(); a.remove(); showToast("已导出工程文件");
     };
 
-    // 【新增】从 JSON 文件读取并解析
     window.loadProject = function(event) {
-        const file = event.target.files[0];
-        if (!file) return;
+        const file = event.target.files[0]; if (!file) return;
         const reader = new FileReader();
         reader.onload = function(e) {
-            try {
-                const data = JSON.parse(e.target.result);
-                window.graph.fromJSON(data);
-                showToast("工程文件加载成功");
-            } catch(err) {
-                showError("文件解析失败，请确保格式规范");
-            }
+            try { window.graph.fromJSON(JSON.parse(e.target.result)); showToast("工程加载成功"); } catch(err) { showError("文件解析失败"); }
         };
-        reader.readAsText(file);
-        event.target.value = ''; // 清空选择器以便能重复加载同名文件
+        reader.readAsText(file); event.target.value = ''; 
     };
 
-    // 【拓展】更新文字格式配置
     window.updateNodeStyle = function(type) {
         if (!window.graph) return;
-        const cells = window.graph.getSelectedCells();
-        const targetNodes = cells.length ? cells.filter(c => c.isNode()) : window.graph.getNodes();
-        
+        const cells = window.graph.getSelectedCells(); const targetNodes = cells.length ? cells.filter(c => c.isNode()) : window.graph.getNodes();
         targetNodes.forEach(node => {
             if (type === 'fontSize') node.attr('text/fontSize', parseInt(document.getElementById('globalFontSize').value));
             if (type === 'fontFamily') node.attr('text/fontFamily', window.getCombinedFont());
             if (type === 'fontWeight') node.attr('text/fontWeight', document.getElementById('fontWeight').checked ? 'bold' : 'normal');
-            
-            // 更新字体后重新计算高度
-            const text = node.attr('text/text') || '';
-            const baseW = parseInt(document.getElementById('globalW').value) || 130;
-            const baseH = parseInt(document.getElementById('globalH').value) || 45;
-            const size = window.calculateNodeSize(text, baseW, baseH);
-            node.resize(size.width, size.height);
         });
+        window.applyGlobalLayout(); // 即时生效并排版
     };
 
-    window.updateSelectedEdge = function() { if (!window.graph) return; const router = window.getSelectedRouter(); const cells = window.graph.getSelectedCells(); const targetCells = cells.length ? cells : window.graph.getEdges(); targetCells.forEach(cell => { if (cell.isEdge()) cell.setRouter(router); }); };
     window.startDrag = function(e, type) { e.dataTransfer.setData('component_type', type); };
     window.deleteSelected = function() { if(window.graph){ const cells = window.graph.getSelectedCells(); if (cells.length) window.graph.removeCells(cells); }};
     window.clearCanvas = function() { if(confirm("确认清空整个画布吗？该操作不可逆。")) { window.graph.clearCells(); } };
@@ -543,18 +520,18 @@
         window.graph.getNodes().forEach(node => {
             const data = node.getData() || {}; if (data.category === 'emission' && data.originalLabel) {
                 const newText = formatEmissionLabel(data.originalLabel, isShort); node.attr('text/text', newText);
-                const baseW = parseInt(document.getElementById('globalW').value) || 130; const baseH = parseInt(document.getElementById('globalH').value) || 45; const size = window.calculateNodeSize(newText, baseW, baseH); node.resize(size.width, size.height);
             }
         });
+        window.applyGlobalLayout(); // 即时生效并排版防歪斜
     };
     window.saveEditModal = function() { 
         if (window.editTargetNode) { 
             let newText = document.getElementById('editModalInput').value.trim() === '' ? ' ' : document.getElementById('editModalInput').value; 
             const data = window.editTargetNode.getData() || {}; data.originalLabel = newText; window.editTargetNode.setData(data);
             const isShort = document.getElementById('shortLabel').checked; const displayText = data.category === 'emission' ? formatEmissionLabel(newText, isShort) : newText; window.editTargetNode.attr('text/text', displayText);
-            const baseW = parseInt(document.getElementById('globalW').value) || 130; const baseH = parseInt(document.getElementById('globalH').value) || 45; const size = window.calculateNodeSize(displayText, baseW, baseH); window.editTargetNode.resize(size.width, size.height);
         } 
         document.getElementById('editModal').style.display='none'; 
+        window.applyGlobalLayout();
     };
 
     window.renderFromJSON = function(jsonStr) {
@@ -570,16 +547,13 @@
 
             data.nodes.forEach(n => {
                 const label = n.label || '未命名'; let displayText = label; 
-                
-                // 【底层样式强约束】: AI 生成直接套用死规格
                 let style = { fill: '#f4f5f7', stroke: '#18191c', rx: 0, fontColor: '#18191c', sw: 2, dash: '0' };
                 if (n.category === 'material') { 
-                    style.fill = '#ffffff'; style.rx = 20; style.sw = 0; style.stroke = 'transparent'; // 强行无边框
+                    style.fill = '#ffffff'; style.rx = 20; style.sw = 0; style.stroke = 'transparent';
                 } else if (n.category === 'emission') { 
-                    style.fill = '#fff1f0'; style.stroke = '#d54941'; style.fontColor = '#d54941'; style.dash = '5 5'; style.sw = 2; // 强行红虚线
+                    style.fill = '#fff1f0'; style.stroke = '#d54941'; style.fontColor = '#d54941'; style.dash = '5 5'; style.sw = 2;
                     displayText = isShortMode ? formatEmissionLabel(label, true) : label; 
                 }
-                
                 const size = window.calculateNodeSize(displayText, baseW, baseH);
                 window.graph.addNode({ id: n.id, x: 0, y: 0, width: size.width, height: size.height, ports: defaultPorts, data: { category: n.category, originalLabel: label }, attrs: { body: { fill: style.fill, stroke: style.stroke, strokeWidth: style.sw, strokeDasharray: style.dash, rx: style.rx, ry: style.rx }, text: { text: displayText, fill: style.fontColor, fontSize: parseInt(document.getElementById('globalFontSize').value), fontFamily: window.getCombinedFont(), fontWeight: document.getElementById('fontWeight').checked ? 'bold' : 'normal' } } });
             });
@@ -594,13 +568,13 @@
                 });
             }
             setTimeout(() => { window.applyGlobalLayout(); }, 80);
-        } catch (fatalError) { showError("架构渲染异常：" + fatalError.message); }
+        } catch (fatalError) { showError("系统渲染异常：" + fatalError.message); }
     };
 
     window.exportPNG = function() {
-        if (!window.graph || window.graph.getCells().length === 0) return showToast("当前视图无内容");
+        if (!window.graph || window.graph.getCells().length === 0) return showToast("当前画布无内容");
         window.graph.cleanSelection(); const nodes = window.graph.getNodes(); nodes.forEach(n => n.getPorts().forEach(p => n.portProp(p.id, 'attrs/circle/style/visibility', 'hidden')));
-        window.graph.toPNG((dataUri) => { const link = document.createElement('a'); link.download = '工艺设计稿.png'; link.href = dataUri; link.click(); nodes.forEach(n => n.getPorts().forEach(p => n.portProp(p.id, 'attrs/circle/style', {}))); }, { padding: 40, backgroundColor: '#fff', quality: 1 });
+        window.graph.toPNG((dataUri) => { const link = document.createElement('a'); link.download = 'Process_Layout.png'; link.href = dataUri; link.click(); nodes.forEach(n => n.getPorts().forEach(p => n.portProp(p.id, 'attrs/circle/style', {}))); }, { padding: 40, backgroundColor: '#fff', quality: 1 });
     };
 </script>
 
