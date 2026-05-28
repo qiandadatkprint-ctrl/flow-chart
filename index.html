@@ -65,7 +65,7 @@
         .typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
         @keyframes typing { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
 
-        /* 纯图形化图元面板（不再包含文字） */
+        /* 图形化面板区 */
         .stencil-container { padding: 15px 20px; border-top: 1px solid var(--border); background: #fbfbfc; flex-shrink: 0; }
         .section-title { font-size: 12px; font-weight: 600; color: var(--text-sub); margin: 0 0 12px 0; font-family: "Microsoft YaHei", sans-serif;}
         .stencil-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
@@ -73,10 +73,10 @@
         .stencil-item-btn { display: flex; align-items: center; justify-content: center; width: 100%; height: 56px; border: 1px solid var(--border); border-radius: 6px; background: #fff; cursor: pointer; transition: all 0.2s; }
         .stencil-item-btn:hover { border-color: var(--primary); box-shadow: 0 2px 8px rgba(0,82,217,0.1); background: #fbfbfc; }
 
-        /* 用于面板展示的微缩图形 */
+        /* 面板展示的微缩图形 */
         .visual-shape { width: 44px; height: 28px; box-sizing: border-box; }
         .v-process { border: 2px solid #18191c; background: #f4f5f7; }
-        .v-material { border: 1px solid #dcdfe6; border-radius: 14px; background: #fff; } /* 仅在面板加浅边框便于看清轮廓，画布上是透明的 */
+        .v-material { border: 1px solid #dcdfe6; border-radius: 14px; background: #fff; }
         .v-emission { border: 2px dashed #d54941; background: #fff1f0; }
         .v-decision { width: 24px; height: 24px; border: 2px solid #18191c; background: #fff; transform: rotate(45deg); }
         .v-ellipse { border: 2px solid #18191c; background: #fff; border-radius: 50%; }
@@ -94,6 +94,14 @@
         .btn-small:hover { border-color: var(--primary); color: var(--primary); background: #f0f4ff; }
 
         .sys-notice { background: #f0f4ff; color: var(--text-main); font-size: 12px; padding: 4px 10px; border-radius: 4px; display: flex; align-items: center; font-weight: 500; border: 1px solid #c5d7f5;}
+
+        /* 颜色与样式选择菜单 */
+        .color-dropdown { position: relative; display: inline-block; }
+        .color-menu { display: none; position: absolute; top: calc(100% + 5px); left: 0; background: #fff; border: 1px solid var(--border); border-radius: 6px; padding: 12px; box-shadow: 0 4px 16px rgba(0,0,0,0.1); z-index: 100; width: 255px; flex-wrap: wrap; gap: 8px; }
+        .color-swatch { width: 24px; height: 24px; border-radius: 4px; border: 1px solid #dcdfe6; cursor: pointer; transition: transform 0.1s; box-sizing: border-box; }
+        .color-swatch:hover { transform: scale(1.15); border-color: var(--primary); box-shadow: 0 2px 6px rgba(0,0,0,0.15); z-index: 2; position: relative;}
+        .color-transparent { background: #fff; position: relative; overflow: hidden; }
+        .color-transparent::after { content: ''; position: absolute; top: 50%; left: -20%; width: 140%; height: 2px; background: #d54941; transform: rotate(45deg); }
 
         #container { flex: 1; width: 100%; height: 100%; position: relative; z-index: 1; outline: none; }
         #minimap { position: absolute; right: 20px; bottom: 20px; width: 180px; height: 120px; background: #fff; border: 1px solid #dcdfe6; box-shadow: 0 4px 12px rgba(0,0,0,0.08); z-index: 10; border-radius: 4px; overflow: hidden; }
@@ -162,23 +170,22 @@
     <div class="stencil-container">
         <div class="section-title">图元组件 (点击直接添加至画布中央)</div>
         <div class="stencil-grid">
-            <!-- 去除了文字的纯图形化按钮 -->
-            <div class="stencil-item-btn" onclick="addNodeToCenter('process')" title="主干工序">
+            <div class="stencil-item-btn" onclick="addNodeToCenter('process')">
                 <div class="visual-shape v-process"></div>
             </div>
-            <div class="stencil-item-btn" onclick="addNodeToCenter('material')" title="原辅料">
+            <div class="stencil-item-btn" onclick="addNodeToCenter('material')">
                 <div class="visual-shape v-material"></div>
             </div>
-            <div class="stencil-item-btn" onclick="addNodeToCenter('emission')" title="产排污">
+            <div class="stencil-item-btn" onclick="addNodeToCenter('emission')">
                 <div class="visual-shape v-emission"></div>
             </div>
-            <div class="stencil-item-btn" onclick="addNodeToCenter('decision')" title="逻辑判定">
+            <div class="stencil-item-btn" onclick="addNodeToCenter('decision')">
                 <div class="visual-shape v-decision"></div>
             </div>
-            <div class="stencil-item-btn" onclick="addNodeToCenter('ellipse')" title="起止状态">
+            <div class="stencil-item-btn" onclick="addNodeToCenter('ellipse')">
                 <div class="visual-shape v-ellipse"></div>
             </div>
-            <div class="stencil-item-btn" onclick="addNodeToCenter('text')" title="纯文本">
+            <div class="stencil-item-btn" onclick="addNodeToCenter('text')">
                 <div class="visual-shape v-text"></div>
             </div>
         </div>
@@ -194,34 +201,68 @@
         </div>
         
         <div class="toolbar-group">
-            <button class="btn-small" onclick="window.graph.history.undo()" title="撤销操作">撤销</button>
-            <button class="btn-small" onclick="saveProject()" title="保存当前图纸">保存文件</button>
-            <button class="btn-small" onclick="document.getElementById('fileInput').click()" title="加载本地图纸">加载文件</button>
+            <button class="btn-small" onclick="window.graph.history.undo()">撤销操作</button>
+            <button class="btn-small" onclick="saveProject()">保存文件</button>
+            <button class="btn-small" onclick="document.getElementById('fileInput').click()">加载文件</button>
             <input type="file" id="fileInput" style="display:none" accept=".json" onchange="loadProject(event)">
         </div>
 
         <div class="toolbar-group" style="background: #fbfbfc; padding: 2px 10px; border-radius: 4px; border: 1px solid #e3e6eb;">
-            <label>基准宽:</label><input type="number" id="globalW" value="130" style="width: 45px;">
-            <label>基准高:</label><input type="number" id="globalH" value="45" style="width: 40px;">
-            <label>横距:</label><input type="number" id="globalGapX" value="300" style="width: 45px;">
-            <label>纵距:</label><input type="number" id="globalGapY" value="80" style="width: 45px;">
-            <button class="btn-small" onclick="applyGlobalLayout()" style="border-color:#0052d9; color:#0052d9; margin-left: 5px;" title="将所有节点强制对齐">一键排版</button>
+            <label>节点宽:</label><input type="number" id="globalW" value="130" style="width: 40px;">
+            <label>高:</label><input type="number" id="globalH" value="45" style="width: 35px;">
+            <div style="width: 1px; height: 14px; background: #dcdfe6; margin: 0 4px;"></div>
+            <label>水平间距:</label><input type="number" id="globalGapX" value="300" style="width: 40px;">
+            <label>垂直间距:</label><input type="number" id="globalGapY" value="80" style="width: 40px;">
+            <button class="btn-small" onclick="applyGlobalLayout()" style="border-color:#0052d9; color:#0052d9; margin-left: 5px;">一键排版</button>
         </div>
 
         <div class="toolbar-group">
-            <!-- 默认固定为 Times New Roman 和 宋体 -->
-            <select id="westFont" onchange="updateNodeStyle('fontFamily')" style="width: 70px;" title="西文字体">
+            <select id="westFont" onchange="updateNodeStyle('fontFamily')" style="width: 70px;">
                 <option value="Times New Roman" selected>Times</option>
                 <option value="Arial">Arial</option>
             </select>
-            <select id="eastFont" onchange="updateNodeStyle('fontFamily')" style="width: 65px;" title="中文字体">
+            <select id="eastFont" onchange="updateNodeStyle('fontFamily')" style="width: 60px;">
                 <option value="SimSun" selected>宋体</option>
                 <option value="Microsoft YaHei">黑体</option>
             </select>
-            <input type="number" id="globalFontSize" value="13" style="width: 40px;" onchange="updateNodeStyle('fontSize')" title="字号调节">
-            <label style="cursor:pointer;" title="文字加粗"><input type="checkbox" id="fontWeight" onchange="updateNodeStyle('fontWeight')"><b>B</b></label>
+            <input type="number" id="globalFontSize" value="13" style="width: 40px;" onchange="updateNodeStyle('fontSize')">
+            <label style="cursor:pointer;" title="加粗"><input type="checkbox" id="fontWeight" onchange="updateNodeStyle('fontWeight')"><b>B</b></label>
         </div>
         
+        <div class="toolbar-group">
+            <div class="color-dropdown">
+                <button class="btn-small" onclick="toggleMenu('bgMenu', event)">填充色</button>
+                <div class="color-menu" id="bgMenu">
+                    <div class="color-swatch color-transparent" onclick="updateColor('fill', 'transparent')"></div>
+                    <div class="color-swatch" style="background-color:#ffffff;" onclick="updateColor('fill', '#ffffff')"></div>
+                    <div class="color-swatch" style="background-color:#f4f5f7;" onclick="updateColor('fill', '#f4f5f7')"></div>
+                    <div class="color-swatch" style="background-color:#fff1f0;" onclick="updateColor('fill', '#fff1f0')"></div>
+                    <div class="color-swatch" style="background-color:#fdf6ec;" onclick="updateColor('fill', '#fdf6ec')"></div>
+                    <div class="color-swatch" style="background-color:#e1f3d8;" onclick="updateColor('fill', '#e1f3d8')"></div>
+                    <div class="color-swatch" style="background-color:#f0f4ff;" onclick="updateColor('fill', '#f0f4ff')"></div>
+                </div>
+            </div>
+            <div class="color-dropdown">
+                <button class="btn-small" onclick="toggleMenu('strokeMenu', event)">边框色</button>
+                <div class="color-menu" id="strokeMenu">
+                    <div class="color-swatch color-transparent" onclick="updateColor('stroke', 'transparent')"></div>
+                    <div class="color-swatch" style="background-color:#18191c;" onclick="updateColor('stroke', '#18191c')"></div>
+                    <div class="color-swatch" style="background-color:#5f6471;" onclick="updateColor('stroke', '#5f6471')"></div>
+                    <div class="color-swatch" style="background-color:#d54941;" onclick="updateColor('stroke', '#d54941')"></div>
+                    <div class="color-swatch" style="background-color:#0052d9;" onclick="updateColor('stroke', '#0052d9')"></div>
+                    <div class="color-swatch" style="background-color:#00a870;" onclick="updateColor('stroke', '#00a870')"></div>
+                </div>
+            </div>
+            <select id="borderWidth" onchange="updateStyleProperty('strokeWidth')" style="width: 50px;">
+                <option value="1">1px</option><option value="2" selected>2px</option><option value="3">3px</option>
+            </select>
+            <select id="lineStyle" onchange="updateLineStyle()" style="width: 60px;">
+                <option value="solid">实线</option>
+                <option value="dashed">虚线</option>
+                <option value="dotted">点线</option>
+            </select>
+        </div>
+
         <div class="toolbar-group">
             <label style="color:#0052d9; cursor:pointer; font-weight: 500;">
                 <input type="checkbox" id="shortLabel" onchange="toggleEmissionLabels()"> 排污简写
@@ -362,18 +403,18 @@
     }
 
     /* =========================================================
-       2. 底层图形渲染逻辑 (固化字体、独立排版逻辑)
+       2. 底层图形渲染逻辑
        ========================================================= */
     function showError(msg) { document.getElementById('error-text').innerHTML = msg; document.getElementById('error-msg').style.display = 'block'; }
     function hideError() { document.getElementById('error-msg').style.display = 'none'; }
     function showToast(msg) { showError(msg); setTimeout(hideError, 2500); }
 
-    // 底层强制结合：宋体+Times，选项仅用于微调
+    // 默认中西文字体
     window.getCombinedFont = function() { 
         return `'${document.getElementById('westFont').value}', '${document.getElementById('eastFont').value}', sans-serif`; 
     }
 
-    // 宽高偶数对齐，防止模糊和连线歪斜
+    // 偶数对齐计算，保证连线精准
     window.calculateNodeSize = function(text, minW, minH) {
         if (!text) return { width: minW, height: minH };
         const lines = text.split('\n'); let maxChars = 0;
@@ -430,8 +471,65 @@
     });
 
     /* =========================================================
-       3. 图元组件：点击生成（彻底免拖拽）
+       3. 样式定制与控件响应
        ========================================================= */
+
+    // 控制菜单显隐
+    window.toggleMenu = function(menuId, event) {
+        event.stopPropagation();
+        document.querySelectorAll('.color-menu').forEach(menu => {
+            menu.style.display = (menu.id === menuId && menu.style.display !== 'flex') ? 'flex' : 'none';
+        });
+    };
+    document.addEventListener('click', event => {
+        if (!event.target.closest('.color-dropdown')) {
+            document.querySelectorAll('.color-menu').forEach(menu => menu.style.display = 'none');
+        }
+    });
+
+    // 独立控制元素颜色
+    window.updateColor = function(type, color) {
+        if (!window.graph) return;
+        const cells = window.graph.getSelectedCells().length ? window.graph.getSelectedCells() : [...window.graph.getNodes(), ...window.graph.getEdges()];
+        cells.forEach(cell => {
+            if (cell.isNode()) {
+                if (type === 'fill') cell.attr('body/fill', color);
+                if (type === 'stroke') {
+                    cell.attr('body/stroke', color);
+                    if (color === 'transparent') cell.attr('body/strokeWidth', 0);
+                    else if (cell.attr('body/strokeWidth') === 0) cell.attr('body/strokeWidth', parseInt(document.getElementById('borderWidth').value) || 2);
+                }
+            } else if (cell.isEdge() && type === 'stroke') {
+                cell.attr('line/stroke', color);
+            }
+        });
+        document.querySelectorAll('.color-menu').forEach(menu => menu.style.display = 'none');
+    };
+
+    // 独立控制元素线宽
+    window.updateStyleProperty = function(property) {
+        if (!window.graph) return;
+        const val = parseInt(document.getElementById('borderWidth').value);
+        const cells = window.graph.getSelectedCells().length ? window.graph.getSelectedCells() : [...window.graph.getNodes(), ...window.graph.getEdges()];
+        cells.forEach(cell => {
+            if (cell.isNode()) cell.attr('body/' + property, val);
+            else if (cell.isEdge()) cell.attr('line/' + property, val);
+        });
+    };
+
+    // 独立控制元素线型
+    window.updateLineStyle = function() {
+        if (!window.graph) return;
+        const val = document.getElementById('lineStyle').value;
+        let dash = '0';
+        if (val === 'dashed') dash = '5 5';
+        if (val === 'dotted') dash = '2 2';
+        const cells = window.graph.getSelectedCells().length ? window.graph.getSelectedCells() : [...window.graph.getNodes(), ...window.graph.getEdges()];
+        cells.forEach(cell => {
+            if (cell.isNode()) cell.attr('body/strokeDasharray', dash);
+            else if (cell.isEdge()) cell.attr('line/strokeDasharray', dash);
+        });
+    };
 
     window.addNodeToCenter = function(type) {
         if (!window.graph) return;
@@ -506,7 +604,6 @@
         window.graph.centerContent({ padding: 60 });
     };
 
-    // 保存文件（对应“保存文件”功能）
     window.saveProject = function() {
         if(!window.graph) return;
         const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(window.graph.toJSON()));
@@ -514,7 +611,6 @@
         document.body.appendChild(a); a.click(); a.remove(); showToast("已成功保存文件");
     };
 
-    // 加载文件（对应“加载文件”功能）
     window.loadProject = function(event) {
         const file = event.target.files[0]; if (!file) return;
         const reader = new FileReader();
@@ -524,7 +620,6 @@
         reader.readAsText(file); event.target.value = ''; 
     };
 
-    // 自适应调整文字与字号（脱离全局排版）
     window.updateNodeStyle = function(type) {
         if (!window.graph) return;
         const cells = window.graph.getSelectedCells(); const targetNodes = cells.length ? cells.filter(c => c.isNode()) : window.graph.getNodes();
@@ -546,7 +641,6 @@
     
     function formatEmissionLabel(fullText, isShort) { if (!isShort) return fullText; return fullText.split('\n').map(line => { const match = line.match(/[A-Za-z]+[-_]?\d+/); return match ? match[0] : line; }).join('\n'); }
     
-    // 排污文字自适应拉伸
     window.toggleEmissionLabels = function() {
         if (!window.graph) return; const isShort = document.getElementById('shortLabel').checked;
         window.graph.getNodes().forEach(node => {
