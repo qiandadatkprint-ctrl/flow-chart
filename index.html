@@ -5,7 +5,7 @@
     <title>工艺流程绘制系统</title>
     <script src="https://unpkg.com/@antv/x6@1.34.6/dist/x6.js"></script>
     <style>
-        /* 企业级规范色板 */
+        /* 严谨的工业级色板 */
         :root { 
             --primary: #0052d9; 
             --primary-hover: #266bf0;
@@ -16,7 +16,7 @@
             --panel-bg: #ffffff;
         }
         
-        body { font-family: "Microsoft YaHei", Arial, sans-serif; margin: 0; padding: 0; display: flex; height: 100vh; background: var(--bg); overflow: hidden; color: var(--text-main); }
+        body { font-family: "SimSun", "Times New Roman", Arial, sans-serif; margin: 0; padding: 0; display: flex; height: 100vh; background: var(--bg); overflow: hidden; color: var(--text-main); }
         
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
@@ -44,18 +44,18 @@
         .msg-row.user { align-self: flex-end; flex-direction: row-reverse; }
         .msg-row.ai { align-self: flex-start; }
         
-        .msg-avatar { width: 36px; height: 32px; border-radius: 4px; display: flex; justify-content: center; align-items: center; font-size: 12px; font-weight: bold; flex-shrink: 0; margin: 0 12px; font-family: Arial, sans-serif;}
+        .msg-avatar { width: 36px; height: 32px; border-radius: 4px; display: flex; justify-content: center; align-items: center; font-size: 12px; font-weight: bold; flex-shrink: 0; margin: 0 12px; font-family: "Microsoft YaHei", Arial, sans-serif;}
         .msg-row.user .msg-avatar { background: #e0e7ff; color: var(--primary); }
         .msg-row.ai .msg-avatar { background: #0052d9; color: #fff; }
         
-        .msg-bubble { padding: 12px 16px; border-radius: 6px; font-size: 13px; line-height: 1.6; word-wrap: break-word; white-space: pre-wrap; box-shadow: 0 2px 6px rgba(0,0,0,0.03);}
+        .msg-bubble { padding: 12px 16px; border-radius: 6px; font-size: 13px; line-height: 1.6; word-wrap: break-word; white-space: pre-wrap; box-shadow: 0 2px 6px rgba(0,0,0,0.03); font-family: "Microsoft YaHei", Arial, sans-serif;}
         .msg-row.user .msg-bubble { background: var(--primary); color: #fff; }
         .msg-row.ai .msg-bubble { background: #fff; color: var(--text-main); border: 1px solid var(--border); }
         
         .chat-input-area { padding: 15px 20px; background: var(--panel-bg); border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 10px; flex-shrink: 0;}
-        .chat-input-area textarea { width: 100%; height: 80px; resize: none; border: 1px solid var(--border); border-radius: 4px; padding: 10px; font-family: inherit; font-size: 13px; box-sizing: border-box; transition: 0.2s;}
+        .chat-input-area textarea { width: 100%; height: 80px; resize: none; border: 1px solid var(--border); border-radius: 4px; padding: 10px; font-family: "Microsoft YaHei", inherit; font-size: 13px; box-sizing: border-box; transition: 0.2s;}
         .chat-input-area textarea:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 0 2px rgba(0,82,217,0.1); }
-        .send-btn { background: var(--primary); color: #fff; border: none; padding: 10px 0; border-radius: 4px; cursor: pointer; font-weight: 500; font-size: 13px; transition: 0.2s; display: flex; justify-content: center; align-items: center; }
+        .send-btn { background: var(--primary); color: #fff; border: none; padding: 10px 0; border-radius: 4px; cursor: pointer; font-weight: 500; font-size: 13px; transition: 0.2s; display: flex; justify-content: center; align-items: center; font-family: "Microsoft YaHei", sans-serif;}
         .send-btn:hover { background: var(--primary-hover); }
         .send-btn:disabled { background: #ccc; cursor: not-allowed; }
 
@@ -65,18 +65,27 @@
         .typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
         @keyframes typing { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
 
-        /* 全新点击式图元面板 */
+        /* 图形化图元组件库 */
         .stencil-container { padding: 15px 20px; border-top: 1px solid var(--border); background: #fbfbfc; flex-shrink: 0; }
-        .section-title { font-size: 12px; font-weight: 600; color: var(--text-sub); margin: 0 0 12px 0; }
-        .stencil-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
-        .btn-stencil { padding: 8px 12px; background: #fff; border: 1px solid var(--border); border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: 500; color: var(--text-main); transition: 0.2s; }
-        .btn-stencil:hover { background: #f0f4ff; border-color: var(--primary); color: var(--primary); }
-        .btn-stencil.process { border-left: 4px solid #18191c; }
-        .btn-stencil.material { border-radius: 12px; border-left: 4px solid #dcdfe6; }
-        .btn-stencil.emission { border: 1px dashed #d54941; color: #d54941; }
+        .section-title { font-size: 12px; font-weight: 600; color: var(--text-sub); margin: 0 0 12px 0; font-family: "Microsoft YaHei", sans-serif;}
+        .stencil-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; justify-items: center; }
         
+        .stencil-item-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; padding: 12px 0; border: 1px solid var(--border); border-radius: 6px; background: #fff; cursor: pointer; transition: all 0.2s; gap: 8px; }
+        .stencil-item-btn:hover { border-color: var(--primary); box-shadow: 0 2px 8px rgba(0,82,217,0.1); }
+        .stencil-item-btn span { font-size: 12px; color: var(--text-sub); font-family: "Microsoft YaHei", sans-serif;}
+        .stencil-item-btn:hover span { color: var(--primary); font-weight: 500; }
+
+        /* 模拟画布中真实的样式 */
+        .visual-shape { width: 40px; height: 26px; box-sizing: border-box; }
+        .v-process { border: 2px solid #18191c; background: #f4f5f7; }
+        .v-material { border: 1px solid #dcdfe6; border-radius: 13px; background: #fff; } /* 原辅料边缘极淡，模拟无边框 */
+        .v-emission { border: 2px dashed #d54941; background: #fff1f0; }
+        .v-decision { width: 22px; height: 22px; border: 2px solid #18191c; background: #fff; transform: rotate(45deg); margin: 2px 0; }
+        .v-ellipse { border: 2px solid #18191c; background: #fff; border-radius: 50%; }
+        .v-text { border: 1px dashed #999; background: transparent; }
+
         .main-workspace { flex: 1; display: flex; flex-direction: column; position: relative; min-width: 0; background: var(--panel-bg);}
-        .toolbar { background: var(--panel-bg); border-bottom: 1px solid var(--border); display: flex; padding: 10px 15px; gap: 10px; z-index: 15; flex-wrap: wrap; flex-shrink: 0; align-items: center; box-shadow: 0 2px 6px rgba(0,0,0,0.02);}
+        .toolbar { background: var(--panel-bg); border-bottom: 1px solid var(--border); display: flex; padding: 10px 15px; gap: 10px; z-index: 15; flex-wrap: wrap; flex-shrink: 0; align-items: center; box-shadow: 0 2px 6px rgba(0,0,0,0.02); font-family: "Microsoft YaHei", sans-serif;}
         .toolbar-group { display: flex; align-items: center; gap: 8px; border-right: 1px solid var(--border); padding-right: 12px; }
         .toolbar-group:last-child { border-right: none; }
         .toolbar label { font-size: 12px; color: var(--text-main); display: flex; align-items: center; gap: 4px;}
@@ -100,10 +109,10 @@
         .x6-node-selected rect, .x6-node-selected polygon, .x6-node-selected ellipse { stroke: var(--primary) !important; stroke-width: 2px !important; stroke-dasharray: 4 4; }
         .x6-edge-selected path { stroke: var(--primary) !important; stroke-width: 3px !important; }
 
-        #editModal { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.4); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(2px);}
+        #editModal { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.4); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(2px); font-family: "Microsoft YaHei", sans-serif;}
         .modal-content { background: #fff; padding: 24px; border-radius: 6px; width: 340px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); }
         .modal-content h3 { margin: 0 0 16px 0; font-size: 15px; color: var(--text-main); }
-        .modal-content textarea { width: 100%; height: 100px; margin-bottom: 16px; font-size: 13px; box-sizing: border-box; font-family: inherit; padding: 10px; border: 1px solid var(--border); border-radius: 4px; outline: none;}
+        .modal-content textarea { width: 100%; height: 100px; margin-bottom: 16px; font-size: 13px; box-sizing: border-box; font-family: "SimSun", "Times New Roman", inherit; padding: 10px; border: 1px solid var(--border); border-radius: 4px; outline: none;}
         .modal-content textarea:focus { border-color: var(--primary); }
         .modal-actions { display: flex; justify-content: flex-end; gap: 12px; }
         .modal-actions button { padding: 6px 16px; border-radius: 4px; cursor: pointer; border: 1px solid transparent; font-size: 13px; font-weight: 500;}
@@ -153,14 +162,32 @@
     </div>
 
     <div class="stencil-container">
-        <div class="section-title">手动图元库 (点击直接添加至画布中央)</div>
+        <div class="section-title">图元组件 (点击直接添加至画布中央)</div>
         <div class="stencil-grid">
-            <button class="btn-stencil process" onclick="addNodeToCenter('process')">➕ 主干工序</button>
-            <button class="btn-stencil material" onclick="addNodeToCenter('material')">➕ 原辅料</button>
-            <button class="btn-stencil emission" onclick="addNodeToCenter('emission')">➕ 产排污</button>
-            <button class="btn-stencil" onclick="addNodeToCenter('decision')">➕ 逻辑判定</button>
-            <button class="btn-stencil" style="border-radius: 12px;" onclick="addNodeToCenter('ellipse')">➕ 起止状态</button>
-            <button class="btn-stencil" style="border: 1px dashed #999;" onclick="addNodeToCenter('text')">➕ 纯文本</button>
+            <div class="stencil-item-btn" onclick="addNodeToCenter('process')" title="主干工序">
+                <div class="visual-shape v-process"></div>
+                <span>主干工序</span>
+            </div>
+            <div class="stencil-item-btn" onclick="addNodeToCenter('material')" title="原辅料">
+                <div class="visual-shape v-material"></div>
+                <span>原辅料</span>
+            </div>
+            <div class="stencil-item-btn" onclick="addNodeToCenter('emission')" title="产排污">
+                <div class="visual-shape v-emission"></div>
+                <span>产排污</span>
+            </div>
+            <div class="stencil-item-btn" onclick="addNodeToCenter('decision')" title="逻辑判定">
+                <div class="visual-shape v-decision"></div>
+                <span>逻辑判定</span>
+            </div>
+            <div class="stencil-item-btn" onclick="addNodeToCenter('ellipse')" title="起止状态">
+                <div class="visual-shape v-ellipse"></div>
+                <span>起止状态</span>
+            </div>
+            <div class="stencil-item-btn" onclick="addNodeToCenter('text')" title="纯文本">
+                <div class="visual-shape v-text"></div>
+                <span>纯文本</span>
+            </div>
         </div>
     </div>
 </div>
@@ -175,27 +202,27 @@
         
         <div class="toolbar-group">
             <button class="btn-small" onclick="window.graph.history.undo()" title="撤销操作">撤销</button>
-            <button class="btn-small" onclick="saveProject()" title="保存当前工程">保存工程</button>
-            <button class="btn-small" onclick="document.getElementById('fileInput').click()" title="加载本地工程">加载工程</button>
+            <button class="btn-small" onclick="saveProject()" title="保存当前图纸">保存文件</button>
+            <button class="btn-small" onclick="document.getElementById('fileInput').click()" title="加载本地图纸">加载文件</button>
             <input type="file" id="fileInput" style="display:none" accept=".json" onchange="loadProject(event)">
         </div>
 
         <div class="toolbar-group" style="background: #fbfbfc; padding: 2px 10px; border-radius: 4px; border: 1px solid #e3e6eb;">
-            <label>框宽:</label><input type="number" id="globalW" value="130" style="width: 45px;" title="排版基准宽度">
-            <label>框高:</label><input type="number" id="globalH" value="45" style="width: 40px;" title="排版基准高度">
-            <label>横距:</label><input type="number" id="globalGapX" value="300" style="width: 45px;" title="原辅料/排污到中心的距离">
-            <label>纵距:</label><input type="number" id="globalGapY" value="80" style="width: 45px;" title="工序上下的间距">
-            <button class="btn-small" onclick="applyGlobalLayout()" style="border-color:#0052d9; color:#0052d9; margin-left: 5px;" title="一键将所有节点强制对齐">一键排版</button>
+            <label>基准宽:</label><input type="number" id="globalW" value="130" style="width: 45px;">
+            <label>基准高:</label><input type="number" id="globalH" value="45" style="width: 40px;">
+            <label>横距:</label><input type="number" id="globalGapX" value="300" style="width: 45px;">
+            <label>纵距:</label><input type="number" id="globalGapY" value="80" style="width: 45px;">
+            <button class="btn-small" onclick="applyGlobalLayout()" style="border-color:#0052d9; color:#0052d9; margin-left: 5px;" title="将所有节点强制对齐">一键排版</button>
         </div>
 
         <div class="toolbar-group">
             <select id="westFont" onchange="updateNodeStyle('fontFamily')" style="width: 70px;" title="西文字体">
+                <option value="Times New Roman" selected>Times</option>
                 <option value="Arial">Arial</option>
-                <option value="Times New Roman">Times</option>
             </select>
             <select id="eastFont" onchange="updateNodeStyle('fontFamily')" style="width: 85px;" title="中文字体">
+                <option value="SimSun" selected>宋体</option>
                 <option value="Microsoft YaHei">微软雅黑</option>
-                <option value="SimSun">宋体</option>
                 <option value="SimHei">黑体</option>
             </select>
             <input type="number" id="globalFontSize" value="13" style="width: 40px;" onchange="updateNodeStyle('fontSize')" title="字号调节">
@@ -210,7 +237,7 @@
 
         <div class="toolbar-group" style="margin-left: auto; border-right: none; padding-right: 0;">
             <button class="btn-small" style="color: var(--text-sub);" onclick="clearCanvas()">清空</button>
-            <button class="btn-small" style="color: #d54941;" onclick="deleteSelected()">删除选区</button>
+            <button class="btn-small" style="color: #d54941;" onclick="deleteSelected()">删除</button>
             <button class="btn-small" style="background:#00a870; color:#fff; border:none;" onclick="exportPNG()">导出 PNG</button>
         </div>
     </div>
@@ -342,16 +369,18 @@
     }
 
     /* =========================================================
-       2. 底层图形渲染逻辑
+       2. 底层图形渲染逻辑 (彻底分离调整与全局排版)
        ========================================================= */
     function showError(msg) { document.getElementById('error-text').innerHTML = msg; document.getElementById('error-msg').style.display = 'block'; }
     function hideError() { document.getElementById('error-msg').style.display = 'none'; }
     function showToast(msg) { showError(msg); setTimeout(hideError, 2500); }
 
+    // 获取当前默认选择的中西文字体组合
     window.getCombinedFont = function() { 
         return `'${document.getElementById('westFont').value}', '${document.getElementById('eastFont').value}', sans-serif`; 
     }
 
+    // 核心计算规则：偶数宽高防止错位偏移
     window.calculateNodeSize = function(text, minW, minH) {
         if (!text) return { width: minW, height: minH };
         const lines = text.split('\n'); let maxChars = 0;
@@ -408,10 +437,9 @@
     });
 
     /* =========================================================
-       3. 全新控制逻辑：点击生成图元至中心、脱绑自动排版
+       3. 图元组件：图形化界面 & 点击生成
        ========================================================= */
 
-    // 点击直接在画布中央生成图元
     window.addNodeToCenter = function(type) {
         if (!window.graph) return;
         const minW = parseInt(document.getElementById('globalW').value) || 130; 
@@ -422,7 +450,7 @@
         const scroller = document.getElementById('container');
         const rect = scroller.getBoundingClientRect();
         const center = window.graph.clientToLocal(rect.left + rect.width / 2, rect.top + rect.height / 2);
-        const offsetX = (Math.random() - 0.5) * 40; // 轻微偏移防重叠
+        const offsetX = (Math.random() - 0.5) * 40; 
         const offsetY = (Math.random() - 0.5) * 40;
 
         let style = { fill: '#f4f5f7', stroke: '#18191c', rx: 0, color: '#18191c', strokeWidth: 2, dash: '0' }; let shape = 'rect';
@@ -438,7 +466,7 @@
         window.graph.addNode({ shape: shape, x: Math.round(center.x - size.width/2 + offsetX), y: Math.round(center.y - size.height/2 + offsetY), width: size.width, height: size.height, ports: defaultPorts, data: { category: type, originalLabel: initialText }, attrs: { body: { fill: style.fill, stroke: style.stroke, strokeWidth: style.strokeWidth, strokeDasharray: style.dash, rx: style.rx, ry: style.rx, refPoints: style.refPoints }, text: { text: initialText, fill: style.color, fontSize: parseInt(document.getElementById('globalFontSize').value), fontFamily: window.getCombinedFont(), fontWeight: document.getElementById('fontWeight').checked ? 'bold' : 'normal' } } });
     };
 
-    // 一键排版 (读取可见的横距/纵距)
+    // 主动式一键排版，不再与日常属性修改强绑定
     window.applyGlobalLayout = function() {
         if (!window.graph) return;
         const allNodes = window.graph.getNodes(); const allEdges = window.graph.getEdges(); if (allNodes.length === 0) return;
@@ -489,7 +517,7 @@
     window.saveProject = function() {
         if(!window.graph) return;
         const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(window.graph.toJSON()));
-        const a = document.createElement('a'); a.setAttribute("href", dataStr); a.setAttribute("download", "工艺流程工程文件.json");
+        const a = document.createElement('a'); a.setAttribute("href", dataStr); a.setAttribute("download", "工艺流程文件.json");
         document.body.appendChild(a); a.click(); a.remove(); showToast("已成功保存工程文件");
     };
 
@@ -515,7 +543,7 @@
             const baseW = parseInt(document.getElementById('globalW').value) || 130;
             const baseH = parseInt(document.getElementById('globalH').value) || 45;
             const size = window.calculateNodeSize(text, baseW, baseH);
-            node.resize(size.width, size.height); // 仅拉伸自身，绝不动位置
+            node.resize(size.width, size.height); 
         });
     };
 
@@ -581,14 +609,14 @@
                     window.graph.addEdge({ source: { cell: edge.source, port: srcPort }, target: { cell: edge.target, port: tgtPort }, attrs: window.getSelectedEdgeAttrs(), router: window.getSelectedRouter(), connector: { name: 'rounded', args: { radius: 4 } } });
                 });
             }
-            setTimeout(() => { window.applyGlobalLayout(); }, 80); // 仅在AI初次渲染时调用一次全局排版
+            setTimeout(() => { window.applyGlobalLayout(); }, 80); // 仅初次生成强制一次全局对齐
         } catch (fatalError) { showError("系统渲染异常：" + fatalError.message); }
     };
 
     window.exportPNG = function() {
         if (!window.graph || window.graph.getCells().length === 0) return showToast("当前画布无内容");
         window.graph.cleanSelection(); const nodes = window.graph.getNodes(); nodes.forEach(n => n.getPorts().forEach(p => n.portProp(p.id, 'attrs/circle/style/visibility', 'hidden')));
-        window.graph.toPNG((dataUri) => { const link = document.createElement('a'); link.download = 'Process_Layout.png'; link.href = dataUri; link.click(); nodes.forEach(n => n.getPorts().forEach(p => n.portProp(p.id, 'attrs/circle/style', {}))); }, { padding: 40, backgroundColor: '#fff', quality: 1 });
+        window.graph.toPNG((dataUri) => { const link = document.createElement('a'); link.download = '工艺图纸.png'; link.href = dataUri; link.click(); nodes.forEach(n => n.getPorts().forEach(p => n.portProp(p.id, 'attrs/circle/style', {}))); }, { padding: 40, backgroundColor: '#fff', quality: 1 });
     };
 </script>
 
