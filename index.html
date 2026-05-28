@@ -52,8 +52,11 @@
         .msg-row.user .msg-bubble { background: var(--primary); color: #fff; }
         .msg-row.ai .msg-bubble { background: #fff; color: var(--text-main); border: 1px solid var(--border); }
         
-        .chat-input-area { padding: 15px 20px; background: var(--panel-bg); border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 10px; flex-shrink: 0;}
-        .chat-input-area textarea { width: 100%; height: 110px; resize: none; border: 1px solid var(--border); border-radius: 4px; padding: 10px; font-family: "Microsoft YaHei", inherit; font-size: 13px; box-sizing: border-box; transition: 0.2s;}
+        .chat-input-area { padding: 15px 20px; background: var(--panel-bg); border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 8px; flex-shrink: 0;}
+        .chat-input-header { display: flex; justify-content: space-between; align-items: center;}
+        .chat-input-header span { font-size: 12px; color: var(--text-sub); font-family: "Microsoft YaHei", sans-serif;}
+        
+        .chat-input-area textarea { width: 100%; height: 90px; resize: none; border: 1px solid var(--border); border-radius: 4px; padding: 10px; font-family: "Microsoft YaHei", inherit; font-size: 13px; box-sizing: border-box; transition: 0.2s;}
         .chat-input-area textarea:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 0 2px rgba(0,82,217,0.1); }
         .send-btn { background: var(--primary); color: #fff; border: none; padding: 10px 0; border-radius: 4px; cursor: pointer; font-weight: 500; font-size: 13px; transition: 0.2s; display: flex; justify-content: center; align-items: center; font-family: "Microsoft YaHei", sans-serif;}
         .send-btn:hover { background: var(--primary-hover); }
@@ -65,7 +68,6 @@
         .typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
         @keyframes typing { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
 
-        /* 图形化面板区 */
         .stencil-container { padding: 15px 20px; border-top: 1px solid var(--border); background: #fbfbfc; flex-shrink: 0; }
         .section-title { font-size: 12px; font-weight: 600; color: var(--text-sub); margin: 0 0 12px 0; font-family: "Microsoft YaHei", sans-serif;}
         .stencil-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
@@ -114,9 +116,9 @@
         .x6-edge-selected path { stroke: var(--primary) !important; stroke-width: 3px !important; }
 
         #editModal { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.4); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(2px); font-family: "Microsoft YaHei", sans-serif;}
-        .modal-content { background: #fff; padding: 24px; border-radius: 6px; width: 340px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); }
+        .modal-content { background: #fff; padding: 24px; border-radius: 6px; width: 360px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); }
         .modal-content h3 { margin: 0 0 16px 0; font-size: 15px; color: var(--text-main); }
-        .modal-content textarea { width: 100%; height: 100px; margin-bottom: 16px; font-size: 13px; box-sizing: border-box; font-family: "SimSun", "Times New Roman", inherit; padding: 10px; border: 1px solid var(--border); border-radius: 4px; outline: none;}
+        .modal-content textarea { width: 100%; height: 120px; margin-bottom: 16px; font-size: 13px; box-sizing: border-box; font-family: "SimSun", "Times New Roman", inherit; padding: 10px; border: 1px solid var(--border); border-radius: 4px; outline: none; line-height: 1.5;}
         .modal-content textarea:focus { border-color: var(--primary); }
         .modal-actions { display: flex; justify-content: flex-end; gap: 12px; }
         .modal-actions button { padding: 6px 16px; border-radius: 4px; cursor: pointer; border: 1px solid transparent; font-size: 13px; font-weight: 500;}
@@ -155,13 +157,17 @@
         <div class="chat-messages" id="chatMessages">
             <div class="msg-row ai">
                 <div class="msg-avatar">豆包</div>
-                <div class="msg-bubble">系统已就绪。请输入工艺流程描述，我将自动提取主线工序、原辅料以及产排污节点，并绘制规范的工艺流程图。</div>
+                <div class="msg-bubble">系统已就绪。请输入工艺流程描述，我将自动提取主干工序、原辅料及产排污节点，并绘制标准的拓扑流程图。</div>
             </div>
         </div>
         
         <div class="chat-input-area">
-            <textarea id="chatInput" placeholder="在此输入工艺描述...&#10;&#10;【规范示例】：&#10;各类原料投入原料检测工序，产生废气G1与废渣S1；&#10;随后加入异丙醇、二甲苯进行投料与合成反应，产生废气G2；&#10;反应后使用纯水进行洗涤，产生清洗废水W1..."></textarea>
-            <button class="send-btn" id="sendBtn" onclick="sendMessage()">执行解析</button>
+            <div class="chat-input-header">
+                <span>流程说明录入：</span>
+                <button class="text-btn" onclick="insertExample()" style="padding:0; font-size:12px;">快速载入规范示例</button>
+            </div>
+            <textarea id="chatInput" placeholder="支持大段文本直接粘贴。AI 将自动分析节点关系。"></textarea>
+            <button class="send-btn" id="sendBtn" onclick="sendMessage()">执行智能分析与排版</button>
         </div>
     </div>
 
@@ -209,7 +215,7 @@
             <label>节点宽:</label><input type="number" id="globalW" value="130" style="width: 40px;">
             <label>高:</label><input type="number" id="globalH" value="45" style="width: 35px;">
             <div style="width: 1px; height: 14px; background: #dcdfe6; margin: 0 4px;"></div>
-            <label>水平间距:</label><input type="number" id="globalGapX" value="300" style="width: 40px;">
+            <label>水平间距:</label><input type="number" id="globalGapX" value="320" style="width: 40px;">
             <label>垂直间距:</label><input type="number" id="globalGapY" value="80" style="width: 40px;">
             <button class="btn-small" onclick="applyGlobalLayout()" style="border-color:#0052d9; color:#0052d9; margin-left: 5px;">一键排版</button>
         </div>
@@ -318,6 +324,12 @@
         configPanel.style.display = 'none'; showToast("接口配置保存成功");
     }
 
+    // 快捷插入规范示例
+    function insertExample() {
+        const text = "各类原料投入原料检测工序，产生废气G1与废渣S1；\n随后加入异丙醇、二甲苯进行投料与合成反应，产生废气G2；\n反应后使用纯水进行洗涤，产生清洗废水W1；\n压滤后产生实验废渣S2，最后通过电加热烘干产生废气G3。";
+        document.getElementById('chatInput').value = text;
+    }
+
     function appendMessage(role, content) {
         const chatMessages = document.getElementById('chatMessages');
         const msgId = 'msg-' + Date.now();
@@ -354,14 +366,14 @@
         const systemPrompt = `你是一个专业的环境工程工艺图解析系统。
 请严格分析用户提供的工艺描述，并提取为标准 JSON 数据格式（必须用 \`\`\`json 和 \`\`\` 包裹）。
 
-【核心拓扑法则】(极其重要，必须严格执行)：
+【核心拓扑法则】(必须严格执行)：
 1. 【主干串联】：必须提取所有的主工序步骤，并在 \`edges\` 中，生成将工序按先后顺序相连的连线数据。
 2. 【原辅料】：同一个工序投入的多种物料必须合并在一个物料节点中（内部用 \\n 换行）。同一种物料在多道工序用到，必须为每道工序创建各自独立的原辅料节点，绝不可复用！原辅料必须通过 edge 指向工序。
 3. 【产排污】：工序产生的多种污染物必须合并在一个节点（用 \\n 换行，名称和代号写在一起）。严禁为同一工序拆分出多个排污节点！工序必须通过 edge 指向污染物。
 
 【JSON 规范】：
 {"nodes": [{"id": "唯一标识", "label": "名称", "category": "分类"}], "edges": [{"source": "起点id", "target": "终点id"}]}
-* category 仅限: process, material, emission。
+* category 取值【必须严格为全小写英文】：process, material, emission。
 * label 禁止使用 Markdown 符号，多项内容使用 \\n 换行。`;
 
         try {
@@ -401,7 +413,7 @@
     }
 
     /* =========================================================
-       2. 底层图形渲染与自适应算法
+       2. 防弹级动态图形渲染逻辑
        ========================================================= */
     function showError(msg) { document.getElementById('error-text').innerHTML = msg; document.getElementById('error-msg').style.display = 'block'; }
     function hideError() { document.getElementById('error-msg').style.display = 'none'; }
@@ -411,10 +423,8 @@
         return `'${document.getElementById('westFont').value}', '${document.getElementById('eastFont').value}', sans-serif`; 
     }
 
-    // 严苛的文本高度测算规则 (全面处理换行符、转义符)
     window.calculateNodeSize = function(text, minW, minH) {
         if (!text) return { width: minW, height: minH };
-        // 兼容 AI 传来的字面量 \\n 和真实的换行符 \n
         const lines = text.replace(/\\n/g, '\n').split(/\r?\n/); 
         let maxChars = 0;
         lines.forEach(l => { 
@@ -556,17 +566,17 @@
         window.graph.addNode({ shape: shape, x: Math.round(center.x - size.width/2 + offsetX), y: Math.round(center.y - size.height/2 + offsetY), width: size.width, height: size.height, ports: defaultPorts, data: { category: type, originalLabel: initialText }, attrs: { body: { fill: style.fill, stroke: style.stroke, strokeWidth: style.strokeWidth, strokeDasharray: style.dash, rx: style.rx, ry: style.rx, refPoints: style.refPoints }, text: { text: initialText, fill: style.color, fontSize: parseInt(document.getElementById('globalFontSize').value), fontFamily: window.getCombinedFont(), fontWeight: document.getElementById('fontWeight').checked ? 'bold' : 'normal' } } });
     };
 
-    // 核心引擎：深度重写的动态高度层级排版算法 (彻底解决多行溢出与重叠)
+    // 终极重构的动态流式排版算法 (防弹级容错)
     window.applyGlobalLayout = function() {
         if (!window.graph) return;
         const allNodes = window.graph.getNodes(); const allEdges = window.graph.getEdges(); if (allNodes.length === 0) return;
         
         const baseW = parseInt(document.getElementById('globalW').value) || 130; 
         const baseH = parseInt(document.getElementById('globalH').value) || 45;
-        const gapX = parseInt(document.getElementById('globalGapX').value) || 300; 
+        const gapX = parseInt(document.getElementById('globalGapX').value) || 320; 
         const minGapY = parseInt(document.getElementById('globalGapY').value) || 80; 
 
-        // 重新测算并应用所有节点的尺寸 (基于换行高度)
+        // 重新同步文字宽高
         allNodes.forEach(node => { 
             const data = node.getData() || {}; 
             if (data.category !== 'text' && data.category !== 'decision' && data.category !== 'ellipse') { 
@@ -576,16 +586,17 @@
             } 
         });
 
-        // 节点归类
-        const processNodes = []; const materialNodes = []; const emissionNodes = [];
+        // 泛化识别分类（防御 AI 乱编分类名导致找不到节点）
+        const processNodes = []; const materialNodes = []; const emissionNodes = []; const otherNodes = [];
         allNodes.forEach(n => { 
             const data = n.getData() || {}; 
-            if(data.category === 'process') processNodes.push(n); 
-            else if(data.category === 'material') materialNodes.push(n); 
-            else if(data.category === 'emission') emissionNodes.push(n); 
+            const cat = String(data.category).toLowerCase();
+            if(cat.includes('process') || cat.includes('工') || cat.includes('主')) processNodes.push(n); 
+            else if(cat.includes('material') || cat.includes('原') || cat.includes('辅')) materialNodes.push(n); 
+            else if(cat.includes('emission') || cat.includes('污') || cat.includes('废')) emissionNodes.push(n); 
+            else processNodes.push(n); // 无法识别的强行挂在主线上
         });
 
-        // 解析连线结构
         const outEdges = {}; const inEdges = {};
         allEdges.forEach(e => { 
             const src = e.getSourceCellId(); const tgt = e.getTargetCellId(); 
@@ -593,10 +604,13 @@
             outEdges[src].push(tgt); inEdges[tgt].push(src); 
         });
 
-        // 寻找流程源头并排序主干
+        // 提取串联主线
         const processIds = new Set(processNodes.map(p => p.id)); 
         let sortedProcesses = []; let visited = new Set();
         let startProcesses = processNodes.filter(p => { return !(inEdges[p.id] || []).some(id => processIds.has(id)); });
+        // 如果图是个死循环闭环，强行抓一个当开头
+        if (startProcesses.length === 0 && processNodes.length > 0) startProcesses = [processNodes[0]];
+        
         let queue = [...startProcesses];
         while(queue.length > 0) { 
             let curr = queue.shift(); 
@@ -608,61 +622,65 @@
         processNodes.forEach(p => { if(!visited.has(p.id)) sortedProcesses.push(p); });
 
         const nodeCoords = {}; 
-        const X_CENTER = 500; 
+        const X_CENTER = 600; 
         const X_LEFT = X_CENTER - gapX; 
         const X_RIGHT = X_CENTER + gapX; 
         
-        let currentY = 50; 
+        let currentY = 100; 
+        const positionedSet = new Set();
         
-        // 基于高度切片的动态分层排版
+        // 核心动态高度计算与部署
         sortedProcesses.forEach((p) => {
-            // 找出挂载在此工序的所有副节点
-            const materials = materialNodes.filter(m => (outEdges[m.id] || []).includes(p.id) || (inEdges[p.id] || []).includes(m.id));
-            const emissions = emissionNodes.filter(e => (inEdges[e.id] || []).includes(p.id) || (outEdges[p.id] || []).includes(e.id));
+            const materials = materialNodes.filter(m => !positionedSet.has(m.id) && ((outEdges[m.id] || []).includes(p.id) || (inEdges[p.id] || []).includes(m.id)));
+            const emissions = emissionNodes.filter(e => !positionedSet.has(e.id) && ((inEdges[e.id] || []).includes(p.id) || (outEdges[p.id] || []).includes(e.id)));
             
-            // 计算某一组节点的累积高度
             const getGroupHeight = (nodesList) => {
                 if (nodesList.length === 0) return 0;
-                let h = 0;
-                nodesList.forEach(n => h += n.getSize().height + 20); // 组内间距 20px
-                return h - 20;
+                return nodesList.reduce((sum, n) => sum + n.getSize().height + 20, 0) - 20;
             };
             
             const pHeight = p.getSize().height;
             const mHeight = getGroupHeight(materials);
             const eHeight = getGroupHeight(emissions);
             
-            // 当前行的总高度取 工序、原辅料、排污中最高的那个
+            // 该层排版所需的最大空间高度
             const rowHeight = Math.max(pHeight, mHeight, eHeight);
+            const stepHeight = Math.max(minGapY, rowHeight + 40); 
             
-            // 当前工艺段的实际垂直跨度 (保证最小跨度不小于用户设置的 gapY)
-            const stepHeight = Math.max(minGapY, rowHeight + 20); 
-            
-            // 将工序节点放置于该跨度中央
             const processY = currentY + stepHeight / 2;
             nodeCoords[p.id] = { x: X_CENTER, y: processY };
+            positionedSet.add(p.id);
             
-            // 将原辅料垂直居中挂载于左侧
             let mStartY = processY - mHeight / 2;
             materials.forEach(m => {
                 const h = m.getSize().height;
                 nodeCoords[m.id] = { x: X_LEFT, y: mStartY + h / 2 };
+                positionedSet.add(m.id);
                 mStartY += h + 20;
             });
             
-            // 将排污垂直居中挂载于右侧
             let eStartY = processY - eHeight / 2;
             emissions.forEach(e => {
                 const h = e.getSize().height;
                 nodeCoords[e.id] = { x: X_RIGHT, y: eStartY + h / 2 };
+                positionedSet.add(e.id);
                 eStartY += h + 20;
             });
             
-            // 向下推进光标，准备渲染下一道主干工序
             currentY += stepHeight;
         });
 
-        // 统一应用计算好的坐标（防止 0.5 像素错位）
+        // 【安全兜底】接管所有被抛弃的游离孤儿节点，防止它们堆叠在0,0坐标
+        const orphans = allNodes.filter(n => !positionedSet.has(n.id));
+        if (orphans.length > 0) {
+            currentY += 80;
+            orphans.forEach(o => {
+                nodeCoords[o.id] = { x: X_CENTER, y: currentY };
+                currentY += o.getSize().height + 30;
+            });
+        }
+
+        // 执行确切位置赋予
         allNodes.forEach(n => { 
             if (nodeCoords[n.id]) { 
                 const finalX = nodeCoords[n.id].x - n.getSize().width / 2; 
@@ -689,7 +707,6 @@
         reader.readAsText(file); event.target.value = ''; 
     };
 
-    // 字体格式本地自适应 (不触发全局重排，防止干扰用户自己的调整)
     window.updateNodeStyle = function(type) {
         if (!window.graph) return;
         const cells = window.graph.getSelectedCells(); const targetNodes = cells.length ? cells.filter(c => c.isNode()) : window.graph.getNodes();
@@ -717,7 +734,6 @@
         }).join('\n'); 
     }
     
-    // 排污文字本地自适应
     window.toggleEmissionLabels = function() {
         if (!window.graph) return; const isShort = document.getElementById('shortLabel').checked;
         window.graph.getNodes().forEach(node => {
@@ -755,11 +771,20 @@
             const defaultPorts = { groups: { top: { position: 'top', attrs: portAttrs }, bottom: { position: 'bottom', attrs: portAttrs }, left: { position: 'left', attrs: portAttrs }, right: { position: 'right', attrs: portAttrs } }, items: [ { id: 'p1', group: 'top' }, { id: 'p2', group: 'bottom' }, { id: 'p3', group: 'left' }, { id: 'p4', group: 'right' } ] };
 
             data.nodes.forEach(n => {
-                const label = (n.label || '未命名').replace(/\\n/g, '\n'); // 强制转义防止多行失效
+                const label = (n.label || '未命名').replace(/\\n/g, '\n');
                 let displayText = label; 
                 let style = { fill: '#f4f5f7', stroke: '#18191c', rx: 0, fontColor: '#18191c', sw: 2, dash: '0' };
-                if (n.category === 'material') { style.fill = '#ffffff'; style.rx = 20; style.sw = 0; style.stroke = 'transparent'; } 
-                else if (n.category === 'emission') { style.fill = '#fff1f0'; style.stroke = '#d54941'; style.fontColor = '#d54941'; style.dash = '5 5'; style.sw = 2; displayText = isShortMode ? formatEmissionLabel(label, true) : label; }
+                
+                // 兼容解析AI传来的多种可能的分类名称
+                const cat = String(n.category).toLowerCase();
+                if (cat.includes('material') || cat.includes('原') || cat.includes('辅')) { 
+                    n.category = 'material'; style.fill = '#ffffff'; style.rx = 20; style.sw = 0; style.stroke = 'transparent'; 
+                } 
+                else if (cat.includes('emission') || cat.includes('污') || cat.includes('废')) { 
+                    n.category = 'emission'; style.fill = '#fff1f0'; style.stroke = '#d54941'; style.fontColor = '#d54941'; style.dash = '5 5'; style.sw = 2; displayText = isShortMode ? formatEmissionLabel(label, true) : label; 
+                } else {
+                    n.category = 'process';
+                }
                 
                 const size = window.calculateNodeSize(displayText, baseW, baseH);
                 window.graph.addNode({ id: n.id, x: 0, y: 0, width: size.width, height: size.height, ports: defaultPorts, data: { category: n.category, originalLabel: label }, attrs: { body: { fill: style.fill, stroke: style.stroke, strokeWidth: style.sw, strokeDasharray: style.dash, rx: style.rx, ry: style.rx }, text: { text: displayText, fill: style.fontColor, fontSize: parseInt(document.getElementById('globalFontSize').value), fontFamily: window.getCombinedFont(), fontWeight: document.getElementById('fontWeight').checked ? 'bold' : 'normal' } } });
