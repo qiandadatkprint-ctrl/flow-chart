@@ -106,7 +106,8 @@
         #container { flex: 1; width: 100%; height: 100%; position: relative; z-index: 1; outline: none; }
         #minimap { position: absolute; right: 20px; bottom: 20px; width: 180px; height: 120px; background: #fff; border: 1px solid #dcdfe6; box-shadow: 0 4px 12px rgba(0,0,0,0.08); z-index: 10; border-radius: 4px; overflow: hidden; }
         
-        #error-msg { display: none; position: absolute; top: 20px; left: 50%; transform: translateX(-50%); background: #fef0f0; border: 1px solid #f56c6c; padding: 12px 20px; border-radius: 4px; color: #f56c6c; font-size: 13px; box-shadow: 0 4px 12px rgba(245,108,108,0.1); z-index: 999; min-width: 300px; line-height: 1.5; font-weight: 500;}
+        /* 提升报错弹窗层级和显示效果 */
+        #error-msg { display: none; position: absolute; top: 20px; left: 50%; transform: translateX(-50%); background: #fef0f0; border: 1px solid #f56c6c; padding: 12px 20px; border-radius: 4px; color: #f56c6c; font-size: 13px; box-shadow: 0 4px 16px rgba(245,108,108,0.2); z-index: 9999; min-width: 300px; line-height: 1.5; font-weight: 500;}
         .close-error { float: right; cursor: pointer; color: #f56c6c; margin-left: 15px; text-decoration: underline;}
 
         .x6-node .x6-port-body { visibility: hidden; }
@@ -116,9 +117,9 @@
         .x6-edge-selected path { stroke: var(--primary) !important; stroke-width: 3px !important; }
 
         #editModal { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.4); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(2px); font-family: "Microsoft YaHei", sans-serif;}
-        .modal-content { background: #fff; padding: 24px; border-radius: 6px; width: 360px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); }
+        .modal-content { background: #fff; padding: 24px; border-radius: 6px; width: 340px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); }
         .modal-content h3 { margin: 0 0 16px 0; font-size: 15px; color: var(--text-main); }
-        .modal-content textarea { width: 100%; height: 120px; margin-bottom: 16px; font-size: 13px; box-sizing: border-box; font-family: "SimSun", "Times New Roman", inherit; padding: 10px; border: 1px solid var(--border); border-radius: 4px; outline: none; line-height: 1.5;}
+        .modal-content textarea { width: 100%; height: 100px; margin-bottom: 16px; font-size: 13px; box-sizing: border-box; font-family: "SimSun", "Times New Roman", inherit; padding: 10px; border: 1px solid var(--border); border-radius: 4px; outline: none;}
         .modal-content textarea:focus { border-color: var(--primary); }
         .modal-actions { display: flex; justify-content: flex-end; gap: 12px; }
         .modal-actions button { padding: 6px 16px; border-radius: 4px; cursor: pointer; border: 1px solid transparent; font-size: 13px; font-weight: 500;}
@@ -324,9 +325,8 @@
         configPanel.style.display = 'none'; showToast("接口配置保存成功");
     }
 
-    // 快捷插入规范示例
     function insertExample() {
-        const text = "各类原料投入原料检测工序，产生废气G1与废渣S1；\n随后加入异丙醇、二甲苯进行投料与合成反应，产生废气G2；\n反应后使用纯水进行洗涤，产生清洗废水W1；\n压滤后产生实验废渣S2，最后通过电加热烘干产生废气G3。";
+        const text = "各类原料投入原料检测工序，产生实验废气G1与实验废液S1；\n随后加入异丙醇、二甲苯进行投料与合成反应，产生废气G2；\n反应后使用纯水进行洗涤，产生清洗废水W1；\n压滤后产生实验废渣S2，最后通过电加热烘干产生废气G3。";
         document.getElementById('chatInput').value = text;
     }
 
@@ -413,7 +413,7 @@
     }
 
     /* =========================================================
-       2. 防弹级动态图形渲染逻辑
+       2. 防弹级动态图形渲染逻辑 (彻底根除挤压堆叠)
        ========================================================= */
     function showError(msg) { document.getElementById('error-text').innerHTML = msg; document.getElementById('error-msg').style.display = 'block'; }
     function hideError() { document.getElementById('error-msg').style.display = 'none'; }
@@ -566,7 +566,7 @@
         window.graph.addNode({ shape: shape, x: Math.round(center.x - size.width/2 + offsetX), y: Math.round(center.y - size.height/2 + offsetY), width: size.width, height: size.height, ports: defaultPorts, data: { category: type, originalLabel: initialText }, attrs: { body: { fill: style.fill, stroke: style.stroke, strokeWidth: style.strokeWidth, strokeDasharray: style.dash, rx: style.rx, ry: style.rx, refPoints: style.refPoints }, text: { text: initialText, fill: style.color, fontSize: parseInt(document.getElementById('globalFontSize').value), fontFamily: window.getCombinedFont(), fontWeight: document.getElementById('fontWeight').checked ? 'bold' : 'normal' } } });
     };
 
-    // 终极重构的动态流式排版算法 (防弹级容错)
+    // 终极重构的动态流式排版算法 (防弹级容错引擎)
     window.applyGlobalLayout = function() {
         if (!window.graph) return;
         const allNodes = window.graph.getNodes(); const allEdges = window.graph.getEdges(); if (allNodes.length === 0) return;
@@ -576,7 +576,7 @@
         const gapX = parseInt(document.getElementById('globalGapX').value) || 320; 
         const minGapY = parseInt(document.getElementById('globalGapY').value) || 80; 
 
-        // 重新同步文字宽高
+        // 重新同步所有文字宽高，确保排版基准正确
         allNodes.forEach(node => { 
             const data = node.getData() || {}; 
             if (data.category !== 'text' && data.category !== 'decision' && data.category !== 'ellipse') { 
@@ -586,15 +586,15 @@
             } 
         });
 
-        // 泛化识别分类（防御 AI 乱编分类名导致找不到节点）
-        const processNodes = []; const materialNodes = []; const emissionNodes = []; const otherNodes = [];
+        // 泛化识别分类（防御 AI 乱编分类名或完全不设分类导致的堆叠）
+        const processNodes = []; const materialNodes = []; const emissionNodes = [];
         allNodes.forEach(n => { 
             const data = n.getData() || {}; 
             const cat = String(data.category).toLowerCase();
             if(cat.includes('process') || cat.includes('工') || cat.includes('主')) processNodes.push(n); 
             else if(cat.includes('material') || cat.includes('原') || cat.includes('辅')) materialNodes.push(n); 
             else if(cat.includes('emission') || cat.includes('污') || cat.includes('废')) emissionNodes.push(n); 
-            else processNodes.push(n); // 无法识别的强行挂在主线上
+            else processNodes.push(n); // 无法识别的强行挂在主线上当工序，绝对不允许流入虚空
         });
 
         const outEdges = {}; const inEdges = {};
@@ -608,18 +608,28 @@
         const processIds = new Set(processNodes.map(p => p.id)); 
         let sortedProcesses = []; let visited = new Set();
         let startProcesses = processNodes.filter(p => { return !(inEdges[p.id] || []).some(id => processIds.has(id)); });
-        // 如果图是个死循环闭环，强行抓一个当开头
+        
+        // 【核心修复】：如果图是个死循环闭环，强行抓一个当开头，避免队列瘫痪
         if (startProcesses.length === 0 && processNodes.length > 0) startProcesses = [processNodes[0]];
         
-        let queue = [...startProcesses];
+        // 【核心修复】：队列内部直接推入 ID 进行检索，防止对象引用丢失导致的致命报错 (p.getSize is not a function)
+        let queue = startProcesses.map(p => p.id);
         while(queue.length > 0) { 
-            let curr = queue.shift(); 
-            if(!visited.has(curr.id)) { 
-                visited.add(curr.id); sortedProcesses.push(curr); 
-                queue.push(...(outEdges[curr.id] || []).filter(id => processIds.has(id))); 
+            let currId = queue.shift(); 
+            if(!visited.has(currId)) { 
+                visited.add(currId); 
+                const node = processNodes.find(p => p.id === currId);
+                if (node) sortedProcesses.push(node);
+                
+                const nextIds = (outEdges[currId] || []).filter(id => processIds.has(id));
+                queue.push(...nextIds); 
             } 
         }
-        processNodes.forEach(p => { if(!visited.has(p.id)) sortedProcesses.push(p); });
+        
+        // 收编没有被连线连起来的独立工序节点
+        processNodes.forEach(p => { 
+            if(!visited.has(p.id)) sortedProcesses.push(p); 
+        });
 
         const nodeCoords = {}; 
         const X_CENTER = 600; 
@@ -627,7 +637,7 @@
         const X_RIGHT = X_CENTER + gapX; 
         
         let currentY = 100; 
-        const positionedSet = new Set();
+        const positionedSet = new Set(); // 记录已经排好座位的节点
         
         // 核心动态高度计算与部署
         sortedProcesses.forEach((p) => {
@@ -670,13 +680,14 @@
             currentY += stepHeight;
         });
 
-        // 【安全兜底】接管所有被抛弃的游离孤儿节点，防止它们堆叠在0,0坐标
+        // 【终极安全兜底】接管所有被抛弃的游离孤儿节点，强行塞在最底下，防止它们堆叠在0,0坐标
         const orphans = allNodes.filter(n => !positionedSet.has(n.id));
         if (orphans.length > 0) {
             currentY += 80;
             orphans.forEach(o => {
                 nodeCoords[o.id] = { x: X_CENTER, y: currentY };
                 currentY += o.getSize().height + 30;
+                positionedSet.add(o.id);
             });
         }
 
@@ -775,7 +786,6 @@
                 let displayText = label; 
                 let style = { fill: '#f4f5f7', stroke: '#18191c', rx: 0, fontColor: '#18191c', sw: 2, dash: '0' };
                 
-                // 兼容解析AI传来的多种可能的分类名称
                 const cat = String(n.category).toLowerCase();
                 if (cat.includes('material') || cat.includes('原') || cat.includes('辅')) { 
                     n.category = 'material'; style.fill = '#ffffff'; style.rx = 20; style.sw = 0; style.stroke = 'transparent'; 
@@ -799,7 +809,8 @@
                     window.graph.addEdge({ source: { cell: edge.source, port: srcPort }, target: { cell: edge.target, port: tgtPort }, attrs: window.getSelectedEdgeAttrs(), router: window.getSelectedRouter(), connector: { name: 'rounded', args: { radius: 4 } } });
                 });
             }
-            setTimeout(() => { window.applyGlobalLayout(); }, 80);
+            // 延时让图框完全生成后，再调用排版引擎确保计算宽高准确无误
+            setTimeout(() => { window.applyGlobalLayout(); }, 100);
         } catch (fatalError) { showError("系统渲染异常：" + fatalError.message); }
     };
 
