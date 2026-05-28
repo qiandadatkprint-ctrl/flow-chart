@@ -65,7 +65,21 @@
         .typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
         @keyframes typing { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
 
-        /* 主工作区 & 分层Ribbon工具栏 */
+        .stencil-container { padding: 15px 20px; border-top: 1px solid var(--border); background: #fbfbfc; flex-shrink: 0; }
+        .section-title { font-size: 12px; font-weight: 600; color: var(--text-sub); margin: 0 0 12px 0; font-family: "Microsoft YaHei", sans-serif;}
+        .stencil-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+        
+        .stencil-item-btn { display: flex; align-items: center; justify-content: center; width: 100%; height: 56px; border: 1px solid var(--border); border-radius: 6px; background: #fff; cursor: pointer; transition: all 0.2s; }
+        .stencil-item-btn:hover { border-color: var(--primary); box-shadow: 0 2px 8px rgba(0,82,217,0.1); background: #fbfbfc; }
+
+        .visual-shape { width: 44px; height: 28px; box-sizing: border-box; }
+        .v-process { border: 2px solid #18191c; background: #f4f5f7; }
+        .v-material { border: 1px solid #dcdfe6; border-radius: 14px; background: #fff; }
+        .v-emission { border: 2px dashed #d54941; background: #fff1f0; }
+        .v-decision { width: 24px; height: 24px; border: 2px solid #18191c; background: #fff; transform: rotate(45deg); }
+        .v-ellipse { border: 2px solid #18191c; background: #fff; border-radius: 50%; }
+        .v-text { border: 1px dashed #9da2a8; background: transparent; }
+
         .main-workspace { flex: 1; display: flex; flex-direction: column; position: relative; min-width: 0; background: var(--panel-bg);}
         .toolbar-container { display: flex; flex-direction: column; background: var(--bg); border-bottom: 1px solid var(--border); z-index: 15; flex-shrink: 0; font-family: "Microsoft YaHei", sans-serif; box-shadow: 0 2px 8px rgba(0,0,0,0.02);}
         .toolbar-row { display: flex; align-items: center; padding: 10px 20px; background: #fff; border-bottom: 1px solid #f0f1f5; }
@@ -166,7 +180,7 @@
         <div class="chat-messages" id="chatMessages">
             <div class="msg-row ai">
                 <div class="msg-avatar">豆包</div>
-                <div class="msg-bubble">您好。我是工艺结构分析引擎。请录入流程描述，我将为您构建排版流程图。</div>
+                <div class="msg-bubble">系统已就绪。请输入工艺流程描述，我将自动提取主干工序、原辅料及产排污节点，并绘制标准的拓扑流程图。</div>
             </div>
         </div>
         
@@ -227,11 +241,11 @@
 
             <div class="prop-group">
                 <span class="group-label">排版</span>
-                <label>宽</label><input type="number" id="globalW" value="130" style="width: 44px;" oninput="applyGlobalLayout(false)">
-                <label>高</label><input type="number" id="globalH" value="45" style="width: 40px;" oninput="applyGlobalLayout(false)">
-                <label>左右距</label><input type="number" id="globalGapX" value="320" style="width: 44px;" oninput="applyGlobalLayout(false)">
-                <label>上下距</label><input type="number" id="globalGapY" value="80" style="width: 40px;" oninput="applyGlobalLayout(false)">
-                <button class="btn-tool" onclick="applyGlobalLayout(true)" style="border-color:#0052d9; color:#0052d9; margin-left: 5px;">一键排版</button>
+                <label>宽</label><input type="number" id="globalW" value="130" style="width: 44px;" oninput="updateGlobalSize()">
+                <label>高</label><input type="number" id="globalH" value="45" style="width: 40px;" oninput="updateGlobalSize()">
+                <label>左右距</label><input type="number" id="globalGapX" value="320" style="width: 44px;" oninput="applyGlobalLayout()">
+                <label>上下距</label><input type="number" id="globalGapY" value="80" style="width: 40px;" oninput="applyGlobalLayout()">
+                <button class="btn-tool" onclick="applyGlobalLayout()" style="border-color:#0052d9; color:#0052d9; margin-left: 5px;">一键排版</button>
             </div>
 
             <div class="prop-group">
@@ -276,7 +290,7 @@
                     </div>
                 </div>
 
-                <select id="borderWidth" onchange="updateStyleProperty('strokeWidth')" style="width: 55px;">
+                <select id="borderWidth" onchange="updateStyleProperty('strokeWidth')" style="width: 55px;" title="线宽">
                     <option value="1">1px</option><option value="2" selected>2px</option><option value="3">3px</option>
                 </select>
 
@@ -456,7 +470,7 @@
     }
 
     /* =========================================================
-       2. 防弹级动态图形渲染逻辑 (彻底分离调整与视角居中)
+       2. 防弹级动态图形渲染逻辑 (彻底分离独立调整与全局重置)
        ========================================================= */
     function showError(msg) { document.getElementById('error-text').innerHTML = msg; document.getElementById('error-msg').style.display = 'block'; }
     function hideError() { document.getElementById('error-msg').style.display = 'none'; }
@@ -555,7 +569,7 @@
     });
 
     window.addEventListener('resize', () => {
-        if(window.graph) { window.graph.scroller.zoomToFit({ maxScale: 1 }); window.graph.centerContent(); }
+        // 解绑：仅在明确需要时才进行全局自适应重排，日常缩放窗体不影响已经定位好的图纸
     });
 
     /* =========================================================
@@ -663,8 +677,31 @@
         window.graph.addNode({ shape: shape, x: Math.round(center.x - size.width/2 + offsetX), y: Math.round(center.y - size.height/2 + offsetY), width: size.width, height: size.height, ports: defaultPorts, data: { category: type, originalLabel: initialText }, attrs: { body: { fill: style.fill, stroke: style.stroke, strokeWidth: style.strokeWidth, strokeDasharray: style.dash, rx: style.rx, ry: style.rx, refPoints: style.refPoints }, text: { text: initialText, fill: style.color, fontSize: parseInt(document.getElementById('globalFontSize').value), fontFamily: window.getCombinedFont(), fontWeight: window.isBold ? 'bold' : 'normal' } } });
     };
 
-    // 【核心排版重构】：解绑居中视图，只在 shouldCenter = true 时执行
-    window.applyGlobalLayout = function(shouldCenter = false) {
+    // 【新增核心函数】：在原地只更新图框的尺寸，绝不触发全局排版干扰用户的自定义坐标
+    window.updateGlobalSize = function() {
+        if (!window.graph) return;
+        const baseW = parseInt(document.getElementById('globalW').value) || 130; 
+        const baseH = parseInt(document.getElementById('globalH').value) || 45;
+        
+        window.graph.getNodes().forEach(node => { 
+            const data = node.getData() || {}; 
+            if (data.category !== 'text' && data.category !== 'decision' && data.category !== 'ellipse') { 
+                const text = (node.attr('text/text') || '').replace(/\\n/g, '\n'); 
+                const newSize = window.calculateNodeSize(text, baseW, baseH); 
+                const oldSize = node.getSize();
+                const oldPos = node.getPosition();
+                
+                // 仅更新大小，并向四周均匀放大/缩小，保持中心点不变
+                if (newSize.width !== oldSize.width || newSize.height !== oldSize.height) {
+                    node.resize(newSize.width, newSize.height); 
+                    node.position(oldPos.x - (newSize.width - oldSize.width) / 2, oldPos.y - (newSize.height - oldSize.height) / 2);
+                }
+            } 
+        });
+    };
+
+    // 核心引擎：深度排版重置（仅在点击“一键排版”或首次解析后触发）
+    window.applyGlobalLayout = function() {
         if (!window.graph) return;
         const allNodes = window.graph.getNodes(); const allEdges = window.graph.getEdges(); if (allNodes.length === 0) return;
         
@@ -712,15 +749,18 @@
                 visited.add(currId); 
                 const node = processNodes.find(p => p.id === currId);
                 if (node) sortedProcesses.push(node);
+                
                 const nextIds = (outEdges[currId] || []).filter(id => processIds.has(id));
                 queue.push(...nextIds); 
             } 
         }
-        processNodes.forEach(p => { if(!visited.has(p.id)) sortedProcesses.push(p); });
+        
+        processNodes.forEach(p => { 
+            if(!visited.has(p.id)) sortedProcesses.push(p); 
+        });
 
         const nodeCoords = {}; 
-        const scrollerWidth = document.getElementById('container').clientWidth;
-        const X_CENTER = Math.round(scrollerWidth > 400 ? scrollerWidth / 2 : 500); 
+        const X_CENTER = 600; 
         const X_LEFT = X_CENTER - gapX; 
         const X_RIGHT = X_CENTER + gapX; 
         
@@ -741,8 +781,7 @@
             const eHeight = getGroupHeight(emissions);
             const rowHeight = Math.max(pHeight, mHeight, eHeight);
             
-            // 【核心安全计算】：确保间距足够容纳曼哈顿路由
-            const stepHeight = Math.max(inputGapY + Math.max(0, rowHeight - baseH), pHeight + 40); 
+            const stepHeight = inputGapY + Math.max(0, rowHeight - baseH); 
             
             const processY = Math.round(currentY + stepHeight / 2);
             nodeCoords[p.id] = { x: X_CENTER, y: processY };
@@ -763,6 +802,7 @@
                 positionedSet.add(e.id);
                 eStartY += h + 20;
             });
+            
             currentY += stepHeight;
         });
 
@@ -784,11 +824,8 @@
             } 
         });
         
-        // 只有被允许时（AI生成完毕、用户主动点击一键排版）才进行居中拉回
-        if (shouldCenter) {
-            window.graph.scroller.zoomToFit({ maxScale: 1 });
-            window.graph.centerContent();
-        }
+        window.graph.scroller.zoomToFit({ maxScale: 1 });
+        window.graph.centerContent();
     };
 
     window.saveProject = function() {
@@ -807,15 +844,30 @@
         reader.readAsText(file); event.target.value = ''; 
     };
 
+    // 局部修改功能：只自适应本身的宽高尺寸，绝对不触发全局排版干扰用户的拖拽
     window.updateNodeStyle = function(type) {
         if (!window.graph) return;
         const cells = window.graph.getSelectedCells(); const targetNodes = cells.length ? cells.filter(c => c.isNode()) : window.graph.getNodes();
+        
+        const baseW = parseInt(document.getElementById('globalW').value) || 130;
+        const baseH = parseInt(document.getElementById('globalH').value) || 45;
+        
         targetNodes.forEach(node => {
             if (type === 'fontSize') node.attr('text/fontSize', parseInt(document.getElementById('globalFontSize').value));
             if (type === 'fontFamily') node.attr('text/fontFamily', window.getCombinedFont());
             if (type === 'fontWeight') node.attr('text/fontWeight', window.isBold ? 'bold' : 'normal');
+            
+            const text = (node.attr('text/text') || '').replace(/\\n/g, '\n');
+            const newSize = window.calculateNodeSize(text, baseW, baseH);
+            const oldSize = node.getSize();
+            const oldPos = node.getPosition();
+            
+            // 局部平滑放大/缩小
+            if(newSize.width !== oldSize.width || newSize.height !== oldSize.height) {
+                node.resize(newSize.width, newSize.height);
+                node.position(oldPos.x - (newSize.width - oldSize.width)/2, oldPos.y - (newSize.height - oldSize.height)/2);
+            }
         });
-        window.applyGlobalLayout(false); 
     };
 
     window.deleteSelected = function() { if(window.graph){ const cells = window.graph.getSelectedCells(); if (cells.length) window.graph.removeCells(cells); }};
@@ -829,24 +881,42 @@
         }).join('\n'); 
     }
     
+    // 排污简写：只原地缩放自己
     window.toggleEmissionLabels = function() {
         if (!window.graph) return; const isShort = document.getElementById('shortLabel').checked;
+        const baseW = parseInt(document.getElementById('globalW').value) || 130; 
+        const baseH = parseInt(document.getElementById('globalH').value) || 45; 
+        
         window.graph.getNodes().forEach(node => {
             const data = node.getData() || {}; if (data.category === 'emission' && data.originalLabel) {
-                const newText = formatEmissionLabel(data.originalLabel, isShort); node.attr('text/text', newText);
+                const newText = formatEmissionLabel(data.originalLabel, isShort); 
+                node.attr('text/text', newText);
+                
+                const newSize = window.calculateNodeSize(newText, baseW, baseH); 
+                const oldSize = node.getSize();
+                const oldPos = node.getPosition();
+                node.resize(newSize.width, newSize.height);
+                node.position(oldPos.x - (newSize.width - oldSize.width)/2, oldPos.y - (newSize.height - oldSize.height)/2);
             }
         });
-        window.applyGlobalLayout(false);
     };
 
+    // 局部双击编辑：只原地缩放自己
     window.saveEditModal = function() { 
         if (window.editTargetNode) { 
             let newText = document.getElementById('editModalInput').value.trim() === '' ? ' ' : document.getElementById('editModalInput').value; 
             const data = window.editTargetNode.getData() || {}; data.originalLabel = newText; window.editTargetNode.setData(data);
             const isShort = document.getElementById('shortLabel').checked; const displayText = data.category === 'emission' ? formatEmissionLabel(newText, isShort) : newText; window.editTargetNode.attr('text/text', displayText);
+            
+            const baseW = parseInt(document.getElementById('globalW').value) || 130; const baseH = parseInt(document.getElementById('globalH').value) || 45; 
+            const newSize = window.calculateNodeSize(displayText, baseW, baseH); 
+            const oldSize = window.editTargetNode.getSize();
+            const oldPos = window.editTargetNode.getPosition();
+            
+            window.editTargetNode.resize(newSize.width, newSize.height);
+            window.editTargetNode.position(oldPos.x - (newSize.width - oldSize.width)/2, oldPos.y - (newSize.height - oldSize.height)/2);
         } 
         document.getElementById('editModal').style.display='none'; 
-        window.applyGlobalLayout(false);
     };
 
     window.renderFromJSON = function(jsonStr) {
@@ -856,6 +926,7 @@
             window.graph.clearCells();
 
             const isShortMode = document.getElementById('shortLabel').checked;
+            const baseW = parseInt(document.getElementById('globalW').value) || 130; const baseH = parseInt(document.getElementById('globalH').value) || 45;
             const portAttrs = { circle: { r: 4, magnet: true, stroke: '#0052d9', fill: '#fff' } };
             const defaultPorts = { groups: { top: { position: 'top', attrs: portAttrs }, bottom: { position: 'bottom', attrs: portAttrs }, left: { position: 'left', attrs: portAttrs }, right: { position: 'right', attrs: portAttrs } }, items: [ { id: 'p1', group: 'top' }, { id: 'p2', group: 'bottom' }, { id: 'p3', group: 'left' }, { id: 'p4', group: 'right' } ] };
 
@@ -874,7 +945,8 @@
                     n.category = 'process';
                 }
                 
-                window.graph.addNode({ id: n.id, x: 0, y: 0, width: 130, height: 45, ports: defaultPorts, data: { category: n.category, originalLabel: label }, attrs: { body: { fill: style.fill, stroke: style.stroke, strokeWidth: style.sw, strokeDasharray: style.dash, rx: style.rx, ry: style.rx }, text: { text: displayText, fill: style.fontColor, fontSize: parseInt(document.getElementById('globalFontSize').value), fontFamily: window.getCombinedFont(), fontWeight: window.isBold ? 'bold' : 'normal' } } });
+                const size = window.calculateNodeSize(displayText, baseW, baseH);
+                window.graph.addNode({ id: n.id, x: 0, y: 0, width: size.width, height: size.height, ports: defaultPorts, data: { category: n.category, originalLabel: label }, attrs: { body: { fill: style.fill, stroke: style.stroke, strokeWidth: style.sw, strokeDasharray: style.dash, rx: style.rx, ry: style.rx }, text: { text: displayText, fill: style.fontColor, fontSize: parseInt(document.getElementById('globalFontSize').value), fontFamily: window.getCombinedFont(), fontWeight: window.isBold ? 'bold' : 'normal' } } });
             });
 
             if (data.edges) {
@@ -886,8 +958,7 @@
                     window.graph.addEdge({ source: { cell: edge.source, port: srcPort }, target: { cell: edge.target, port: tgtPort }, attrs: window.getSelectedEdgeAttrs(), router: window.getSelectedRouter(), connector: { name: 'rounded', args: { radius: 4 } } });
                 });
             }
-            // 初次渲染完成后，允许执行居中视图操作
-            setTimeout(() => { window.applyGlobalLayout(true); }, 120);
+            setTimeout(() => { window.applyGlobalLayout(); }, 80);
         } catch (fatalError) { showError("系统渲染异常：" + fatalError.message); }
     };
 
