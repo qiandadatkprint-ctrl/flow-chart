@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
@@ -54,7 +54,7 @@
         .chat-input-area { padding: 15px 20px; background: var(--panel-bg); border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 8px; flex-shrink: 0;}
         .chat-input-header { display: flex; justify-content: space-between; align-items: center;}
         .chat-input-header span { font-size: 12px; color: var(--text-sub); font-family: "Microsoft YaHei", sans-serif;}
-        .chat-input-area textarea { width: 100%; height: 100px; resize: none; border: 1px solid var(--border); border-radius: 4px; padding: 10px; font-family: "Microsoft YaHei", inherit; font-size: 13px; box-sizing: border-box; transition: 0.2s;}
+        .chat-input-area textarea { width: 100%; height: 90px; resize: none; border: 1px solid var(--border); border-radius: 4px; padding: 10px; font-family: "Microsoft YaHei", inherit; font-size: 13px; box-sizing: border-box; transition: 0.2s;}
         .chat-input-area textarea:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 0 2px rgba(0,82,217,0.1); }
         .send-btn { background: var(--primary); color: #fff; border: none; padding: 10px 0; border-radius: 4px; cursor: pointer; font-weight: 500; font-size: 13px; transition: 0.2s; display: flex; justify-content: center; align-items: center; font-family: "Microsoft YaHei", sans-serif;}
         .send-btn:hover { background: var(--primary-hover); }
@@ -66,48 +66,36 @@
         .typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
         @keyframes typing { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
 
-        /* 主工作区 & 工具栏 */
+        .stencil-container { padding: 15px 20px; border-top: 1px solid var(--border); background: #fbfbfc; flex-shrink: 0; }
+        .section-title { font-size: 12px; font-weight: 600; color: var(--text-sub); margin: 0 0 12px 0; font-family: "Microsoft YaHei", sans-serif;}
+        .stencil-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+        
+        .stencil-item-btn { display: flex; align-items: center; justify-content: center; width: 100%; height: 56px; border: 1px solid var(--border); border-radius: 6px; background: #fff; cursor: pointer; transition: all 0.2s; }
+        .stencil-item-btn:hover { border-color: var(--primary); box-shadow: 0 2px 8px rgba(0,82,217,0.1); background: #fbfbfc; }
+
+        .visual-shape { width: 44px; height: 28px; box-sizing: border-box; }
+        .v-process { border: 2px solid #18191c; background: #f4f5f7; }
+        .v-material { border: 1px solid #dcdfe6; border-radius: 14px; background: #fff; }
+        .v-emission { border: 2px dashed #d54941; background: #fff1f0; }
+        .v-decision { width: 24px; height: 24px; border: 2px solid #18191c; background: #fff; transform: rotate(45deg); }
+        .v-ellipse { border: 2px solid #18191c; background: #fff; border-radius: 50%; }
+        .v-text { border: 1px dashed #9da2a8; background: transparent; }
+
+        /* 主工作区 & 分层工具栏 */
         .main-workspace { flex: 1; display: flex; flex-direction: column; position: relative; min-width: 0; background: var(--panel-bg);}
         
-        .toolbar-container { display: flex; flex-direction: column; background: var(--bg); border-bottom: 1px solid var(--border); z-index: 15; flex-shrink: 0; font-family: "Microsoft YaHei", sans-serif; box-shadow: 0 2px 8px rgba(0,0,0,0.02);}
+        .toolbar-container { display: flex; flex-direction: column; background: #fff; border-bottom: 1px solid var(--border); z-index: 15; flex-shrink: 0; font-family: "Microsoft YaHei", sans-serif; box-shadow: 0 2px 8px rgba(0,0,0,0.02);}
         
-        /* 顶层：全局文件操作 */
-        .toolbar-top { display: flex; justify-content: space-between; align-items: center; padding: 10px 20px; background: #fff; border-bottom: 1px solid var(--border); }
+        .toolbar-top { display: flex; justify-content: space-between; align-items: center; padding: 10px 20px; border-bottom: 1px solid #f0f1f5; }
         .toolbar-left, .toolbar-right { display: flex; align-items: center; gap: 10px; }
         
-        /* 底层：全新的模块化折行工作台 */
-        .toolbar-bottom { 
-            display: flex; 
-            align-items: flex-start; 
-            padding: 12px 20px; 
-            background: #fbfbfc; 
-            gap: 16px; 
-            flex-wrap: wrap; /* 核心：允许自动换行，消灭滚动条 */
-        }
+        .toolbar-bottom { display: flex; align-items: flex-start; padding: 12px 20px; background: #fbfbfc; gap: 16px; flex-wrap: wrap; }
         
-        /* 独立的卡片式控制组 */
-        .prop-group { 
-            display: flex; 
-            align-items: center; 
-            gap: 8px; 
-            background: #ffffff; 
-            padding: 6px 14px; 
-            border-radius: 6px; 
-            border: 1px solid var(--border);
-            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
-        }
-        .group-label { 
-            font-size: 12px; 
-            font-weight: 600; 
-            color: var(--primary); 
-            margin-right: 4px;
-            padding-right: 12px;
-            border-right: 1px solid var(--border);
-        }
+        .prop-group { display: flex; align-items: center; gap: 8px; background: #ffffff; padding: 6px 14px; border-radius: 6px; border: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.02); }
+        .group-label { font-size: 12px; font-weight: bold; color: var(--primary); margin-right: 4px; padding-right: 12px; border-right: 1px solid var(--border); white-space: nowrap;}
         
         .sys-notice { background: #f0f4ff; color: var(--primary); font-size: 12px; padding: 6px 12px; border-radius: 4px; font-weight: 500; border: 1px solid #c5d7f5; margin-right: 10px;}
         
-        /* 控件统一样式 */
         .toolbar-container label { font-size: 12px; color: var(--text-main); display: flex; align-items: center; gap: 4px; cursor: pointer; white-space: nowrap;}
         .toolbar-container input[type="number"], .toolbar-container select { padding: 4px 8px; border: 1px solid #dcdfe6; border-radius: 4px; font-size: 12px; outline: none; color: var(--text-main); transition: 0.2s;}
         .toolbar-container input[type="number"]:focus, .toolbar-container select:focus { border-color: var(--primary); }
@@ -120,7 +108,6 @@
         .btn-success { background: #00a870; color: #fff; border: none; padding: 6px 14px;}
         .btn-success:hover { background: #009664; color: #fff; }
 
-        /* SVG 图形按钮：不再包含任何提示文字 */
         .btn-shape { padding: 5px 10px; border-color: transparent; background: transparent;}
         .btn-shape svg { width: 22px; height: 22px; color: var(--text-main); transition: 0.2s;}
         .btn-shape:hover { background: #e0e7ff; border-color: var(--primary);}
@@ -129,7 +116,6 @@
         .btn-format { width: 26px; height: 26px; border: 1px solid #dcdfe6; background: #fff; border-radius: 4px; cursor: pointer; font-weight: bold; color: var(--text-main); display: flex; align-items: center; justify-content: center; transition: 0.2s;}
         .btn-format.active { background: #e0e7ff; color: var(--primary); border-color: var(--primary); }
 
-        /* 绝对悬浮层，防止遮挡 */
         .visual-dropdown { position: relative; display: inline-block; }
         .visual-menu { display: none; position: absolute; top: calc(100% + 6px); left: 0; background: #fff; border: 1px solid var(--border); border-radius: 6px; padding: 8px; box-shadow: 0 4px 16px rgba(0,0,0,0.15); z-index: 9999; min-width: 140px; flex-direction: column; gap: 4px; }
         .visual-swatch { display: flex; align-items: center; padding: 8px 12px; border-radius: 4px; cursor: pointer; transition: 0.2s; border: 1px solid transparent; }
@@ -143,8 +129,6 @@
         .color-transparent::after { content: ''; position: absolute; top: 50%; left: -20%; width: 140%; height: 2px; background: #d54941; transform: rotate(45deg); }
 
         #container { flex: 1; width: 100%; height: 100%; position: relative; z-index: 1; outline: none; }
-        
-        /* 隐藏高级画布自身的滚动条 */
         .x6-widget-scroller { scrollbar-width: none; }
         .x6-widget-scroller::-webkit-scrollbar { display: none; width: 0; height: 0; }
 
@@ -201,7 +185,7 @@
         <div class="chat-messages" id="chatMessages">
             <div class="msg-row ai">
                 <div class="msg-avatar">豆包</div>
-                <div class="msg-bubble">系统已就绪。请输入工艺流程描述，我将自动提取主干工序、原辅料及产排污节点，并绘制标准的拓扑流程图。</div>
+                <div class="msg-bubble">您好。我是工程工艺分析引擎。请录入流程描述，我将为您构建排版流程图。</div>
             </div>
         </div>
         
@@ -210,7 +194,7 @@
                 <span>流程说明录入：</span>
                 <button class="text-btn" onclick="insertExample()" style="padding:0; font-size:12px;">快速载入示例</button>
             </div>
-            <textarea id="chatInput" placeholder="支持大段文本直接粘贴。AI 将自动分析节点关系。"></textarea>
+            <textarea id="chatInput" placeholder="支持直接粘贴大段文本。若物料缺少行业代号，系统将依据环评技术规范为您智能补充。"></textarea>
             <button class="send-btn" id="sendBtn" onclick="sendMessage()">执行智能分析与排版</button>
         </div>
     </div>
@@ -240,32 +224,20 @@
         <div class="toolbar-bottom">
             <div class="prop-group">
                 <span class="group-label">插入</span>
-                <button class="btn-tool btn-shape" onclick="addNodeToCenter('process')">
-                    <svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" fill="none" stroke="currentColor" stroke-width="2"/></svg>
-                </button>
-                <button class="btn-tool btn-shape" onclick="addNodeToCenter('material')">
-                    <svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="6" fill="none" stroke="currentColor" stroke-width="2"/></svg>
-                </button>
-                <button class="btn-tool btn-shape" onclick="addNodeToCenter('emission')">
-                    <svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" fill="none" stroke="#d54941" stroke-width="2" stroke-dasharray="3 2"/></svg>
-                </button>
-                <button class="btn-tool btn-shape" onclick="addNodeToCenter('decision')">
-                    <svg viewBox="0 0 24 24"><polygon points="12,3 21,12 12,21 3,12" fill="none" stroke="currentColor" stroke-width="2"/></svg>
-                </button>
-                <button class="btn-tool btn-shape" onclick="addNodeToCenter('ellipse')">
-                    <svg viewBox="0 0 24 24"><ellipse cx="12" cy="12" rx="10" ry="7" fill="none" stroke="currentColor" stroke-width="2"/></svg>
-                </button>
-                <button class="btn-tool btn-shape" onclick="addNodeToCenter('text')">
-                    <svg viewBox="0 0 24 24"><text x="12" y="17" font-family="Arial" font-size="16" font-weight="bold" text-anchor="middle" fill="currentColor">T</text></svg>
-                </button>
+                <button class="btn-tool btn-shape" onclick="addNodeToCenter('process')"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" fill="none" stroke="currentColor" stroke-width="2"/></svg></button>
+                <button class="btn-tool btn-shape" onclick="addNodeToCenter('material')"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="6" fill="none" stroke="currentColor" stroke-width="2"/></svg></button>
+                <button class="btn-tool btn-shape" onclick="addNodeToCenter('emission')"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" fill="none" stroke="#d54941" stroke-width="2" stroke-dasharray="3 2"/></svg></button>
+                <button class="btn-tool btn-shape" onclick="addNodeToCenter('decision')"><svg viewBox="0 0 24 24"><polygon points="12,3 21,12 12,21 3,12" fill="none" stroke="currentColor" stroke-width="2"/></svg></button>
+                <button class="btn-tool btn-shape" onclick="addNodeToCenter('ellipse')"><svg viewBox="0 0 24 24"><ellipse cx="12" cy="12" rx="10" ry="7" fill="none" stroke="currentColor" stroke-width="2"/></svg></button>
+                <button class="btn-tool btn-shape" onclick="addNodeToCenter('text')"><svg viewBox="0 0 24 24"><text x="12" y="17" font-family="Arial" font-size="16" font-weight="bold" text-anchor="middle" fill="currentColor">T</text></svg></button>
             </div>
 
             <div class="prop-group">
                 <span class="group-label">排版</span>
                 <label>宽</label><input type="number" id="globalW" value="130" style="width: 44px;" oninput="applyGlobalLayout()">
                 <label>高</label><input type="number" id="globalH" value="45" style="width: 40px;" oninput="applyGlobalLayout()">
-                <label>左右间距</label><input type="number" id="globalGapX" value="320" style="width: 44px;" oninput="applyGlobalLayout()">
-                <label>上下间距</label><input type="number" id="globalGapY" value="80" style="width: 40px;" oninput="applyGlobalLayout()">
+                <label>左右距</label><input type="number" id="globalGapX" value="320" style="width: 44px;" oninput="applyGlobalLayout()">
+                <label>上下距</label><input type="number" id="globalGapY" value="80" style="width: 40px;" oninput="applyGlobalLayout()">
             </div>
 
             <div class="prop-group">
@@ -310,7 +282,7 @@
                     </div>
                 </div>
 
-                <select id="borderWidth" onchange="updateStyleProperty('strokeWidth')" style="width: 55px;">
+                <select id="borderWidth" onchange="updateStyleProperty('strokeWidth')" style="width: 55px;" title="线宽">
                     <option value="1">1px</option><option value="2" selected>2px</option><option value="3">3px</option>
                 </select>
 
@@ -436,15 +408,14 @@
         const systemPrompt = `你是一个专业的环境工程工艺图解析系统。
 请严格分析用户提供的工艺描述，并提取为标准 JSON 数据格式（必须用 \`\`\`json 和 \`\`\` 包裹）。
 
-【核心拓扑法则】：
-1. 【主干串联】：必须提取所有的主工序步骤，并在 \`edges\` 中生成连线数据。
-2. 【原辅料】：同一个工序投入的多种物料必须合并在一个节点（内部 \\n 换行）。同种物料在多工序用到，必须创建独立节点，不可复用。
-3. 【产排污】：工序产生的多种污染物必须合并在一个节点（\\n 换行）。严禁拆分出多个排污节点。
+【核心拓扑及合规编码规则】：
+1. 【主干单链】：必须提取所有的主工序步骤，并在 \`edges\` 中生成严格首尾相连的单链流转数据，绝不允许跨级跳跃。
+2. 【环评合规编码补充】：若原文中提及了污染物但没有提供行业代号（如 G1、W1），你必须基于环境工程规范，顺次为其强制自动生成标准的环评编码。废气G系列，废水W系列，废渣S系列。格式为："名称(代号)"。
+3. 【节点一归一】：同一工序投入的所有原辅料必须强行合并在1个节点（内部用 \\n 换行）。同理工序产生的所有污染物也必须强行合并在1个节点。
 
-【JSON 规范】：
-{"nodes": [{"id": "唯一标识", "label": "名称", "category": "分类"}], "edges": [{"source": "起点id", "target": "终点id"}]}
-* category 取值【必须严格为全小写英文】：process, material, emission。
-* label 禁止使用 Markdown 符号，多项内容使用 \\n 换行。`;
+【JSON 数据规范】：
+{"nodes": [{"id": "唯一标识", "label": "名称(代号)", "category": "分类"}], "edges": [{"source": "起点id", "target": "终点id"}]}
+* category 取值仅限: process, material, emission。`;
 
         try {
             const response = await fetch('https://ark.cn-beijing.volces.com/api/v3/chat/completions', {
@@ -468,7 +439,7 @@
 
             if (jsonMatch) {
                 const jsonStr = jsonMatch[1].trim();
-                chatText += `<br><br><span style="color:#00a870; font-weight:500;">解析完毕，数据结构已推送至视图。</span>`;
+                chatText += `<br><br><span style="color:#00a870; font-weight:500;">解析指令执行完毕，画布已更新。</span>`;
                 updateMessage(aiMsgId, chatText);
                 renderFromJSON(jsonStr);
             } else {
@@ -483,7 +454,7 @@
     }
 
     /* =========================================================
-       2. 防弹级动态图形渲染逻辑 (开启无限框选功能)
+       2. 防弹级动态图形渲染逻辑 (修复偶数像素触发死锁BUG)
        ========================================================= */
     function showError(msg) { document.getElementById('error-text').innerHTML = msg; document.getElementById('error-msg').style.display = 'block'; }
     function hideError() { document.getElementById('error-msg').style.display = 'none'; }
@@ -547,16 +518,7 @@
         window.graph = new X6.Graph({
             container: containerElem, history: { enabled: true }, clipboard: { enabled: true }, 
             grid: { size: 10, visible: true, type: 'dot', args: { color: '#e3e6eb', thickness: 1 } },
-            
-            /* 启用 Scroller 引擎实现拖拽无限延展 */
-            scroller: { 
-                enabled: true, 
-                pageVisible: false, 
-                pageBreak: false, 
-                pannable: true,
-                autoScroll: true
-            },
-            
+            scroller: { enabled: true, pageVisible: false, pageBreak: false, pannable: true, autoScroll: true },
             selecting: { enabled: true, rubberband: true, showNodeSelectionBox: true, modifiers: 'shift' }, 
             mousewheel: { enabled: true, zoomAtMousePosition: true, modifiers: 'ctrl', minScale: 0.1, maxScale: 4 },
             snapline: { enabled: true, sharp: true },
@@ -588,6 +550,10 @@
                 const line = cell.attr('line'); document.getElementById('borderWidth').value = line.strokeWidth || 2;
             }
         });
+    });
+
+    window.addEventListener('resize', () => {
+        if(window.graph) { window.graph.scroller.zoomToFit({ maxScale: 1 }); window.graph.centerContent(); }
     });
 
     /* =========================================================
@@ -678,9 +644,7 @@
         const initialText = '双击录入文本'; 
         const size = window.calculateNodeSize(initialText, minW, minH);
         
-        const scroller = document.getElementById('container');
-        const rect = scroller.getBoundingClientRect();
-        const center = window.graph.clientToLocal(rect.left + rect.width / 2, rect.top + rect.height / 2);
+        const center = window.graph.scroller.getCenter(); 
         const offsetX = (Math.random() - 0.5) * 40; 
         const offsetY = (Math.random() - 0.5) * 40;
 
@@ -697,6 +661,7 @@
         window.graph.addNode({ shape: shape, x: Math.round(center.x - size.width/2 + offsetX), y: Math.round(center.y - size.height/2 + offsetY), width: size.width, height: size.height, ports: defaultPorts, data: { category: type, originalLabel: initialText }, attrs: { body: { fill: style.fill, stroke: style.stroke, strokeWidth: style.strokeWidth, strokeDasharray: style.dash, rx: style.rx, ry: style.rx, refPoints: style.refPoints }, text: { text: initialText, fill: style.color, fontSize: parseInt(document.getElementById('globalFontSize').value), fontFamily: window.getCombinedFont(), fontWeight: window.isBold ? 'bold' : 'normal' } } });
     };
 
+    // 【修改核心】：不再强行锁定偶数值（会导致输入框失灵），改为直接将计算结果做平滑加法。
     window.applyGlobalLayout = function() {
         if (!window.graph) return;
         const allNodes = window.graph.getNodes(); const allEdges = window.graph.getEdges(); if (allNodes.length === 0) return;
@@ -704,7 +669,8 @@
         const baseW = parseInt(document.getElementById('globalW').value) || 130; 
         const baseH = parseInt(document.getElementById('globalH').value) || 45;
         const gapX = parseInt(document.getElementById('globalGapX').value) || 320; 
-        const minGapY = parseInt(document.getElementById('globalGapY').value) || 80; 
+        // 将这里的纵向间距变回原汁原味的累加基准值，不再做死板的 Math.max() 限制
+        const inputGapY = parseInt(document.getElementById('globalGapY').value) || 80; 
 
         allNodes.forEach(node => { 
             const data = node.getData() || {}; 
@@ -735,7 +701,6 @@
         const processIds = new Set(processNodes.map(p => p.id)); 
         let sortedProcesses = []; let visited = new Set();
         let startProcesses = processNodes.filter(p => { return !(inEdges[p.id] || []).some(id => processIds.has(id)); });
-        
         if (startProcesses.length === 0 && processNodes.length > 0) startProcesses = [processNodes[0]];
         
         let queue = startProcesses.map(p => p.id);
@@ -745,22 +710,19 @@
                 visited.add(currId); 
                 const node = processNodes.find(p => p.id === currId);
                 if (node) sortedProcesses.push(node);
-                
                 const nextIds = (outEdges[currId] || []).filter(id => processIds.has(id));
                 queue.push(...nextIds); 
             } 
         }
-        
-        processNodes.forEach(p => { 
-            if(!visited.has(p.id)) sortedProcesses.push(p); 
-        });
+        processNodes.forEach(p => { if(!visited.has(p.id)) sortedProcesses.push(p); });
 
         const nodeCoords = {}; 
-        const X_CENTER = 600; 
+        const scrollerWidth = document.getElementById('container').clientWidth;
+        const X_CENTER = Math.round(scrollerWidth > 400 ? scrollerWidth / 2 : 500); 
         const X_LEFT = X_CENTER - gapX; 
         const X_RIGHT = X_CENTER + gapX; 
         
-        let currentY = 100; 
+        let currentY = 80; 
         const positionedSet = new Set(); 
         
         sortedProcesses.forEach((p) => {
@@ -775,9 +737,10 @@
             const pHeight = p.getSize().height;
             const mHeight = getGroupHeight(materials);
             const eHeight = getGroupHeight(emissions);
-            
             const rowHeight = Math.max(pHeight, mHeight, eHeight);
-            const stepHeight = Math.max(minGapY, rowHeight + 40); 
+            
+            // 【核心修正】：用输入的上下距作为基础间距，叠加上实际超出默认高度的冗余高度
+            const stepHeight = inputGapY + Math.max(0, rowHeight - baseH);
             
             const processY = Math.round(currentY + stepHeight / 2);
             nodeCoords[p.id] = { x: X_CENTER, y: processY };
@@ -798,7 +761,6 @@
                 positionedSet.add(e.id);
                 eStartY += h + 20;
             });
-            
             currentY += stepHeight;
         });
 
@@ -819,7 +781,8 @@
                 n.position(finalX, finalY); 
             } 
         });
-        window.graph.centerContent({ padding: 60 });
+        window.graph.scroller.zoomToFit({ maxScale: 1 });
+        window.graph.centerContent();
     };
 
     window.saveProject = function() {
@@ -845,12 +808,6 @@
             if (type === 'fontSize') node.attr('text/fontSize', parseInt(document.getElementById('globalFontSize').value));
             if (type === 'fontFamily') node.attr('text/fontFamily', window.getCombinedFont());
             if (type === 'fontWeight') node.attr('text/fontWeight', window.isBold ? 'bold' : 'normal');
-            
-            const text = (node.attr('text/text') || '').replace(/\\n/g, '\n');
-            const baseW = parseInt(document.getElementById('globalW').value) || 130;
-            const baseH = parseInt(document.getElementById('globalH').value) || 45;
-            const size = window.calculateNodeSize(text, baseW, baseH);
-            node.resize(size.width, size.height); 
         });
         window.applyGlobalLayout(); 
     };
@@ -923,7 +880,7 @@
                     window.graph.addEdge({ source: { cell: edge.source, port: srcPort }, target: { cell: edge.target, port: tgtPort }, attrs: window.getSelectedEdgeAttrs(), router: window.getSelectedRouter(), connector: { name: 'rounded', args: { radius: 4 } } });
                 });
             }
-            setTimeout(() => { window.applyGlobalLayout(); }, 80);
+            setTimeout(() => { window.applyGlobalLayout(); }, 120);
         } catch (fatalError) { showError("系统渲染异常：" + fatalError.message); }
     };
 
