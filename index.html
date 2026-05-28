@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
@@ -23,7 +23,6 @@
         ::-webkit-scrollbar-thumb { background: #d1d5da; border-radius: 3px; }
         ::-webkit-scrollbar-thumb:hover { background: #9da2a8; }
 
-        /* 左侧面板 */
         .sidebar { width: 340px; background: var(--panel-bg); display: flex; flex-direction: column; box-shadow: 2px 0 10px rgba(0,0,0,0.05); z-index: 20; border-right: 1px solid var(--border); flex-shrink: 0;}
         
         .sidebar-header { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: #fbfbfc; flex-shrink: 0;}
@@ -54,7 +53,7 @@
         .chat-input-area { padding: 15px 20px; background: var(--panel-bg); border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 8px; flex-shrink: 0;}
         .chat-input-header { display: flex; justify-content: space-between; align-items: center;}
         .chat-input-header span { font-size: 12px; color: var(--text-sub); font-family: "Microsoft YaHei", sans-serif;}
-        .chat-input-area textarea { width: 100%; height: 90px; resize: none; border: 1px solid var(--border); border-radius: 4px; padding: 10px; font-family: "Microsoft YaHei", inherit; font-size: 13px; box-sizing: border-box; transition: 0.2s;}
+        .chat-input-area textarea { width: 100%; height: 100px; resize: none; border: 1px solid var(--border); border-radius: 4px; padding: 10px; font-family: "Microsoft YaHei", inherit; font-size: 13px; box-sizing: border-box; transition: 0.2s;}
         .chat-input-area textarea:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 0 2px rgba(0,82,217,0.1); }
         .send-btn { background: var(--primary); color: #fff; border: none; padding: 10px 0; border-radius: 4px; cursor: pointer; font-weight: 500; font-size: 13px; transition: 0.2s; display: flex; justify-content: center; align-items: center; font-family: "Microsoft YaHei", sans-serif;}
         .send-btn:hover { background: var(--primary-hover); }
@@ -66,31 +65,13 @@
         .typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
         @keyframes typing { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
 
-        .stencil-container { padding: 15px 20px; border-top: 1px solid var(--border); background: #fbfbfc; flex-shrink: 0; }
-        .section-title { font-size: 12px; font-weight: 600; color: var(--text-sub); margin: 0 0 12px 0; font-family: "Microsoft YaHei", sans-serif;}
-        .stencil-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
-        
-        .stencil-item-btn { display: flex; align-items: center; justify-content: center; width: 100%; height: 56px; border: 1px solid var(--border); border-radius: 6px; background: #fff; cursor: pointer; transition: all 0.2s; }
-        .stencil-item-btn:hover { border-color: var(--primary); box-shadow: 0 2px 8px rgba(0,82,217,0.1); background: #fbfbfc; }
-
-        .visual-shape { width: 44px; height: 28px; box-sizing: border-box; }
-        .v-process { border: 2px solid #18191c; background: #f4f5f7; }
-        .v-material { border: 1px solid #dcdfe6; border-radius: 14px; background: #fff; }
-        .v-emission { border: 2px dashed #d54941; background: #fff1f0; }
-        .v-decision { width: 24px; height: 24px; border: 2px solid #18191c; background: #fff; transform: rotate(45deg); }
-        .v-ellipse { border: 2px solid #18191c; background: #fff; border-radius: 50%; }
-        .v-text { border: 1px dashed #9da2a8; background: transparent; }
-
-        /* 主工作区 & 分层工具栏 */
+        /* 主工作区 & 分层Ribbon工具栏 */
         .main-workspace { flex: 1; display: flex; flex-direction: column; position: relative; min-width: 0; background: var(--panel-bg);}
-        
-        .toolbar-container { display: flex; flex-direction: column; background: #fff; border-bottom: 1px solid var(--border); z-index: 15; flex-shrink: 0; font-family: "Microsoft YaHei", sans-serif; box-shadow: 0 2px 8px rgba(0,0,0,0.02);}
-        
-        .toolbar-top { display: flex; justify-content: space-between; align-items: center; padding: 10px 20px; border-bottom: 1px solid #f0f1f5; }
+        .toolbar-container { display: flex; flex-direction: column; background: var(--bg); border-bottom: 1px solid var(--border); z-index: 15; flex-shrink: 0; font-family: "Microsoft YaHei", sans-serif; box-shadow: 0 2px 8px rgba(0,0,0,0.02);}
+        .toolbar-row { display: flex; align-items: center; padding: 10px 20px; background: #fff; border-bottom: 1px solid #f0f1f5; }
         .toolbar-left, .toolbar-right { display: flex; align-items: center; gap: 10px; }
         
         .toolbar-bottom { display: flex; align-items: flex-start; padding: 12px 20px; background: #fbfbfc; gap: 16px; flex-wrap: wrap; }
-        
         .prop-group { display: flex; align-items: center; gap: 8px; background: #ffffff; padding: 6px 14px; border-radius: 6px; border: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.02); }
         .group-label { font-size: 12px; font-weight: bold; color: var(--primary); margin-right: 4px; padding-right: 12px; border-right: 1px solid var(--border); white-space: nowrap;}
         
@@ -100,7 +81,7 @@
         .toolbar-container input[type="number"], .toolbar-container select { padding: 4px 8px; border: 1px solid #dcdfe6; border-radius: 4px; font-size: 12px; outline: none; color: var(--text-main); transition: 0.2s;}
         .toolbar-container input[type="number"]:focus, .toolbar-container select:focus { border-color: var(--primary); }
         
-        .btn-tool { background: #fff; border: 1px solid #dcdfe6; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; color: var(--text-main); display: flex; align-items: center; justify-content: center; gap: 4px; transition: 0.2s; font-weight: 500; white-space: nowrap;}
+        .btn-tool { background: #fff; border: 1px solid #dcdfe6; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; color: var(--text-main); display: flex; align-items: center; justify-content: center; gap: 6px; transition: 0.2s; font-weight: 500; white-space: nowrap;}
         .btn-tool:hover { border-color: var(--primary); color: var(--primary); background: #f0f4ff; }
         
         .btn-danger { color: #d54941; border-color: transparent; background: transparent; }
@@ -185,7 +166,7 @@
         <div class="chat-messages" id="chatMessages">
             <div class="msg-row ai">
                 <div class="msg-avatar">豆包</div>
-                <div class="msg-bubble">您好。我是工程工艺分析引擎。请录入流程描述，我将为您构建排版流程图。</div>
+                <div class="msg-bubble">系统已就绪。请输入工艺流程描述，我将自动提取主干工序、原辅料及产排污节点，并绘制标准的拓扑流程图。</div>
             </div>
         </div>
         
@@ -194,7 +175,7 @@
                 <span>流程说明录入：</span>
                 <button class="text-btn" onclick="insertExample()" style="padding:0; font-size:12px;">快速载入示例</button>
             </div>
-            <textarea id="chatInput" placeholder="支持直接粘贴大段文本。若物料缺少行业代号，系统将依据环评技术规范为您智能补充。"></textarea>
+            <textarea id="chatInput" placeholder="支持大段文本直接粘贴。AI 将自动分析节点关系。"></textarea>
             <button class="send-btn" id="sendBtn" onclick="sendMessage()">执行智能分析与排版</button>
         </div>
     </div>
@@ -224,12 +205,24 @@
         <div class="toolbar-bottom">
             <div class="prop-group">
                 <span class="group-label">插入</span>
-                <button class="btn-tool btn-shape" onclick="addNodeToCenter('process')"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" fill="none" stroke="currentColor" stroke-width="2"/></svg></button>
-                <button class="btn-tool btn-shape" onclick="addNodeToCenter('material')"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="6" fill="none" stroke="currentColor" stroke-width="2"/></svg></button>
-                <button class="btn-tool btn-shape" onclick="addNodeToCenter('emission')"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" fill="none" stroke="#d54941" stroke-width="2" stroke-dasharray="3 2"/></svg></button>
-                <button class="btn-tool btn-shape" onclick="addNodeToCenter('decision')"><svg viewBox="0 0 24 24"><polygon points="12,3 21,12 12,21 3,12" fill="none" stroke="currentColor" stroke-width="2"/></svg></button>
-                <button class="btn-tool btn-shape" onclick="addNodeToCenter('ellipse')"><svg viewBox="0 0 24 24"><ellipse cx="12" cy="12" rx="10" ry="7" fill="none" stroke="currentColor" stroke-width="2"/></svg></button>
-                <button class="btn-tool btn-shape" onclick="addNodeToCenter('text')"><svg viewBox="0 0 24 24"><text x="12" y="17" font-family="Arial" font-size="16" font-weight="bold" text-anchor="middle" fill="currentColor">T</text></svg></button>
+                <button class="btn-tool btn-shape" onclick="addNodeToCenter('process')">
+                    <svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+                </button>
+                <button class="btn-tool btn-shape" onclick="addNodeToCenter('material')">
+                    <svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="6" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+                </button>
+                <button class="btn-tool btn-shape" onclick="addNodeToCenter('emission')">
+                    <svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" fill="none" stroke="#d54941" stroke-width="2" stroke-dasharray="3 2"/></svg>
+                </button>
+                <button class="btn-tool btn-shape" onclick="addNodeToCenter('decision')">
+                    <svg viewBox="0 0 24 24"><polygon points="12,3 21,12 12,21 3,12" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+                </button>
+                <button class="btn-tool btn-shape" onclick="addNodeToCenter('ellipse')">
+                    <svg viewBox="0 0 24 24"><ellipse cx="12" cy="12" rx="10" ry="7" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+                </button>
+                <button class="btn-tool btn-shape" onclick="addNodeToCenter('text')">
+                    <svg viewBox="0 0 24 24"><text x="12" y="17" font-family="Arial" font-size="16" font-weight="bold" text-anchor="middle" fill="currentColor">T</text></svg>
+                </button>
             </div>
 
             <div class="prop-group">
@@ -255,7 +248,7 @@
                 <label style="color:var(--primary); margin-left:4px;"><input type="checkbox" id="shortLabel" onchange="toggleEmissionLabels()"> 简写排污</label>
             </div>
 
-            <div class="prop-group">
+            <div class="prop-group" style="border:none;">
                 <span class="group-label">样式</span>
                 <div class="visual-dropdown">
                     <button class="btn-tool" onclick="toggleMenu('bgMenu', event)">填充色</button>
@@ -405,16 +398,25 @@
             stepIdx = (stepIdx + 1) % statusSteps.length;
         }, 1200);
 
+        // 【重构系统提示词，严禁 AI 生成跨级跳跃连线，明确不许合并工序】
         const systemPrompt = `你是一个专业的环境工程工艺图解析系统。
 请严格分析用户提供的工艺描述，并提取为标准 JSON 数据格式（必须用 \`\`\`json 和 \`\`\` 包裹）。
 
 【核心拓扑及合规编码规则】：
-1. 【主干单链】：必须提取所有的主工序步骤，并在 \`edges\` 中生成严格首尾相连的单链流转数据，绝不允许跨级跳跃。
-2. 【环评合规编码补充】：若原文中提及了污染物但没有提供行业代号（如 G1、W1），你必须基于环境工程规范，顺次为其强制自动生成标准的环评编码。废气G系列，废水W系列，废渣S系列。格式为："名称(代号)"。
-3. 【节点一归一】：同一工序投入的所有原辅料必须强行合并在1个节点（内部用 \\n 换行）。同理工序产生的所有污染物也必须强行合并在1个节点。
+1. 【主干单链】：必须提取所有的主工序步骤，并在 \`edges\` 中生成严格首尾相连的单链流转数据（如 A->B, B->C），绝不允许跨级跳跃（如 A->C 属于严重错误）。绝对不能把工序合并到原辅料里。
+2. 【环评合规编码补充（核心）】：若原文中提及了污染物（废水、废气、固废/废渣、噪声）但没有提供对应的行业代号（如 G1、W1、S1 等），你必须基于环境工程规范，顺次为其强制自动生成标准的环评编码。
+   - 废气用 G1, G2, G3...
+   - 废水用 W1, W2, W3...
+   - 固体废物/废渣/废液用 S1, S2, S3...
+   - 噪声用 N1, N2, N3...
+   - 节点文本必须以 "名称代号" 的形式直接相连，绝对不能使用括号包裹！例如："合成废气G1"、"精馏废水W1"。
+3. 【严格分离与合并】：
+   - 【工序节点】(process) 只能写工序名称，绝不能把原料写进工序节点里！
+   - 【原辅料节点】(material) 必须作为独立节点，通过 edge 指向对应的工序。同一工序投入的多种物料合并在1个物料节点中（内部用 \\n 换行）。
+   - 【产排污节点】(emission) 必须作为独立节点，由对应工序通过 edge 指向它。同一工序产生的多种污染物合并在1个节点中（内部用 \\n 换行）。
 
-【JSON 数据规范】：
-{"nodes": [{"id": "唯一标识", "label": "名称(代号)", "category": "分类"}], "edges": [{"source": "起点id", "target": "终点id"}]}
+【JSON 数据结构规范】：
+{"nodes": [{"id": "唯一标识", "label": "名称代号", "category": "分类"}], "edges": [{"source": "起点id", "target": "终点id"}]}
 * category 取值仅限: process, material, emission。`;
 
         try {
@@ -439,7 +441,7 @@
 
             if (jsonMatch) {
                 const jsonStr = jsonMatch[1].trim();
-                chatText += `<br><br><span style="color:#00a870; font-weight:500;">解析指令执行完毕，画布已更新。</span>`;
+                chatText += `<br><br><span style="color:#00a870; font-weight:500;">解析完毕，数据结构已推送至视图。</span>`;
                 updateMessage(aiMsgId, chatText);
                 renderFromJSON(jsonStr);
             } else {
@@ -454,7 +456,7 @@
     }
 
     /* =========================================================
-       2. 防弹级动态图形渲染逻辑 (修复偶数像素触发死锁BUG)
+       2. 防弹级动态图形渲染逻辑 
        ========================================================= */
     function showError(msg) { document.getElementById('error-text').innerHTML = msg; document.getElementById('error-msg').style.display = 'block'; }
     function hideError() { document.getElementById('error-msg').style.display = 'none'; }
@@ -661,7 +663,6 @@
         window.graph.addNode({ shape: shape, x: Math.round(center.x - size.width/2 + offsetX), y: Math.round(center.y - size.height/2 + offsetY), width: size.width, height: size.height, ports: defaultPorts, data: { category: type, originalLabel: initialText }, attrs: { body: { fill: style.fill, stroke: style.stroke, strokeWidth: style.strokeWidth, strokeDasharray: style.dash, rx: style.rx, ry: style.rx, refPoints: style.refPoints }, text: { text: initialText, fill: style.color, fontSize: parseInt(document.getElementById('globalFontSize').value), fontFamily: window.getCombinedFont(), fontWeight: window.isBold ? 'bold' : 'normal' } } });
     };
 
-    // 【修改核心】：不再强行锁定偶数值（会导致输入框失灵），改为直接将计算结果做平滑加法。
     window.applyGlobalLayout = function() {
         if (!window.graph) return;
         const allNodes = window.graph.getNodes(); const allEdges = window.graph.getEdges(); if (allNodes.length === 0) return;
@@ -669,8 +670,7 @@
         const baseW = parseInt(document.getElementById('globalW').value) || 130; 
         const baseH = parseInt(document.getElementById('globalH').value) || 45;
         const gapX = parseInt(document.getElementById('globalGapX').value) || 320; 
-        // 将这里的纵向间距变回原汁原味的累加基准值，不再做死板的 Math.max() 限制
-        const inputGapY = parseInt(document.getElementById('globalGapY').value) || 80; 
+        const minGapY = parseInt(document.getElementById('globalGapY').value) || 80; 
 
         allNodes.forEach(node => { 
             const data = node.getData() || {}; 
@@ -701,6 +701,7 @@
         const processIds = new Set(processNodes.map(p => p.id)); 
         let sortedProcesses = []; let visited = new Set();
         let startProcesses = processNodes.filter(p => { return !(inEdges[p.id] || []).some(id => processIds.has(id)); });
+        
         if (startProcesses.length === 0 && processNodes.length > 0) startProcesses = [processNodes[0]];
         
         let queue = startProcesses.map(p => p.id);
@@ -710,11 +711,15 @@
                 visited.add(currId); 
                 const node = processNodes.find(p => p.id === currId);
                 if (node) sortedProcesses.push(node);
+                
                 const nextIds = (outEdges[currId] || []).filter(id => processIds.has(id));
                 queue.push(...nextIds); 
             } 
         }
-        processNodes.forEach(p => { if(!visited.has(p.id)) sortedProcesses.push(p); });
+        
+        processNodes.forEach(p => { 
+            if(!visited.has(p.id)) sortedProcesses.push(p); 
+        });
 
         const nodeCoords = {}; 
         const scrollerWidth = document.getElementById('container').clientWidth;
@@ -739,8 +744,7 @@
             const eHeight = getGroupHeight(emissions);
             const rowHeight = Math.max(pHeight, mHeight, eHeight);
             
-            // 【核心修正】：用输入的上下距作为基础间距，叠加上实际超出默认高度的冗余高度
-            const stepHeight = inputGapY + Math.max(0, rowHeight - baseH);
+            const stepHeight = Math.max(minGapY, rowHeight + 40); 
             
             const processY = Math.round(currentY + stepHeight / 2);
             nodeCoords[p.id] = { x: X_CENTER, y: processY };
@@ -808,6 +812,12 @@
             if (type === 'fontSize') node.attr('text/fontSize', parseInt(document.getElementById('globalFontSize').value));
             if (type === 'fontFamily') node.attr('text/fontFamily', window.getCombinedFont());
             if (type === 'fontWeight') node.attr('text/fontWeight', window.isBold ? 'bold' : 'normal');
+            
+            const text = (node.attr('text/text') || '').replace(/\\n/g, '\n');
+            const baseW = parseInt(document.getElementById('globalW').value) || 130;
+            const baseH = parseInt(document.getElementById('globalH').value) || 45;
+            const size = window.calculateNodeSize(text, baseW, baseH);
+            node.resize(size.width, size.height); 
         });
         window.applyGlobalLayout(); 
     };
@@ -880,7 +890,7 @@
                     window.graph.addEdge({ source: { cell: edge.source, port: srcPort }, target: { cell: edge.target, port: tgtPort }, attrs: window.getSelectedEdgeAttrs(), router: window.getSelectedRouter(), connector: { name: 'rounded', args: { radius: 4 } } });
                 });
             }
-            setTimeout(() => { window.applyGlobalLayout(); }, 120);
+            setTimeout(() => { window.applyGlobalLayout(); }, 80);
         } catch (fatalError) { showError("系统渲染异常：" + fatalError.message); }
     };
 
