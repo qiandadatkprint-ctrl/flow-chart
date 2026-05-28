@@ -26,15 +26,15 @@
         .sidebar { width: 360px; background: var(--panel-bg); display: flex; flex-direction: column; box-shadow: 2px 0 10px rgba(0,0,0,0.05); z-index: 20; border-right: 1px solid var(--border); }
         
         .sidebar-header { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: #fbfbfc; flex-shrink: 0;}
-        .sidebar-title { font-size: 15px; font-weight: 600; color: var(--text-main); display: flex; align-items: center; gap: 8px;}
-        .text-btn { cursor: pointer; color: var(--primary); font-size: 13px; font-weight: 500; background: none; border: none; padding: 4px 8px; border-radius: 4px; transition: 0.2s;}
+        .sidebar-title { font-size: 15px; font-weight: 600; color: var(--text-main); display: flex; align-items: center; gap: 8px; font-family: "Microsoft YaHei", sans-serif;}
+        .text-btn { cursor: pointer; color: var(--primary); font-size: 13px; font-weight: 500; background: none; border: none; padding: 4px 8px; border-radius: 4px; transition: 0.2s; font-family: "Microsoft YaHei", sans-serif;}
         .text-btn:hover { background: #f0f4ff; }
 
         .config-panel { display: none; padding: 16px 20px; background: #f0f4ff; border-bottom: 1px solid #d9e6ff; transition: all 0.3s; }
-        .config-header { font-size: 13px; font-weight: 600; color: #0045b3; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
+        .config-header { font-size: 13px; font-weight: 600; color: #0045b3; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; font-family: "Microsoft YaHei", sans-serif;}
         .form-group { margin-bottom: 12px; }
-        .form-group label { display: block; font-size: 12px; color: var(--text-sub); margin-bottom: 6px; font-weight: 500;}
-        .form-group input { width: 100%; box-sizing: border-box; padding: 8px 10px; border: 1px solid #c5d7f5; border-radius: 4px; font-size: 13px; transition: 0.2s;}
+        .form-group label { display: block; font-size: 12px; color: var(--text-sub); margin-bottom: 6px; font-weight: 500; font-family: "Microsoft YaHei", sans-serif;}
+        .form-group input { width: 100%; box-sizing: border-box; padding: 8px 10px; border: 1px solid #c5d7f5; border-radius: 4px; font-size: 13px; transition: 0.2s; font-family: inherit;}
         .form-group input:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 0 2px rgba(0,82,217,0.1); }
 
         .chat-container { flex: 1; display: flex; flex-direction: column; background: #fafbfa; overflow: hidden; }
@@ -65,24 +65,22 @@
         .typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
         @keyframes typing { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
 
-        /* 图形化图元组件库 */
+        /* 纯图形化图元面板（不再包含文字） */
         .stencil-container { padding: 15px 20px; border-top: 1px solid var(--border); background: #fbfbfc; flex-shrink: 0; }
         .section-title { font-size: 12px; font-weight: 600; color: var(--text-sub); margin: 0 0 12px 0; font-family: "Microsoft YaHei", sans-serif;}
-        .stencil-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; justify-items: center; }
+        .stencil-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
         
-        .stencil-item-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; padding: 12px 0; border: 1px solid var(--border); border-radius: 6px; background: #fff; cursor: pointer; transition: all 0.2s; gap: 8px; }
-        .stencil-item-btn:hover { border-color: var(--primary); box-shadow: 0 2px 8px rgba(0,82,217,0.1); }
-        .stencil-item-btn span { font-size: 12px; color: var(--text-sub); font-family: "Microsoft YaHei", sans-serif;}
-        .stencil-item-btn:hover span { color: var(--primary); font-weight: 500; }
+        .stencil-item-btn { display: flex; align-items: center; justify-content: center; width: 100%; height: 56px; border: 1px solid var(--border); border-radius: 6px; background: #fff; cursor: pointer; transition: all 0.2s; }
+        .stencil-item-btn:hover { border-color: var(--primary); box-shadow: 0 2px 8px rgba(0,82,217,0.1); background: #fbfbfc; }
 
-        /* 模拟画布中真实的样式 */
-        .visual-shape { width: 40px; height: 26px; box-sizing: border-box; }
+        /* 用于面板展示的微缩图形 */
+        .visual-shape { width: 44px; height: 28px; box-sizing: border-box; }
         .v-process { border: 2px solid #18191c; background: #f4f5f7; }
-        .v-material { border: 1px solid #dcdfe6; border-radius: 13px; background: #fff; } /* 原辅料边缘极淡，模拟无边框 */
+        .v-material { border: 1px solid #dcdfe6; border-radius: 14px; background: #fff; } /* 仅在面板加浅边框便于看清轮廓，画布上是透明的 */
         .v-emission { border: 2px dashed #d54941; background: #fff1f0; }
-        .v-decision { width: 22px; height: 22px; border: 2px solid #18191c; background: #fff; transform: rotate(45deg); margin: 2px 0; }
+        .v-decision { width: 24px; height: 24px; border: 2px solid #18191c; background: #fff; transform: rotate(45deg); }
         .v-ellipse { border: 2px solid #18191c; background: #fff; border-radius: 50%; }
-        .v-text { border: 1px dashed #999; background: transparent; }
+        .v-text { border: 1px dashed #9da2a8; background: transparent; }
 
         .main-workspace { flex: 1; display: flex; flex-direction: column; position: relative; min-width: 0; background: var(--panel-bg);}
         .toolbar { background: var(--panel-bg); border-bottom: 1px solid var(--border); display: flex; padding: 10px 15px; gap: 10px; z-index: 15; flex-wrap: wrap; flex-shrink: 0; align-items: center; box-shadow: 0 2px 6px rgba(0,0,0,0.02); font-family: "Microsoft YaHei", sans-serif;}
@@ -164,29 +162,24 @@
     <div class="stencil-container">
         <div class="section-title">图元组件 (点击直接添加至画布中央)</div>
         <div class="stencil-grid">
+            <!-- 去除了文字的纯图形化按钮 -->
             <div class="stencil-item-btn" onclick="addNodeToCenter('process')" title="主干工序">
                 <div class="visual-shape v-process"></div>
-                <span>主干工序</span>
             </div>
             <div class="stencil-item-btn" onclick="addNodeToCenter('material')" title="原辅料">
                 <div class="visual-shape v-material"></div>
-                <span>原辅料</span>
             </div>
             <div class="stencil-item-btn" onclick="addNodeToCenter('emission')" title="产排污">
                 <div class="visual-shape v-emission"></div>
-                <span>产排污</span>
             </div>
             <div class="stencil-item-btn" onclick="addNodeToCenter('decision')" title="逻辑判定">
                 <div class="visual-shape v-decision"></div>
-                <span>逻辑判定</span>
             </div>
             <div class="stencil-item-btn" onclick="addNodeToCenter('ellipse')" title="起止状态">
                 <div class="visual-shape v-ellipse"></div>
-                <span>起止状态</span>
             </div>
             <div class="stencil-item-btn" onclick="addNodeToCenter('text')" title="纯文本">
                 <div class="visual-shape v-text"></div>
-                <span>纯文本</span>
             </div>
         </div>
     </div>
@@ -216,14 +209,14 @@
         </div>
 
         <div class="toolbar-group">
+            <!-- 默认固定为 Times New Roman 和 宋体 -->
             <select id="westFont" onchange="updateNodeStyle('fontFamily')" style="width: 70px;" title="西文字体">
                 <option value="Times New Roman" selected>Times</option>
                 <option value="Arial">Arial</option>
             </select>
-            <select id="eastFont" onchange="updateNodeStyle('fontFamily')" style="width: 85px;" title="中文字体">
+            <select id="eastFont" onchange="updateNodeStyle('fontFamily')" style="width: 65px;" title="中文字体">
                 <option value="SimSun" selected>宋体</option>
-                <option value="Microsoft YaHei">微软雅黑</option>
-                <option value="SimHei">黑体</option>
+                <option value="Microsoft YaHei">黑体</option>
             </select>
             <input type="number" id="globalFontSize" value="13" style="width: 40px;" onchange="updateNodeStyle('fontSize')" title="字号调节">
             <label style="cursor:pointer;" title="文字加粗"><input type="checkbox" id="fontWeight" onchange="updateNodeStyle('fontWeight')"><b>B</b></label>
@@ -369,18 +362,18 @@
     }
 
     /* =========================================================
-       2. 底层图形渲染逻辑 (彻底分离调整与全局排版)
+       2. 底层图形渲染逻辑 (固化字体、独立排版逻辑)
        ========================================================= */
     function showError(msg) { document.getElementById('error-text').innerHTML = msg; document.getElementById('error-msg').style.display = 'block'; }
     function hideError() { document.getElementById('error-msg').style.display = 'none'; }
     function showToast(msg) { showError(msg); setTimeout(hideError, 2500); }
 
-    // 获取当前默认选择的中西文字体组合
+    // 底层强制结合：宋体+Times，选项仅用于微调
     window.getCombinedFont = function() { 
         return `'${document.getElementById('westFont').value}', '${document.getElementById('eastFont').value}', sans-serif`; 
     }
 
-    // 核心计算规则：偶数宽高防止错位偏移
+    // 宽高偶数对齐，防止模糊和连线歪斜
     window.calculateNodeSize = function(text, minW, minH) {
         if (!text) return { width: minW, height: minH };
         const lines = text.split('\n'); let maxChars = 0;
@@ -437,7 +430,7 @@
     });
 
     /* =========================================================
-       3. 图元组件：图形化界面 & 点击生成
+       3. 图元组件：点击生成（彻底免拖拽）
        ========================================================= */
 
     window.addNodeToCenter = function(type) {
@@ -466,7 +459,6 @@
         window.graph.addNode({ shape: shape, x: Math.round(center.x - size.width/2 + offsetX), y: Math.round(center.y - size.height/2 + offsetY), width: size.width, height: size.height, ports: defaultPorts, data: { category: type, originalLabel: initialText }, attrs: { body: { fill: style.fill, stroke: style.stroke, strokeWidth: style.strokeWidth, strokeDasharray: style.dash, rx: style.rx, ry: style.rx, refPoints: style.refPoints }, text: { text: initialText, fill: style.color, fontSize: parseInt(document.getElementById('globalFontSize').value), fontFamily: window.getCombinedFont(), fontWeight: document.getElementById('fontWeight').checked ? 'bold' : 'normal' } } });
     };
 
-    // 主动式一键排版，不再与日常属性修改强绑定
     window.applyGlobalLayout = function() {
         if (!window.graph) return;
         const allNodes = window.graph.getNodes(); const allEdges = window.graph.getEdges(); if (allNodes.length === 0) return;
@@ -514,23 +506,25 @@
         window.graph.centerContent({ padding: 60 });
     };
 
+    // 保存文件（对应“保存文件”功能）
     window.saveProject = function() {
         if(!window.graph) return;
         const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(window.graph.toJSON()));
         const a = document.createElement('a'); a.setAttribute("href", dataStr); a.setAttribute("download", "工艺流程文件.json");
-        document.body.appendChild(a); a.click(); a.remove(); showToast("已成功保存工程文件");
+        document.body.appendChild(a); a.click(); a.remove(); showToast("已成功保存文件");
     };
 
+    // 加载文件（对应“加载文件”功能）
     window.loadProject = function(event) {
         const file = event.target.files[0]; if (!file) return;
         const reader = new FileReader();
         reader.onload = function(e) {
-            try { window.graph.fromJSON(JSON.parse(e.target.result)); showToast("工程加载成功"); } catch(err) { showError("文件解析失败"); }
+            try { window.graph.fromJSON(JSON.parse(e.target.result)); showToast("文件加载成功"); } catch(err) { showError("文件解析失败"); }
         };
         reader.readAsText(file); event.target.value = ''; 
     };
 
-    // 原地自适应更新样式（脱离一键排版）
+    // 自适应调整文字与字号（脱离全局排版）
     window.updateNodeStyle = function(type) {
         if (!window.graph) return;
         const cells = window.graph.getSelectedCells(); const targetNodes = cells.length ? cells.filter(c => c.isNode()) : window.graph.getNodes();
@@ -552,7 +546,7 @@
     
     function formatEmissionLabel(fullText, isShort) { if (!isShort) return fullText; return fullText.split('\n').map(line => { const match = line.match(/[A-Za-z]+[-_]?\d+/); return match ? match[0] : line; }).join('\n'); }
     
-    // 原地自适应排污文字（脱离一键排版）
+    // 排污文字自适应拉伸
     window.toggleEmissionLabels = function() {
         if (!window.graph) return; const isShort = document.getElementById('shortLabel').checked;
         window.graph.getNodes().forEach(node => {
@@ -565,7 +559,6 @@
         });
     };
 
-    // 原地自适应编辑文本（脱离一键排版）
     window.saveEditModal = function() { 
         if (window.editTargetNode) { 
             let newText = document.getElementById('editModalInput').value.trim() === '' ? ' ' : document.getElementById('editModalInput').value; 
@@ -609,7 +602,7 @@
                     window.graph.addEdge({ source: { cell: edge.source, port: srcPort }, target: { cell: edge.target, port: tgtPort }, attrs: window.getSelectedEdgeAttrs(), router: window.getSelectedRouter(), connector: { name: 'rounded', args: { radius: 4 } } });
                 });
             }
-            setTimeout(() => { window.applyGlobalLayout(); }, 80); // 仅初次生成强制一次全局对齐
+            setTimeout(() => { window.applyGlobalLayout(); }, 80);
         } catch (fatalError) { showError("系统渲染异常：" + fatalError.message); }
     };
 
