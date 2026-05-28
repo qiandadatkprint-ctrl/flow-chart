@@ -23,7 +23,8 @@
         ::-webkit-scrollbar-thumb { background: #d1d5da; border-radius: 3px; }
         ::-webkit-scrollbar-thumb:hover { background: #9da2a8; }
 
-        .sidebar { width: 360px; background: var(--panel-bg); display: flex; flex-direction: column; box-shadow: 2px 0 10px rgba(0,0,0,0.05); z-index: 20; border-right: 1px solid var(--border); }
+        /* 左侧面板 */
+        .sidebar { width: 340px; background: var(--panel-bg); display: flex; flex-direction: column; box-shadow: 2px 0 10px rgba(0,0,0,0.05); z-index: 20; border-right: 1px solid var(--border); }
         
         .sidebar-header { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: #fbfbfc; flex-shrink: 0;}
         .sidebar-title { font-size: 15px; font-weight: 600; color: var(--text-main); display: flex; align-items: center; gap: 8px; font-family: "Microsoft YaHei", sans-serif;}
@@ -65,49 +66,47 @@
         .typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
         @keyframes typing { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
 
-        .stencil-container { padding: 15px 20px; border-top: 1px solid var(--border); background: #fbfbfc; flex-shrink: 0; }
-        .section-title { font-size: 12px; font-weight: 600; color: var(--text-sub); margin: 0 0 12px 0; font-family: "Microsoft YaHei", sans-serif;}
-        .stencil-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
-        .stencil-item-btn { display: flex; align-items: center; justify-content: center; width: 100%; height: 56px; border: 1px solid var(--border); border-radius: 6px; background: #fff; cursor: pointer; transition: all 0.2s; }
-        .stencil-item-btn:hover { border-color: var(--primary); box-shadow: 0 2px 8px rgba(0,82,217,0.1); background: #fbfbfc; }
-
-        .visual-shape { width: 44px; height: 28px; box-sizing: border-box; }
-        .v-process { border: 2px solid #18191c; background: #f4f5f7; }
-        .v-material { border: 1px solid #dcdfe6; border-radius: 14px; background: #fff; }
-        .v-emission { border: 2px dashed #d54941; background: #fff1f0; }
-        .v-decision { width: 24px; height: 24px; border: 2px solid #18191c; background: #fff; transform: rotate(45deg); }
-        .v-ellipse { border: 2px solid #18191c; background: #fff; border-radius: 50%; }
-        .v-text { border: 1px dashed #9da2a8; background: transparent; }
-
+        /* ================= 修复核心：专业工作台双层菜单 CSS ================= */
         .main-workspace { flex: 1; display: flex; flex-direction: column; position: relative; min-width: 0; background: var(--panel-bg);}
         
         .toolbar-container { display: flex; flex-direction: column; background: #fff; border-bottom: 1px solid var(--border); z-index: 15; flex-shrink: 0; font-family: "Microsoft YaHei", sans-serif; box-shadow: 0 2px 8px rgba(0,0,0,0.02);}
         
-        .toolbar-row { display: flex; align-items: center; padding: 10px 20px; gap: 16px;}
-        .toolbar-row.bottom { padding-top: 0; padding-bottom: 12px; }
+        /* 第一层：全局操作 */
+        .toolbar-top { display: flex; justify-content: space-between; align-items: center; padding: 10px 20px; border-bottom: 1px solid #f0f1f5; }
+        .toolbar-left, .toolbar-right { display: flex; align-items: center; gap: 10px; }
         
-        .toolbar-group { display: flex; align-items: center; gap: 6px; }
-        .toolbar-divider { width: 1px; height: 18px; background: var(--border); margin: 0 8px; }
+        /* 第二层：属性与插入 */
+        .toolbar-bottom { display: flex; align-items: center; padding: 10px 20px; background: #fbfbfc; gap: 20px; overflow-x: auto; white-space: nowrap;}
         
-        .toolbar-container label { font-size: 12px; color: var(--text-sub); display: flex; align-items: center; gap: 4px; white-space: nowrap;}
-        .toolbar-container input[type="number"], .toolbar-container select { padding: 5px 8px; border: 1px solid #dcdfe6; border-radius: 4px; font-size: 12px; outline: none; color: var(--text-main); transition: 0.2s;}
+        .prop-group { display: flex; align-items: center; gap: 8px; border-right: 1px solid var(--border); padding-right: 20px; }
+        .prop-group:last-child { border-right: none; padding-right: 0; }
+        .group-label { font-size: 12px; font-weight: bold; color: var(--text-sub); margin-right: 4px;}
+        
+        .sys-notice { background: #f0f4ff; color: var(--primary); font-size: 12px; padding: 6px 12px; border-radius: 4px; font-weight: 500; border: 1px solid #c5d7f5; margin-right: 10px;}
+        
+        /* 控件样式统一 */
+        .toolbar-container label { font-size: 12px; color: var(--text-main); display: flex; align-items: center; gap: 4px; cursor: pointer;}
+        .toolbar-container input[type="number"], .toolbar-container select { padding: 4px 8px; border: 1px solid #dcdfe6; border-radius: 4px; font-size: 12px; outline: none; color: var(--text-main); transition: 0.2s;}
         .toolbar-container input[type="number"]:focus, .toolbar-container select:focus { border-color: var(--primary); }
         
-        .btn-tool { background: #fff; border: 1px solid #dcdfe6; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; color: var(--text-main); display: flex; align-items: center; justify-content: center; gap: 6px; transition: 0.2s; font-weight: 500; white-space: nowrap;}
+        .btn-tool { background: #fff; border: 1px solid #dcdfe6; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; color: var(--text-main); display: flex; align-items: center; justify-content: center; gap: 4px; transition: 0.2s; font-weight: 500; white-space: nowrap;}
         .btn-tool:hover { border-color: var(--primary); color: var(--primary); background: #f0f4ff; }
         
-        .btn-shape { padding: 4px 8px; border-color: transparent; }
-        .btn-shape svg { width: 20px; height: 20px; color: var(--text-main); }
+        .btn-danger { color: #d54941; border-color: transparent; background: transparent; }
+        .btn-danger:hover { background: #fff1f0; border-color: #d54941; color: #d54941;}
+        .btn-success { background: #00a870; color: #fff; border: none; padding: 6px 14px;}
+        .btn-success:hover { background: #009664; color: #fff; }
+
+        /* SVG 专用图形按钮 */
+        .btn-shape { padding: 5px 10px; border-color: transparent; background: transparent;}
+        .btn-shape svg { width: 22px; height: 22px; color: var(--text-main); transition: 0.2s;}
+        .btn-shape:hover { background: #e0e7ff; border-color: var(--primary);}
         .btn-shape:hover svg { color: var(--primary); }
-        
+
         .btn-format { width: 28px; height: 28px; border: 1px solid #dcdfe6; background: #fff; border-radius: 4px; cursor: pointer; font-weight: bold; color: var(--text-main); display: flex; align-items: center; justify-content: center; transition: 0.2s;}
         .btn-format.active { background: #e0e7ff; color: var(--primary); border-color: var(--primary); }
 
-        .btn-danger { color: #d54941; border-color: transparent; }
-        .btn-danger:hover { background: #fff1f0; border-color: #d54941; color: #d54941;}
-        .btn-success { background: #00a870; color: #fff; border: none; padding: 7px 14px;}
-        .btn-success:hover { background: #009664; color: #fff; }
-
+        /* 下拉菜单控制 (Z-index 防遮挡) */
         .visual-dropdown { position: relative; display: inline-block; }
         .visual-menu { display: none; position: absolute; top: calc(100% + 6px); left: 0; background: #fff; border: 1px solid var(--border); border-radius: 6px; padding: 8px; box-shadow: 0 4px 16px rgba(0,0,0,0.15); z-index: 9999; min-width: 140px; flex-direction: column; gap: 4px; }
         .visual-swatch { display: flex; align-items: center; padding: 8px 12px; border-radius: 4px; cursor: pointer; transition: 0.2s; border: 1px solid transparent; }
@@ -122,7 +121,7 @@
 
         #container { flex: 1; width: 100%; height: 100%; position: relative; z-index: 1; outline: none; }
         
-        /* 隐藏高级画布 Scroller 引擎自身的滚动条，保持界面极简干净 */
+        /* 隐藏高级画布自身的滚动条 */
         .x6-widget-scroller { scrollbar-width: none; }
         .x6-widget-scroller::-webkit-scrollbar { display: none; width: 0; height: 0; }
 
@@ -197,7 +196,9 @@
 <div class="main-workspace">
     <div id="error-msg"><span id="error-text"></span><span class="close-error" onclick="hideError()">关闭</span></div>
     
+    <!-- 全新双层架构工具栏：分区明确，彻底防遮挡 -->
     <div class="toolbar-container">
+        <!-- 顶层：文件与操作 -->
         <div class="toolbar-top">
             <div class="toolbar-left">
                 <span class="sys-notice">💡 提示：左键平移画布 | Shift+左键框选元素</span>
@@ -207,40 +208,67 @@
                 <button class="btn-tool" onclick="document.getElementById('fileInput').click()">加载文件</button>
                 <input type="file" id="fileInput" style="display:none" accept=".json" onchange="loadProject(event)">
             </div>
+            
             <div class="toolbar-right">
-                <button class="btn-tool danger" onclick="clearCanvas()">清空画布</button>
-                <button class="btn-tool danger" onclick="deleteSelected()">删除选区</button>
-                <button class="btn-tool success" onclick="exportPNG()">导出 PNG 图纸</button>
+                <button class="btn-tool btn-danger" onclick="clearCanvas()">清空画布</button>
+                <button class="btn-tool btn-danger" onclick="deleteSelected()">删除选区</button>
+                <button class="btn-tool btn-success" onclick="exportPNG()">导出 PNG 图纸</button>
             </div>
         </div>
 
+        <!-- 底层：细分属性与插入控制 -->
         <div class="toolbar-bottom">
+            <!-- 【新增】图形插入区 -->
+            <div class="prop-group">
+                <span class="group-label">插入</span>
+                <button class="btn-tool btn-shape" onclick="addNodeToCenter('process')" title="主干工序">
+                    <svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+                </button>
+                <button class="btn-tool btn-shape" onclick="addNodeToCenter('material')" title="原辅料">
+                    <svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="6" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+                </button>
+                <button class="btn-tool btn-shape" onclick="addNodeToCenter('emission')" title="产排污">
+                    <svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" fill="none" stroke="#d54941" stroke-width="2" stroke-dasharray="3 2"/></svg>
+                </button>
+                <button class="btn-tool btn-shape" onclick="addNodeToCenter('decision')" title="逻辑判定">
+                    <svg viewBox="0 0 24 24"><polygon points="12,3 21,12 12,21 3,12" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+                </button>
+                <button class="btn-tool btn-shape" onclick="addNodeToCenter('ellipse')" title="起止状态">
+                    <svg viewBox="0 0 24 24"><ellipse cx="12" cy="12" rx="10" ry="7" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+                </button>
+                <button class="btn-tool btn-shape" onclick="addNodeToCenter('text')" title="纯文本">
+                    <svg viewBox="0 0 24 24"><text x="12" y="17" font-family="Arial" font-size="16" font-weight="bold" text-anchor="middle" fill="currentColor">T</text></svg>
+                </button>
+            </div>
+
+            <!-- 排版控制 -->
             <div class="prop-group">
                 <span class="group-label">排版</span>
                 <label>宽</label><input type="number" id="globalW" value="130" style="width: 44px;" oninput="applyGlobalLayout()">
                 <label>高</label><input type="number" id="globalH" value="45" style="width: 40px;" oninput="applyGlobalLayout()">
-                <label>水平间距</label><input type="number" id="globalGapX" value="320" style="width: 44px;" oninput="applyGlobalLayout()">
-                <label>垂直间距</label><input type="number" id="globalGapY" value="80" style="width: 40px;" oninput="applyGlobalLayout()">
+                <label>左右距</label><input type="number" id="globalGapX" value="320" style="width: 44px;" oninput="applyGlobalLayout()">
+                <label>上下距</label><input type="number" id="globalGapY" value="80" style="width: 40px;" oninput="applyGlobalLayout()">
             </div>
 
+            <!-- 文本控制 -->
             <div class="prop-group">
                 <span class="group-label">文本</span>
-                <select id="westFont" onchange="updateNodeStyle('fontFamily')" style="width: 75px;">
+                <select id="westFont" onchange="updateNodeStyle('fontFamily')" style="width: 70px;">
                     <option value="Times New Roman" selected>Times</option>
                     <option value="Arial">Arial</option>
                 </select>
-                <select id="eastFont" onchange="updateNodeStyle('fontFamily')" style="width: 65px;">
+                <select id="eastFont" onchange="updateNodeStyle('fontFamily')" style="width: 60px;">
                     <option value="SimSun" selected>宋体</option>
                     <option value="Microsoft YaHei">黑体</option>
                 </select>
                 <input type="number" id="globalFontSize" value="13" style="width: 40px;" oninput="updateNodeStyle('fontSize')">
                 <button id="btnBold" class="btn-format" onclick="toggleBold()" title="加粗">B</button>
-                <label style="color:#0052d9; cursor:pointer; margin-left:4px;"><input type="checkbox" id="shortLabel" onchange="toggleEmissionLabels()"> 排污简写</label>
+                <label style="color:var(--primary); margin-left:4px;"><input type="checkbox" id="shortLabel" onchange="toggleEmissionLabels()"> 简写排污</label>
             </div>
 
+            <!-- 图形样式控制 -->
             <div class="prop-group">
                 <span class="group-label">样式</span>
-                
                 <div class="visual-dropdown">
                     <button class="btn-tool" onclick="toggleMenu('bgMenu', event)">填充色</button>
                     <div class="color-menu" id="bgMenu">
@@ -270,26 +298,28 @@
                     <option value="1">1px</option><option value="2" selected>2px</option><option value="3">3px</option>
                 </select>
 
+                <!-- 图形化线型 -->
                 <div class="visual-dropdown">
                     <button class="btn-tool" onclick="toggleMenu('lineStyleMenu', event)" title="连线虚实样式">
-                        <svg width="24" height="12"><path id="icon-line-style" d="M0,6 L24,6" stroke="#18191c" stroke-width="2" fill="none"/></svg>
+                        <svg width="24" height="12"><path id="icon-line-style" d="M0,6 L24,6" stroke="currentColor" stroke-width="2" fill="none"/></svg>
                     </button>
                     <div class="visual-menu" id="lineStyleMenu">
                         <div class="visual-swatch" onclick="selectLineStyle('solid')">
                             <svg><path d="M0,6 L100,6" stroke="#18191c" stroke-width="2"/></svg>
                         </div>
                         <div class="visual-swatch" onclick="selectLineStyle('dashed')">
-                            <svg><path d="M0,6 L100,6" stroke="#18191c" stroke-width="2" stroke-dasharray="5 5"/></svg>
+                            <svg><path d="M0,6 L100,6" stroke="#18191c" stroke-width="2" stroke-dasharray="6 4"/></svg>
                         </div>
                         <div class="visual-swatch" onclick="selectLineStyle('dotted')">
-                            <svg><path d="M0,6 L100,6" stroke="#18191c" stroke-width="2" stroke-dasharray="2 2"/></svg>
+                            <svg><path d="M0,6 L100,6" stroke="#18191c" stroke-width="2" stroke-dasharray="2 3"/></svg>
                         </div>
                     </div>
                 </div>
 
+                <!-- 图形化折角 -->
                 <div class="visual-dropdown">
                     <button class="btn-tool" onclick="toggleMenu('lineRouterMenu', event)" title="连线折角样式">
-                        <svg width="24" height="12"><path id="icon-router" d="M0,6 L12,6 L12,0 L24,0" stroke="#18191c" stroke-width="2" fill="none"/></svg>
+                        <svg width="24" height="12"><path id="icon-router" d="M0,6 L12,6 L12,0 L24,0" stroke="currentColor" stroke-width="2" fill="none"/></svg>
                     </button>
                     <div class="visual-menu" id="lineRouterMenu">
                         <div class="visual-swatch" onclick="selectRouter('manhattan')">
@@ -300,27 +330,6 @@
                         </div>
                     </div>
                 </div>
-            </div>
-            
-            <div class="prop-group" style="border:none;">
-                <button class="btn-tool btn-shape" onclick="addNodeToCenter('process')" title="插入主干工序">
-                    <svg viewBox="0 0 24 24"><rect x="4" y="6" width="16" height="12" fill="none" stroke="currentColor" stroke-width="2"/></svg>
-                </button>
-                <button class="btn-tool btn-shape" onclick="addNodeToCenter('material')" title="插入原辅料">
-                    <svg viewBox="0 0 24 24"><rect x="4" y="6" width="16" height="12" rx="6" fill="none" stroke="currentColor" stroke-width="2"/></svg>
-                </button>
-                <button class="btn-tool btn-shape" onclick="addNodeToCenter('emission')" title="插入产排污">
-                    <svg viewBox="0 0 24 24"><rect x="4" y="6" width="16" height="12" fill="none" stroke="#d54941" stroke-width="2" stroke-dasharray="3 2"/></svg>
-                </button>
-                <button class="btn-tool btn-shape" onclick="addNodeToCenter('decision')" title="插入逻辑判定">
-                    <svg viewBox="0 0 24 24"><polygon points="12,4 20,12 12,20 4,12" fill="none" stroke="currentColor" stroke-width="2"/></svg>
-                </button>
-                <button class="btn-tool btn-shape" onclick="addNodeToCenter('ellipse')" title="插入起止状态">
-                    <svg viewBox="0 0 24 24"><ellipse cx="12" cy="12" rx="10" ry="7" fill="none" stroke="currentColor" stroke-width="2"/></svg>
-                </button>
-                <button class="btn-tool btn-shape" onclick="addNodeToCenter('text')" title="插入纯文本">
-                    <svg viewBox="0 0 24 24"><text x="12" y="17" font-family="Arial" font-size="16" font-weight="bold" text-anchor="middle" fill="currentColor">T</text></svg>
-                </button>
             </div>
         </div>
     </div>
@@ -525,7 +534,7 @@
             container: containerElem, history: { enabled: true }, clipboard: { enabled: true }, 
             grid: { size: 10, visible: true, type: 'dot', args: { color: '#e3e6eb', thickness: 1 } },
             
-            /* 【核心替换：启用 Scroller 引擎实现拖拽无限延展】 */
+            /* 启用 Scroller 引擎实现拖拽无限延展 */
             scroller: { 
                 enabled: true, 
                 pageVisible: false, 
