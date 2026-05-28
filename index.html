@@ -23,11 +23,11 @@
         ::-webkit-scrollbar-thumb { background: #d1d5da; border-radius: 3px; }
         ::-webkit-scrollbar-thumb:hover { background: #9da2a8; }
 
-        /* 左侧面板 */
-        .sidebar { width: 360px; background: var(--panel-bg); display: flex; flex-direction: column; box-shadow: 2px 0 10px rgba(0,0,0,0.05); z-index: 20; border-right: 1px solid var(--border); }
+        /* 左侧面板（现仅保留 AI 交互） */
+        .sidebar { width: 340px; background: var(--panel-bg); display: flex; flex-direction: column; box-shadow: 2px 0 10px rgba(0,0,0,0.05); z-index: 20; border-right: 1px solid var(--border); }
         
         .sidebar-header { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: #fbfbfc; flex-shrink: 0;}
-        .sidebar-title { font-size: 15px; font-weight: 600; color: var(--text-main); font-family: "Microsoft YaHei", sans-serif;}
+        .sidebar-title { font-size: 15px; font-weight: 600; color: var(--text-main); display: flex; align-items: center; gap: 8px; font-family: "Microsoft YaHei", sans-serif;}
         .text-btn { cursor: pointer; color: var(--primary); font-size: 13px; font-weight: 500; background: none; border: none; padding: 4px 8px; border-radius: 4px; transition: 0.2s; font-family: "Microsoft YaHei", sans-serif;}
         .text-btn:hover { background: #f0f4ff; }
 
@@ -54,7 +54,7 @@
         .chat-input-area { padding: 15px 20px; background: var(--panel-bg); border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 8px; flex-shrink: 0;}
         .chat-input-header { display: flex; justify-content: space-between; align-items: center;}
         .chat-input-header span { font-size: 12px; color: var(--text-sub); font-family: "Microsoft YaHei", sans-serif;}
-        .chat-input-area textarea { width: 100%; height: 90px; resize: none; border: 1px solid var(--border); border-radius: 4px; padding: 10px; font-family: "Microsoft YaHei", inherit; font-size: 13px; box-sizing: border-box; transition: 0.2s;}
+        .chat-input-area textarea { width: 100%; height: 100px; resize: none; border: 1px solid var(--border); border-radius: 4px; padding: 10px; font-family: "Microsoft YaHei", inherit; font-size: 13px; box-sizing: border-box; transition: 0.2s;}
         .chat-input-area textarea:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 0 2px rgba(0,82,217,0.1); }
         .send-btn { background: var(--primary); color: #fff; border: none; padding: 10px 0; border-radius: 4px; cursor: pointer; font-weight: 500; font-size: 13px; transition: 0.2s; display: flex; justify-content: center; align-items: center; font-family: "Microsoft YaHei", sans-serif;}
         .send-btn:hover { background: var(--primary-hover); }
@@ -66,58 +66,45 @@
         .typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
         @keyframes typing { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
 
-        /* 图元区：没有任何文字提示 */
-        .stencil-container { padding: 15px 20px; border-top: 1px solid var(--border); background: #fbfbfc; flex-shrink: 0; }
-        .section-title { font-size: 12px; font-weight: 600; color: var(--text-sub); margin: 0 0 12px 0; font-family: "Microsoft YaHei", sans-serif;}
-        .stencil-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
-        .stencil-item-btn { display: flex; align-items: center; justify-content: center; width: 100%; height: 56px; border: 1px solid var(--border); border-radius: 6px; background: #fff; cursor: pointer; transition: all 0.2s; }
-        .stencil-item-btn:hover { border-color: var(--primary); box-shadow: 0 2px 8px rgba(0,82,217,0.1); background: #fbfbfc; }
-
-        .visual-shape { width: 44px; height: 28px; box-sizing: border-box; }
-        .v-process { border: 2px solid #18191c; background: #f4f5f7; }
-        .v-material { border: 1px solid #dcdfe6; border-radius: 14px; background: #fff; }
-        .v-emission { border: 2px dashed #d54941; background: #fff1f0; }
-        .v-decision { width: 24px; height: 24px; border: 2px solid #18191c; background: #fff; transform: rotate(45deg); }
-        .v-ellipse { border: 2px solid #18191c; background: #fff; border-radius: 50%; }
-        .v-text { border: 1px dashed #9da2a8; background: transparent; }
-
-        /* 主工作区 & 分层工具栏 */
+        /* 主工作区 & 顶部专业工具栏 */
         .main-workspace { flex: 1; display: flex; flex-direction: column; position: relative; min-width: 0; background: var(--panel-bg);}
         
-        .toolbar-container { display: flex; flex-direction: column; background: #fff; border-bottom: 1px solid var(--border); z-index: 15; flex-shrink: 0; font-family: "Microsoft YaHei", sans-serif; }
+        .toolbar-container { display: flex; flex-direction: column; background: #fff; border-bottom: 1px solid var(--border); z-index: 15; flex-shrink: 0; font-family: "Microsoft YaHei", sans-serif; box-shadow: 0 2px 8px rgba(0,0,0,0.02);}
         
-        /* 第一层：文件与操作 */
-        .toolbar-top { display: flex; justify-content: space-between; align-items: center; padding: 10px 20px; border-bottom: 1px solid #f0f1f5; }
-        .toolbar-left, .toolbar-right { display: flex; align-items: center; gap: 8px; }
-        .sys-notice { background: #f0f4ff; color: var(--primary); font-size: 12px; padding: 6px 12px; border-radius: 4px; font-weight: 500; border: 1px solid #c5d7f5; margin-right: 15px;}
+        .toolbar-row { display: flex; align-items: center; padding: 10px 20px; gap: 16px;}
+        .toolbar-row.bottom { padding-top: 0; padding-bottom: 12px; }
         
-        /* 第二层：属性配置 */
-        .toolbar-bottom { display: flex; align-items: center; padding: 10px 20px; background: #fbfbfc; overflow-x: auto; gap: 24px;}
-        .prop-group { display: flex; align-items: center; gap: 10px; border-right: 1px solid var(--border); padding-right: 24px; }
-        .prop-group:last-child { border-right: none; padding-right: 0; }
-        .group-label { font-size: 12px; font-weight: 600; color: #888; letter-spacing: 1px;}
+        .toolbar-group { display: flex; align-items: center; gap: 6px; }
+        .toolbar-divider { width: 1px; height: 18px; background: var(--border); margin: 0 8px; }
         
-        .toolbar-container label { font-size: 12px; color: var(--text-main); display: flex; align-items: center; gap: 4px; white-space: nowrap;}
+        .toolbar-container label { font-size: 12px; color: var(--text-sub); display: flex; align-items: center; gap: 4px; white-space: nowrap;}
         .toolbar-container input[type="number"], .toolbar-container select { padding: 5px 8px; border: 1px solid #dcdfe6; border-radius: 4px; font-size: 12px; outline: none; color: var(--text-main); transition: 0.2s;}
         .toolbar-container input[type="number"]:focus, .toolbar-container select:focus { border-color: var(--primary); }
         
-        .btn-tool { background: #fff; border: 1px solid #dcdfe6; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; color: var(--text-main); display: flex; align-items: center; justify-content: center; gap: 4px; transition: 0.2s; font-weight: 500; white-space: nowrap;}
+        .btn-tool { background: #fff; border: 1px solid #dcdfe6; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; color: var(--text-main); display: flex; align-items: center; justify-content: center; gap: 6px; transition: 0.2s; font-weight: 500; white-space: nowrap;}
         .btn-tool:hover { border-color: var(--primary); color: var(--primary); background: #f0f4ff; }
-        .btn-tool.danger { color: #d54941; border-color: #ffd8d6; }
-        .btn-tool.danger:hover { background: #fff1f0; border-color: #d54941; }
-        .btn-tool.success { background: #00a870; color: #fff; border: none; padding: 7px 14px;}
-        .btn-tool.success:hover { background: #009664; color: #fff; }
+        
+        /* 顶部图形插入专用按钮 */
+        .btn-shape { padding: 4px 8px; border-color: transparent; }
+        .btn-shape svg { width: 20px; height: 20px; color: var(--text-main); }
+        .btn-shape:hover svg { color: var(--primary); }
+        
         .btn-format { width: 28px; height: 28px; border: 1px solid #dcdfe6; background: #fff; border-radius: 4px; cursor: pointer; font-weight: bold; color: var(--text-main); display: flex; align-items: center; justify-content: center; transition: 0.2s;}
         .btn-format.active { background: #e0e7ff; color: var(--primary); border-color: var(--primary); }
 
-        /* 图形化下拉菜单 */
+        .btn-danger { color: #d54941; border-color: transparent; }
+        .btn-danger:hover { background: #fff1f0; border-color: #d54941; color: #d54941;}
+        .btn-success { background: #00a870; color: #fff; border: none; padding: 7px 14px;}
+        .btn-success:hover { background: #009664; color: #fff; }
+
+        /* 解决菜单遮挡的核心：层级设置与绝对定位 */
         .visual-dropdown { position: relative; display: inline-block; }
-        .visual-menu { display: none; position: absolute; top: calc(100% + 6px); left: 0; background: #fff; border: 1px solid var(--border); border-radius: 6px; padding: 8px; box-shadow: 0 4px 16px rgba(0,0,0,0.1); z-index: 100; min-width: 140px; flex-direction: column; gap: 4px; }
+        .visual-menu { display: none; position: absolute; top: calc(100% + 6px); left: 0; background: #fff; border: 1px solid var(--border); border-radius: 6px; padding: 8px; box-shadow: 0 4px 16px rgba(0,0,0,0.15); z-index: 9999; min-width: 140px; flex-direction: column; gap: 4px; }
         .visual-swatch { display: flex; align-items: center; padding: 8px 12px; border-radius: 4px; cursor: pointer; transition: 0.2s; border: 1px solid transparent; }
         .visual-swatch:hover { background: #f0f4ff; border-color: #c5d7f5; }
         .visual-swatch svg { width: 100%; height: 12px; }
         
-        .color-menu { display: none; position: absolute; top: calc(100% + 6px); left: 0; background: #fff; border: 1px solid var(--border); border-radius: 6px; padding: 12px; box-shadow: 0 4px 16px rgba(0,0,0,0.1); z-index: 100; width: 200px; flex-wrap: wrap; gap: 8px; }
+        .color-menu { display: none; position: absolute; top: calc(100% + 6px); left: 0; background: #fff; border: 1px solid var(--border); border-radius: 6px; padding: 12px; box-shadow: 0 4px 16px rgba(0,0,0,0.15); z-index: 9999; width: 200px; flex-wrap: wrap; gap: 8px; }
         .color-swatch { width: 22px; height: 22px; border-radius: 4px; border: 1px solid #dcdfe6; cursor: pointer; transition: transform 0.1s; box-sizing: border-box; }
         .color-swatch:hover { transform: scale(1.15); border-color: var(--primary); box-shadow: 0 2px 6px rgba(0,0,0,0.15); z-index: 2; position: relative;}
         .color-transparent { background: #fff; position: relative; overflow: hidden; }
@@ -190,51 +177,64 @@
             <button class="send-btn" id="sendBtn" onclick="sendMessage()">执行智能分析与排版</button>
         </div>
     </div>
-
-    <div class="stencil-container">
-        <div class="section-title">图元组件 (点击直接添加至画布中央)</div>
-        <div class="stencil-grid">
-            <div class="stencil-item-btn" onclick="addNodeToCenter('process')"><div class="visual-shape v-process"></div></div>
-            <div class="stencil-item-btn" onclick="addNodeToCenter('material')"><div class="visual-shape v-material"></div></div>
-            <div class="stencil-item-btn" onclick="addNodeToCenter('emission')"><div class="visual-shape v-emission"></div></div>
-            <div class="stencil-item-btn" onclick="addNodeToCenter('decision')"><div class="visual-shape v-decision"></div></div>
-            <div class="stencil-item-btn" onclick="addNodeToCenter('ellipse')"><div class="visual-shape v-ellipse"></div></div>
-            <div class="stencil-item-btn" onclick="addNodeToCenter('text')"><div class="visual-shape v-text"></div></div>
-        </div>
-    </div>
 </div>
 
 <div class="main-workspace">
     <div id="error-msg"><span id="error-text"></span><span class="close-error" onclick="hideError()">关闭</span></div>
     
     <div class="toolbar-container">
-        <div class="toolbar-top">
-            <div class="toolbar-left">
-                <span class="sys-notice">💡 操作提示：左键平移画布 | Shift+左键框选元素</span>
-                <button class="btn-tool" onclick="window.graph.history.undo()">撤销操作</button>
-                <div style="width:1px; height:16px; background:#e3e6eb; margin:0 8px;"></div>
+        <div class="toolbar-row">
+            <div class="toolbar-group">
+                <button class="btn-tool" onclick="window.graph.history.undo()" title="撤销">↩</button>
                 <button class="btn-tool" onclick="saveProject()">保存文件</button>
                 <button class="btn-tool" onclick="document.getElementById('fileInput').click()">加载文件</button>
                 <input type="file" id="fileInput" style="display:none" accept=".json" onchange="loadProject(event)">
             </div>
-            <div class="toolbar-right">
-                <button class="btn-tool danger" onclick="clearCanvas()">清空画布</button>
-                <button class="btn-tool danger" onclick="deleteSelected()">删除选区</button>
-                <button class="btn-tool success" onclick="exportPNG()">导出 PNG 图纸</button>
+            
+            <div class="toolbar-divider"></div>
+            
+            <div class="toolbar-group">
+                <button class="btn-tool btn-shape" onclick="addNodeToCenter('process')" title="主干工序">
+                    <svg viewBox="0 0 24 24"><rect x="4" y="6" width="16" height="12" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+                </button>
+                <button class="btn-tool btn-shape" onclick="addNodeToCenter('material')" title="原辅料">
+                    <svg viewBox="0 0 24 24"><rect x="4" y="6" width="16" height="12" rx="6" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+                </button>
+                <button class="btn-tool btn-shape" onclick="addNodeToCenter('emission')" title="产排污">
+                    <svg viewBox="0 0 24 24"><rect x="4" y="6" width="16" height="12" fill="none" stroke="#d54941" stroke-width="2" stroke-dasharray="3 2"/></svg>
+                </button>
+                <button class="btn-tool btn-shape" onclick="addNodeToCenter('decision')" title="逻辑判定">
+                    <svg viewBox="0 0 24 24"><polygon points="12,4 20,12 12,20 4,12" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+                </button>
+                <button class="btn-tool btn-shape" onclick="addNodeToCenter('ellipse')" title="起止状态">
+                    <svg viewBox="0 0 24 24"><ellipse cx="12" cy="12" rx="10" ry="7" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+                </button>
+                <button class="btn-tool btn-shape" onclick="addNodeToCenter('text')" title="纯文本">
+                    <svg viewBox="0 0 24 24"><text x="12" y="17" font-family="Arial" font-size="16" font-weight="bold" text-anchor="middle" fill="currentColor">T</text></svg>
+                </button>
+            </div>
+
+            <div class="toolbar-divider"></div>
+
+            <div class="toolbar-group" style="margin-left: auto;">
+                <button class="btn-tool btn-danger" onclick="clearCanvas()">清空画布</button>
+                <button class="btn-tool btn-danger" onclick="deleteSelected()">删除选区</button>
+                <button class="btn-tool btn-success" onclick="exportPNG()">导出 PNG 图纸</button>
             </div>
         </div>
 
-        <div class="toolbar-bottom">
-            <div class="prop-group">
-                <span class="group-label">排版</span>
-                <label>图框宽</label><input type="number" id="globalW" value="130" style="width: 44px;" oninput="applyGlobalLayout()">
-                <label>图框高</label><input type="number" id="globalH" value="45" style="width: 40px;" oninput="applyGlobalLayout()">
-                <label>水平间距</label><input type="number" id="globalGapX" value="320" style="width: 44px;" oninput="applyGlobalLayout()">
-                <label>垂直间距</label><input type="number" id="globalGapY" value="80" style="width: 40px;" oninput="applyGlobalLayout()">
+        <div class="toolbar-row bottom">
+            <div class="toolbar-group" style="background:#f4f5f7; padding:4px 8px; border-radius:4px; border:1px solid var(--border);">
+                <label>宽:</label><input type="number" id="globalW" value="130" style="width: 44px;" oninput="applyGlobalLayout()">
+                <label>高:</label><input type="number" id="globalH" value="45" style="width: 40px;" oninput="applyGlobalLayout()">
+                <div style="width:1px; height:12px; background:#dcdfe6; margin:0 4px;"></div>
+                <label>水平距:</label><input type="number" id="globalGapX" value="320" style="width: 44px;" oninput="applyGlobalLayout()">
+                <label>垂直距:</label><input type="number" id="globalGapY" value="80" style="width: 40px;" oninput="applyGlobalLayout()">
             </div>
+            
+            <div class="toolbar-divider"></div>
 
-            <div class="prop-group">
-                <span class="group-label">文本</span>
+            <div class="toolbar-group">
                 <select id="westFont" onchange="updateNodeStyle('fontFamily')" style="width: 75px;">
                     <option value="Times New Roman" selected>Times</option>
                     <option value="Arial">Arial</option>
@@ -243,14 +243,14 @@
                     <option value="SimSun" selected>宋体</option>
                     <option value="Microsoft YaHei">黑体</option>
                 </select>
-                <input type="number" id="globalFontSize" value="13" style="width: 40px;" onchange="updateNodeStyle('fontSize')">
+                <input type="number" id="globalFontSize" value="13" style="width: 40px;" oninput="updateNodeStyle('fontSize')">
                 <button id="btnBold" class="btn-format" onclick="toggleBold()" title="加粗">B</button>
-                <label style="color:#0052d9; cursor:pointer; margin-left:4px;"><input type="checkbox" id="shortLabel" onchange="toggleEmissionLabels()"> 排污简写</label>
+                <label style="color:var(--primary); cursor:pointer; margin-left:4px;"><input type="checkbox" id="shortLabel" onchange="toggleEmissionLabels()"> 排污简写</label>
             </div>
 
-            <div class="prop-group">
-                <span class="group-label">图形</span>
-                
+            <div class="toolbar-divider"></div>
+
+            <div class="toolbar-group">
                 <div class="visual-dropdown">
                     <button class="btn-tool" onclick="toggleMenu('bgMenu', event)">填充色</button>
                     <div class="color-menu" id="bgMenu">
@@ -281,25 +281,25 @@
                 </select>
 
                 <div class="visual-dropdown">
-                    <button class="btn-tool" onclick="toggleMenu('lineStyleMenu', event)" title="连线虚实样式">
-                        <svg width="24" height="12"><path id="icon-line-style" d="M0,6 L24,6" stroke="#18191c" stroke-width="2" fill="none"/></svg>
+                    <button class="btn-tool" onclick="toggleMenu('lineStyleMenu', event)" title="虚实样式">
+                        <svg width="24" height="12"><path id="icon-line-style" d="M0,6 L24,6" stroke="currentColor" stroke-width="2" fill="none"/></svg>
                     </button>
                     <div class="visual-menu" id="lineStyleMenu">
                         <div class="visual-swatch" onclick="selectLineStyle('solid')">
                             <svg><path d="M0,6 L100,6" stroke="#18191c" stroke-width="2"/></svg>
                         </div>
                         <div class="visual-swatch" onclick="selectLineStyle('dashed')">
-                            <svg><path d="M0,6 L100,6" stroke="#18191c" stroke-width="2" stroke-dasharray="5 5"/></svg>
+                            <svg><path d="M0,6 L100,6" stroke="#18191c" stroke-width="2" stroke-dasharray="6 4"/></svg>
                         </div>
                         <div class="visual-swatch" onclick="selectLineStyle('dotted')">
-                            <svg><path d="M0,6 L100,6" stroke="#18191c" stroke-width="2" stroke-dasharray="2 2"/></svg>
+                            <svg><path d="M0,6 L100,6" stroke="#18191c" stroke-width="2" stroke-dasharray="2 3"/></svg>
                         </div>
                     </div>
                 </div>
 
                 <div class="visual-dropdown">
-                    <button class="btn-tool" onclick="toggleMenu('lineRouterMenu', event)" title="连线折角样式">
-                        <svg width="24" height="12"><path id="icon-router" d="M0,6 L12,6 L12,0 L24,0" stroke="#18191c" stroke-width="2" fill="none"/></svg>
+                    <button class="btn-tool" onclick="toggleMenu('lineRouterMenu', event)" title="折线/直线">
+                        <svg width="24" height="12"><path id="icon-router" d="M0,6 L12,6 L12,0 L24,0" stroke="currentColor" stroke-width="2" fill="none"/></svg>
                     </button>
                     <div class="visual-menu" id="lineRouterMenu">
                         <div class="visual-swatch" onclick="selectRouter('manhattan')">
@@ -590,13 +590,13 @@
         });
     };
 
-    // 图形化线型选择
+    // 纯正的图形化线型选择
     window.selectLineStyle = function(style) {
         document.getElementById('currentLineStyleVal').value = style;
         const icon = document.getElementById('icon-line-style');
         if(style === 'solid') icon.setAttribute('stroke-dasharray', '0');
-        if(style === 'dashed') icon.setAttribute('stroke-dasharray', '5 5');
-        if(style === 'dotted') icon.setAttribute('stroke-dasharray', '2 2');
+        if(style === 'dashed') icon.setAttribute('stroke-dasharray', '6 4');
+        if(style === 'dotted') icon.setAttribute('stroke-dasharray', '2 3');
         
         let dash = '0';
         if (style === 'dashed') dash = '5 5';
@@ -612,7 +612,7 @@
         document.querySelectorAll('.visual-menu').forEach(m => m.style.display='none');
     };
 
-    // 图形化折角选择
+    // 纯正的图形化折角选择
     window.selectRouter = function(routerType) {
         document.getElementById('currentRouterVal').value = routerType;
         const icon = document.getElementById('icon-router');
