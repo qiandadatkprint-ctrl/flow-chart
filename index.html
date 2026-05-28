@@ -53,7 +53,7 @@
         .msg-row.ai .msg-bubble { background: #fff; color: var(--text-main); border: 1px solid var(--border); }
         
         .chat-input-area { padding: 15px 20px; background: var(--panel-bg); border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 10px; flex-shrink: 0;}
-        .chat-input-area textarea { width: 100%; height: 80px; resize: none; border: 1px solid var(--border); border-radius: 4px; padding: 10px; font-family: "Microsoft YaHei", inherit; font-size: 13px; box-sizing: border-box; transition: 0.2s;}
+        .chat-input-area textarea { width: 100%; height: 110px; resize: none; border: 1px solid var(--border); border-radius: 4px; padding: 10px; font-family: "Microsoft YaHei", inherit; font-size: 13px; box-sizing: border-box; transition: 0.2s;}
         .chat-input-area textarea:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 0 2px rgba(0,82,217,0.1); }
         .send-btn { background: var(--primary); color: #fff; border: none; padding: 10px 0; border-radius: 4px; cursor: pointer; font-weight: 500; font-size: 13px; transition: 0.2s; display: flex; justify-content: center; align-items: center; font-family: "Microsoft YaHei", sans-serif;}
         .send-btn:hover { background: var(--primary-hover); }
@@ -73,7 +73,6 @@
         .stencil-item-btn { display: flex; align-items: center; justify-content: center; width: 100%; height: 56px; border: 1px solid var(--border); border-radius: 6px; background: #fff; cursor: pointer; transition: all 0.2s; }
         .stencil-item-btn:hover { border-color: var(--primary); box-shadow: 0 2px 8px rgba(0,82,217,0.1); background: #fbfbfc; }
 
-        /* 面板展示的微缩图形 */
         .visual-shape { width: 44px; height: 28px; box-sizing: border-box; }
         .v-process { border: 2px solid #18191c; background: #f4f5f7; }
         .v-material { border: 1px solid #dcdfe6; border-radius: 14px; background: #fff; }
@@ -95,7 +94,6 @@
 
         .sys-notice { background: #f0f4ff; color: var(--text-main); font-size: 12px; padding: 4px 10px; border-radius: 4px; display: flex; align-items: center; font-weight: 500; border: 1px solid #c5d7f5;}
 
-        /* 颜色与样式选择菜单 */
         .color-dropdown { position: relative; display: inline-block; }
         .color-menu { display: none; position: absolute; top: calc(100% + 5px); left: 0; background: #fff; border: 1px solid var(--border); border-radius: 6px; padding: 12px; box-shadow: 0 4px 16px rgba(0,0,0,0.1); z-index: 100; width: 255px; flex-wrap: wrap; gap: 8px; }
         .color-swatch { width: 24px; height: 24px; border-radius: 4px; border: 1px solid #dcdfe6; cursor: pointer; transition: transform 0.1s; box-sizing: border-box; }
@@ -162,7 +160,7 @@
         </div>
         
         <div class="chat-input-area">
-            <textarea id="chatInput" placeholder="在此输入工艺流程描述..."></textarea>
+            <textarea id="chatInput" placeholder="在此输入工艺描述...&#10;&#10;【规范示例】：&#10;各类原料投入原料检测工序，产生废气G1与废渣S1；&#10;随后加入异丙醇、二甲苯进行投料与合成反应，产生废气G2；&#10;反应后使用纯水进行洗涤，产生清洗废水W1..."></textarea>
             <button class="send-btn" id="sendBtn" onclick="sendMessage()">执行解析</button>
         </div>
     </div>
@@ -170,22 +168,22 @@
     <div class="stencil-container">
         <div class="section-title">图元组件 (点击直接添加至画布中央)</div>
         <div class="stencil-grid">
-            <div class="stencil-item-btn" onclick="addNodeToCenter('process')">
+            <div class="stencil-item-btn" onclick="addNodeToCenter('process')" title="主干工序">
                 <div class="visual-shape v-process"></div>
             </div>
-            <div class="stencil-item-btn" onclick="addNodeToCenter('material')">
+            <div class="stencil-item-btn" onclick="addNodeToCenter('material')" title="原辅料">
                 <div class="visual-shape v-material"></div>
             </div>
-            <div class="stencil-item-btn" onclick="addNodeToCenter('emission')">
+            <div class="stencil-item-btn" onclick="addNodeToCenter('emission')" title="产排污">
                 <div class="visual-shape v-emission"></div>
             </div>
-            <div class="stencil-item-btn" onclick="addNodeToCenter('decision')">
+            <div class="stencil-item-btn" onclick="addNodeToCenter('decision')" title="逻辑判定">
                 <div class="visual-shape v-decision"></div>
             </div>
-            <div class="stencil-item-btn" onclick="addNodeToCenter('ellipse')">
+            <div class="stencil-item-btn" onclick="addNodeToCenter('ellipse')" title="起止状态">
                 <div class="visual-shape v-ellipse"></div>
             </div>
-            <div class="stencil-item-btn" onclick="addNodeToCenter('text')">
+            <div class="stencil-item-btn" onclick="addNodeToCenter('text')" title="纯文本">
                 <div class="visual-shape v-text"></div>
             </div>
         </div>
@@ -403,26 +401,31 @@
     }
 
     /* =========================================================
-       2. 底层图形渲染逻辑
+       2. 底层图形渲染与自适应算法
        ========================================================= */
     function showError(msg) { document.getElementById('error-text').innerHTML = msg; document.getElementById('error-msg').style.display = 'block'; }
     function hideError() { document.getElementById('error-msg').style.display = 'none'; }
     function showToast(msg) { showError(msg); setTimeout(hideError, 2500); }
 
-    // 默认中西文字体
     window.getCombinedFont = function() { 
         return `'${document.getElementById('westFont').value}', '${document.getElementById('eastFont').value}', sans-serif`; 
     }
 
-    // 偶数对齐计算，保证连线精准
+    // 严苛的文本高度测算规则 (全面处理换行符、转义符)
     window.calculateNodeSize = function(text, minW, minH) {
         if (!text) return { width: minW, height: minH };
-        const lines = text.split('\n'); let maxChars = 0;
-        lines.forEach(l => { let len = 0; for(let i=0; i<l.length; i++) { len += l.charCodeAt(i) > 255 ? 2 : 1; } if(len > maxChars) maxChars = len; });
+        // 兼容 AI 传来的字面量 \\n 和真实的换行符 \n
+        const lines = text.replace(/\\n/g, '\n').split(/\r?\n/); 
+        let maxChars = 0;
+        lines.forEach(l => { 
+            let len = 0; 
+            for(let i=0; i<l.length; i++) { len += l.charCodeAt(i) > 255 ? 2 : 1.1; } 
+            if(len > maxChars) maxChars = len; 
+        });
         const fontSize = parseInt(document.getElementById('globalFontSize').value) || 13;
         
-        let w = Math.max(minW, Math.ceil(maxChars * fontSize * 0.6) + 30);
-        let h = Math.max(minH, Math.ceil(lines.length * fontSize * 1.6) + 24);
+        let w = Math.max(minW, Math.ceil(maxChars * fontSize * 0.55) + 30);
+        let h = Math.max(minH, Math.ceil(lines.length * fontSize * 1.5) + 24);
         if (w % 2 !== 0) w += 1;
         if (h % 2 !== 0) h += 1;
         return { width: w, height: h };
@@ -474,7 +477,6 @@
        3. 样式定制与控件响应
        ========================================================= */
 
-    // 控制菜单显隐
     window.toggleMenu = function(menuId, event) {
         event.stopPropagation();
         document.querySelectorAll('.color-menu').forEach(menu => {
@@ -487,7 +489,6 @@
         }
     });
 
-    // 独立控制元素颜色
     window.updateColor = function(type, color) {
         if (!window.graph) return;
         const cells = window.graph.getSelectedCells().length ? window.graph.getSelectedCells() : [...window.graph.getNodes(), ...window.graph.getEdges()];
@@ -506,7 +507,6 @@
         document.querySelectorAll('.color-menu').forEach(menu => menu.style.display = 'none');
     };
 
-    // 独立控制元素线宽
     window.updateStyleProperty = function(property) {
         if (!window.graph) return;
         const val = parseInt(document.getElementById('borderWidth').value);
@@ -517,7 +517,6 @@
         });
     };
 
-    // 独立控制元素线型
     window.updateLineStyle = function() {
         if (!window.graph) return;
         const val = document.getElementById('lineStyle').value;
@@ -557,43 +556,113 @@
         window.graph.addNode({ shape: shape, x: Math.round(center.x - size.width/2 + offsetX), y: Math.round(center.y - size.height/2 + offsetY), width: size.width, height: size.height, ports: defaultPorts, data: { category: type, originalLabel: initialText }, attrs: { body: { fill: style.fill, stroke: style.stroke, strokeWidth: style.strokeWidth, strokeDasharray: style.dash, rx: style.rx, ry: style.rx, refPoints: style.refPoints }, text: { text: initialText, fill: style.color, fontSize: parseInt(document.getElementById('globalFontSize').value), fontFamily: window.getCombinedFont(), fontWeight: document.getElementById('fontWeight').checked ? 'bold' : 'normal' } } });
     };
 
+    // 核心引擎：深度重写的动态高度层级排版算法 (彻底解决多行溢出与重叠)
     window.applyGlobalLayout = function() {
         if (!window.graph) return;
         const allNodes = window.graph.getNodes(); const allEdges = window.graph.getEdges(); if (allNodes.length === 0) return;
-        const baseW = parseInt(document.getElementById('globalW').value) || 130; const baseH = parseInt(document.getElementById('globalH').value) || 45;
+        
+        const baseW = parseInt(document.getElementById('globalW').value) || 130; 
+        const baseH = parseInt(document.getElementById('globalH').value) || 45;
         const gapX = parseInt(document.getElementById('globalGapX').value) || 300; 
-        const gapY = parseInt(document.getElementById('globalGapY').value) || 80; 
+        const minGapY = parseInt(document.getElementById('globalGapY').value) || 80; 
 
-        allNodes.forEach(node => { const data = node.getData() || {}; if (data.category !== 'text' && data.category !== 'decision' && data.category !== 'ellipse') { const text = node.attr('text/text') || ''; const size = window.calculateNodeSize(text, baseW, baseH); node.resize(size.width, size.height); } });
+        // 重新测算并应用所有节点的尺寸 (基于换行高度)
+        allNodes.forEach(node => { 
+            const data = node.getData() || {}; 
+            if (data.category !== 'text' && data.category !== 'decision' && data.category !== 'ellipse') { 
+                const text = (node.attr('text/text') || '').replace(/\\n/g, '\n'); 
+                const size = window.calculateNodeSize(text, baseW, baseH); 
+                node.resize(size.width, size.height); 
+            } 
+        });
 
+        // 节点归类
         const processNodes = []; const materialNodes = []; const emissionNodes = [];
-        allNodes.forEach(n => { const data = n.getData() || {}; if(data.category === 'process') processNodes.push(n); else if(data.category === 'material') materialNodes.push(n); else if(data.category === 'emission') emissionNodes.push(n); });
+        allNodes.forEach(n => { 
+            const data = n.getData() || {}; 
+            if(data.category === 'process') processNodes.push(n); 
+            else if(data.category === 'material') materialNodes.push(n); 
+            else if(data.category === 'emission') emissionNodes.push(n); 
+        });
 
+        // 解析连线结构
         const outEdges = {}; const inEdges = {};
-        allEdges.forEach(e => { const src = e.getSourceCellId(); const tgt = e.getTargetCellId(); if(!outEdges[src]) outEdges[src] = []; if(!inEdges[tgt]) inEdges[tgt] = []; outEdges[src].push(tgt); inEdges[tgt].push(src); });
+        allEdges.forEach(e => { 
+            const src = e.getSourceCellId(); const tgt = e.getTargetCellId(); 
+            if(!outEdges[src]) outEdges[src] = []; if(!inEdges[tgt]) inEdges[tgt] = []; 
+            outEdges[src].push(tgt); inEdges[tgt].push(src); 
+        });
 
-        const processIds = new Set(processNodes.map(p => p.id)); let sortedProcesses = []; let visited = new Set();
+        // 寻找流程源头并排序主干
+        const processIds = new Set(processNodes.map(p => p.id)); 
+        let sortedProcesses = []; let visited = new Set();
         let startProcesses = processNodes.filter(p => { return !(inEdges[p.id] || []).some(id => processIds.has(id)); });
         let queue = [...startProcesses];
-        while(queue.length > 0) { let curr = queue.shift(); if(!visited.has(curr.id)) { visited.add(curr.id); sortedProcesses.push(curr); queue.push(...(outEdges[curr.id] || []).filter(id => processIds.has(id))); } }
+        while(queue.length > 0) { 
+            let curr = queue.shift(); 
+            if(!visited.has(curr.id)) { 
+                visited.add(curr.id); sortedProcesses.push(curr); 
+                queue.push(...(outEdges[curr.id] || []).filter(id => processIds.has(id))); 
+            } 
+        }
         processNodes.forEach(p => { if(!visited.has(p.id)) sortedProcesses.push(p); });
 
-        const nodeCoords = {}; const X_CENTER = 500; const X_LEFT = X_CENTER - gapX; const X_RIGHT = X_CENTER + gapX; 
-        sortedProcesses.forEach((p, index) => { nodeCoords[p.id] = { x: X_CENTER, y: 100 + index * gapY }; });
+        const nodeCoords = {}; 
+        const X_CENTER = 500; 
+        const X_LEFT = X_CENTER - gapX; 
+        const X_RIGHT = X_CENTER + gapX; 
+        
+        let currentY = 50; 
+        
+        // 基于高度切片的动态分层排版
+        sortedProcesses.forEach((p) => {
+            // 找出挂载在此工序的所有副节点
+            const materials = materialNodes.filter(m => (outEdges[m.id] || []).includes(p.id) || (inEdges[p.id] || []).includes(m.id));
+            const emissions = emissionNodes.filter(e => (inEdges[e.id] || []).includes(p.id) || (outEdges[p.id] || []).includes(e.id));
+            
+            // 计算某一组节点的累积高度
+            const getGroupHeight = (nodesList) => {
+                if (nodesList.length === 0) return 0;
+                let h = 0;
+                nodesList.forEach(n => h += n.getSize().height + 20); // 组内间距 20px
+                return h - 20;
+            };
+            
+            const pHeight = p.getSize().height;
+            const mHeight = getGroupHeight(materials);
+            const eHeight = getGroupHeight(emissions);
+            
+            // 当前行的总高度取 工序、原辅料、排污中最高的那个
+            const rowHeight = Math.max(pHeight, mHeight, eHeight);
+            
+            // 当前工艺段的实际垂直跨度 (保证最小跨度不小于用户设置的 gapY)
+            const stepHeight = Math.max(minGapY, rowHeight + 20); 
+            
+            // 将工序节点放置于该跨度中央
+            const processY = currentY + stepHeight / 2;
+            nodeCoords[p.id] = { x: X_CENTER, y: processY };
+            
+            // 将原辅料垂直居中挂载于左侧
+            let mStartY = processY - mHeight / 2;
+            materials.forEach(m => {
+                const h = m.getSize().height;
+                nodeCoords[m.id] = { x: X_LEFT, y: mStartY + h / 2 };
+                mStartY += h + 20;
+            });
+            
+            // 将排污垂直居中挂载于右侧
+            let eStartY = processY - eHeight / 2;
+            emissions.forEach(e => {
+                const h = e.getSize().height;
+                nodeCoords[e.id] = { x: X_RIGHT, y: eStartY + h / 2 };
+                eStartY += h + 20;
+            });
+            
+            // 向下推进光标，准备渲染下一道主干工序
+            currentY += stepHeight;
+        });
 
-        materialNodes.forEach(m => { let targetId = (outEdges[m.id] || []).find(id => processIds.has(id)); if (!targetId && sortedProcesses.length > 0) targetId = sortedProcesses[0].id; nodeCoords[m.id] = { x: X_LEFT, y: targetId && nodeCoords[targetId] ? nodeCoords[targetId].y : 100 }; });
-        emissionNodes.forEach(e => { let sourceId = (inEdges[e.id] || []).find(id => processIds.has(id)); if (!sourceId && sortedProcesses.length > 0) sourceId = sortedProcesses[sortedProcesses.length-1].id; nodeCoords[e.id] = { x: X_RIGHT, y: sourceId && nodeCoords[sourceId] ? nodeCoords[sourceId].y : 100 }; });
-
-        const adjustOverlap = (nodesArr) => {
-            const groupedByY = {};
-            nodesArr.forEach(n => { let y = nodeCoords[n.id].y; if(!groupedByY[y]) groupedByY[y] = []; groupedByY[y].push(n.id); });
-            for (let y in groupedByY) {
-                let ids = groupedByY[y];
-                if (ids.length > 1) { const offset = baseH + 12; let startY = parseInt(y) - ((ids.length - 1) * offset) / 2; ids.forEach((id, idx) => { nodeCoords[id].y = startY + idx * offset; }); }
-            }
-        };
-        adjustOverlap(materialNodes); adjustOverlap(emissionNodes);
-
+        // 统一应用计算好的坐标（防止 0.5 像素错位）
         allNodes.forEach(n => { 
             if (nodeCoords[n.id]) { 
                 const finalX = nodeCoords[n.id].x - n.getSize().width / 2; 
@@ -620,6 +689,7 @@
         reader.readAsText(file); event.target.value = ''; 
     };
 
+    // 字体格式本地自适应 (不触发全局重排，防止干扰用户自己的调整)
     window.updateNodeStyle = function(type) {
         if (!window.graph) return;
         const cells = window.graph.getSelectedCells(); const targetNodes = cells.length ? cells.filter(c => c.isNode()) : window.graph.getNodes();
@@ -628,7 +698,7 @@
             if (type === 'fontFamily') node.attr('text/fontFamily', window.getCombinedFont());
             if (type === 'fontWeight') node.attr('text/fontWeight', document.getElementById('fontWeight').checked ? 'bold' : 'normal');
             
-            const text = node.attr('text/text') || '';
+            const text = (node.attr('text/text') || '').replace(/\\n/g, '\n');
             const baseW = parseInt(document.getElementById('globalW').value) || 130;
             const baseH = parseInt(document.getElementById('globalH').value) || 45;
             const size = window.calculateNodeSize(text, baseW, baseH);
@@ -639,8 +709,15 @@
     window.deleteSelected = function() { if(window.graph){ const cells = window.graph.getSelectedCells(); if (cells.length) window.graph.removeCells(cells); }};
     window.clearCanvas = function() { if(confirm("确认清空整个画布吗？该操作不可逆。")) { window.graph.clearCells(); } };
     
-    function formatEmissionLabel(fullText, isShort) { if (!isShort) return fullText; return fullText.split('\n').map(line => { const match = line.match(/[A-Za-z]+[-_]?\d+/); return match ? match[0] : line; }).join('\n'); }
+    function formatEmissionLabel(fullText, isShort) { 
+        if (!isShort) return fullText.replace(/\\n/g, '\n'); 
+        return fullText.replace(/\\n/g, '\n').split('\n').map(line => { 
+            const match = line.match(/[A-Za-z]+[-_]?\d+/); 
+            return match ? match[0] : line; 
+        }).join('\n'); 
+    }
     
+    // 排污文字本地自适应
     window.toggleEmissionLabels = function() {
         if (!window.graph) return; const isShort = document.getElementById('shortLabel').checked;
         window.graph.getNodes().forEach(node => {
@@ -678,7 +755,8 @@
             const defaultPorts = { groups: { top: { position: 'top', attrs: portAttrs }, bottom: { position: 'bottom', attrs: portAttrs }, left: { position: 'left', attrs: portAttrs }, right: { position: 'right', attrs: portAttrs } }, items: [ { id: 'p1', group: 'top' }, { id: 'p2', group: 'bottom' }, { id: 'p3', group: 'left' }, { id: 'p4', group: 'right' } ] };
 
             data.nodes.forEach(n => {
-                const label = n.label || '未命名'; let displayText = label; 
+                const label = (n.label || '未命名').replace(/\\n/g, '\n'); // 强制转义防止多行失效
+                let displayText = label; 
                 let style = { fill: '#f4f5f7', stroke: '#18191c', rx: 0, fontColor: '#18191c', sw: 2, dash: '0' };
                 if (n.category === 'material') { style.fill = '#ffffff'; style.rx = 20; style.sw = 0; style.stroke = 'transparent'; } 
                 else if (n.category === 'emission') { style.fill = '#fff1f0'; style.stroke = '#d54941'; style.fontColor = '#d54941'; style.dash = '5 5'; style.sw = 2; displayText = isShortMode ? formatEmissionLabel(label, true) : label; }
