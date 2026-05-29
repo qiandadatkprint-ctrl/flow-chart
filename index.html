@@ -93,6 +93,10 @@
         .btn-shape:hover { background: #e0e7ff; border-color: var(--primary);}
         .btn-shape:hover svg { color: var(--primary); }
 
+        /* 画笔模式激活状态 */
+        .btn-shape.active { background: #0052d9; border-color: #0052d9; }
+        .btn-shape.active svg { color: #fff; }
+
         .btn-format { width: 26px; height: 26px; border: 1px solid #dcdfe6; background: #fff; border-radius: 4px; cursor: pointer; font-weight: bold; color: var(--text-main); display: flex; align-items: center; justify-content: center; transition: 0.2s;}
         .btn-format.active { background: #e0e7ff; color: var(--primary); border-color: var(--primary); }
 
@@ -223,8 +227,9 @@
                     <svg viewBox="0 0 24 24"><text x="12" y="17" font-family="Arial" font-size="16" font-weight="bold" text-anchor="middle" fill="currentColor">T</text></svg>
                 </button>
                 <div style="width:1px; height:18px; background:var(--border); margin:0 4px;"></div>
-                <button class="btn-tool btn-shape" onclick="addFreeLine()" title="自由折线" style="color:var(--primary);">
-                    <svg viewBox="0 0 24 24"><path d="M4,20 L10,20 L10,4 L20,4" fill="none" stroke="currentColor" stroke-width="2"/><polygon points="20,1 24,4 20,7" fill="currentColor"/></svg>
+                
+                <button id="btnDrawMode" class="btn-tool btn-shape" onclick="toggleDrawMode()" title="开启/关闭自由画笔 (在空白处直接拖动画线)">
+                    <svg viewBox="0 0 24 24"><path d="M4,20 L10,20 L20,10 L14,4 L4,14 Z" fill="none" stroke="currentColor" stroke-width="2"/><line x1="14" y1="4" x2="20" y2="10" stroke="currentColor" stroke-width="2"/></svg>
                 </button>
             </div>
 
@@ -234,7 +239,7 @@
                 <label>高</label><input type="number" id="globalH" value="45" style="width: 40px;" oninput="applyGlobalLayout(false)">
                 <label>左右距</label><input type="number" id="globalGapX" value="320" style="width: 44px;" oninput="applyGlobalLayout(false)">
                 <label>上下距</label><input type="number" id="globalGapY" value="60" style="width: 40px;" oninput="applyGlobalLayout(false)">
-                <button class="btn-tool" onclick="forceRecenter()" style="border-color:#0052d9; color:#0052d9; margin-left: 5px;" title="将视角瞬间居中对齐图纸">一键居中</button>
+                <button class="btn-tool" onclick="forceRecenter()" style="border-color:#0052d9; color:#0052d9; margin-left: 5px;" title="仅重新居中视图">一键居中</button>
             </div>
 
             <div class="prop-group">
@@ -284,7 +289,30 @@
                 </select>
 
                 <div class="visual-dropdown">
-                    <button class="btn-tool" onclick="toggleMenu('lineStyleMenu', event)">
+                    <button class="btn-tool" onclick="toggleMenu('arrowStyleMenu', event)" title="箭头方向">
+                        <svg width="24" height="12">
+                            <path d="M2,6 L20,6" stroke="currentColor" stroke-width="2" fill="none"/>
+                            <polygon points="20,3 24,6 20,9" fill="currentColor"/>
+                        </svg>
+                    </button>
+                    <div class="visual-menu" id="arrowStyleMenu">
+                        <div class="visual-swatch" onclick="selectArrowStyle('target')" title="正向箭头">
+                            <svg><path d="M0,6 L100,6" stroke="#18191c" stroke-width="2"/><polygon points="96,2 100,6 96,10" fill="#18191c"/></svg>
+                        </div>
+                        <div class="visual-swatch" onclick="selectArrowStyle('source')" title="反向箭头">
+                            <svg><path d="M0,6 L100,6" stroke="#18191c" stroke-width="2"/><polygon points="4,2 0,6 4,10" fill="#18191c"/></svg>
+                        </div>
+                        <div class="visual-swatch" onclick="selectArrowStyle('both')" title="双向箭头">
+                            <svg><path d="M0,6 L100,6" stroke="#18191c" stroke-width="2"/><polygon points="96,2 100,6 96,10" fill="#18191c"/><polygon points="4,2 0,6 4,10" fill="#18191c"/></svg>
+                        </div>
+                        <div class="visual-swatch" onclick="selectArrowStyle('none')" title="无箭头">
+                            <svg><path d="M0,6 L100,6" stroke="#18191c" stroke-width="2"/></svg>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="visual-dropdown">
+                    <button class="btn-tool" onclick="toggleMenu('lineStyleMenu', event)" title="虚实样式">
                         <svg width="24" height="12"><path id="icon-line-style" d="M0,6 L24,6" stroke="currentColor" stroke-width="2" fill="none"/></svg>
                     </button>
                     <div class="visual-menu" id="lineStyleMenu">
@@ -301,7 +329,7 @@
                 </div>
 
                 <div class="visual-dropdown">
-                    <button class="btn-tool" onclick="toggleMenu('lineRouterMenu', event)">
+                    <button class="btn-tool" onclick="toggleMenu('lineRouterMenu', event)" title="折线/直线">
                         <svg width="24" height="12"><path id="icon-router" d="M0,6 L12,6 L12,0 L24,0" stroke="currentColor" stroke-width="2" fill="none"/></svg>
                     </button>
                     <div class="visual-menu" id="lineRouterMenu">
@@ -335,9 +363,10 @@
 
 <input type="hidden" id="currentLineStyleVal" value="solid">
 <input type="hidden" id="currentRouterVal" value="manhattan">
+<input type="hidden" id="currentArrowVal" value="target">
 
 <script>
-    // 阻断输入框滚动事件，防止干扰画布
+    // 【核心防御】：阻断所有输入框在被滚轮操作时的事件冒泡，防止画板乱飞
     document.querySelectorAll('.toolbar-container input, .toolbar-container select').forEach(elem => {
         elem.addEventListener('wheel', e => e.stopPropagation(), { passive: false });
         elem.addEventListener('mousedown', e => e.stopPropagation());
@@ -562,10 +591,30 @@
     function showToast(msg) { showError(msg); setTimeout(hideError, 2500); }
 
     window.isBold = false;
+    window.isDrawingMode = false;
+    let drawEdge = null; // 正在绘制的线段
+
     window.toggleBold = function() {
         window.isBold = !window.isBold;
         document.getElementById('btnBold').classList.toggle('active', window.isBold);
         updateNodeStyle('fontWeight');
+    }
+
+    // 自由画笔模式切换
+    window.toggleDrawMode = function() {
+        window.isDrawingMode = !window.isDrawingMode;
+        const btn = document.getElementById('btnDrawMode');
+        if (window.isDrawingMode) {
+            btn.classList.add('active');
+            window.graph.disablePanning(); // 锁定画布，准备画线
+            document.getElementById('container').style.cursor = 'crosshair';
+            showToast("已开启画线模式：在空白处按住左键拖拽即可绘制线段");
+        } else {
+            btn.classList.remove('active');
+            window.graph.enablePanning(); // 恢复画布平移
+            document.getElementById('container').style.cursor = 'default';
+            showToast("已退出画线模式");
+        }
     }
 
     window.getCombinedFont = function() { 
@@ -590,14 +639,6 @@
         return { width: w, height: h };
     }
 
-    // 获取视口绝对中心（修复插入组件无效的 Bug）
-    function getCenterCoord() {
-        if (!window.graph) return { x: 500, y: 100 };
-        const scroller = document.querySelector('.x6-widget-scroller') || document.getElementById('container');
-        const rect = scroller.getBoundingClientRect();
-        return window.graph.clientToLocal(rect.left + rect.width / 2, rect.top + rect.height / 2);
-    }
-
     window.addEventListener('DOMContentLoaded', () => {
         if (typeof window.X6 === 'undefined') { document.getElementById('loading-tip').innerHTML = "图形库模块加载失败。"; return; }
         document.getElementById('loading-tip').style.display = 'none';
@@ -617,10 +658,18 @@
         window.getSelectedEdgeAttrs = function() { 
             const width = parseInt(document.getElementById('borderWidth').value) || 2;
             const style = document.getElementById('currentLineStyleVal').value;
+            const arrow = document.getElementById('currentArrowVal').value;
+            
             let dash = '0';
-            if (style === 'dashed') dash = '5 5';
-            if (style === 'dotted') dash = '2 2';
-            return { line: { stroke: '#5f6471', strokeWidth: width, targetMarker: 'block', strokeDasharray: dash } }; 
+            if (style === 'dashed') dash = '6 4';
+            if (style === 'dotted') dash = '2 3';
+            
+            let sourceMarker = null;
+            let targetMarker = null;
+            if (arrow === 'target' || arrow === 'both') targetMarker = 'block';
+            if (arrow === 'source' || arrow === 'both') sourceMarker = 'block';
+
+            return { line: { stroke: '#5f6471', strokeWidth: width, sourceMarker, targetMarker, strokeDasharray: dash } }; 
         }
 
         const containerElem = document.getElementById('container');
@@ -637,6 +686,30 @@
                 snap: true, allowBlank: true, allowNode: true, highlight: true, connector: { name: 'rounded', args: { radius: 4 } },
                 createEdge() { return new X6.Shape.Edge({ attrs: window.getSelectedEdgeAttrs(), router: window.getSelectedRouter(), connector: { name: 'rounded', args: { radius: 4 } } }); } 
             }, keyboard: { enabled: true }
+        });
+
+        // 自由画笔交互绑定
+        graph.on('blank:mousedown', ({ e, x, y }) => {
+            if (!window.isDrawingMode) return;
+            drawEdge = graph.addEdge({
+                source: { x, y },
+                target: { x, y },
+                attrs: window.getSelectedEdgeAttrs(),
+                router: window.getSelectedRouter(),
+                connector: { name: 'rounded', args: { radius: 4 } },
+                zIndex: 1
+            });
+        });
+        graph.on('blank:mousemove', ({ e, x, y }) => {
+            if (!window.isDrawingMode || !drawEdge) return;
+            drawEdge.setTarget({ x, y });
+        });
+        graph.on('blank:mouseup', () => {
+            if (!window.isDrawingMode || !drawEdge) return;
+            // 如果点了一下没拖动，就删掉这根没长度的线
+            const src = drawEdge.getSource(); const tgt = drawEdge.getTarget();
+            if (Math.abs(src.x - tgt.x) < 5 && Math.abs(src.y - tgt.y) < 5) drawEdge.remove();
+            drawEdge = null;
         });
 
         graph.bindKey(['delete', 'backspace'], window.deleteSelected);
@@ -661,10 +734,9 @@
         });
     });
 
-    // 强行单独居中指令，完美拉回视角
     window.forceRecenter = function() {
         if(window.graph) {
-            window.graph.zoomToFit({ padding: 60, maxScale: 1 });
+            window.graph.scroller.zoomToFit({ maxScale: 1 });
             window.graph.centerContent();
         }
     };
@@ -712,6 +784,22 @@
         });
     };
 
+    // 选择箭头样式并应用到选中线条
+    window.selectArrowStyle = function(style) {
+        document.getElementById('currentArrowVal').value = style;
+        
+        if (window.graph) {
+            const cells = window.graph.getSelectedCells().filter(c => c.isEdge());
+            cells.forEach(cell => {
+                if (style === 'target') { cell.attr('line/sourceMarker', null); cell.attr('line/targetMarker', 'block'); }
+                else if (style === 'source') { cell.attr('line/sourceMarker', 'block'); cell.attr('line/targetMarker', null); }
+                else if (style === 'both') { cell.attr('line/sourceMarker', 'block'); cell.attr('line/targetMarker', 'block'); }
+                else { cell.attr('line/sourceMarker', null); cell.attr('line/targetMarker', null); }
+            });
+        }
+        document.querySelectorAll('.visual-menu').forEach(m => m.style.display='none');
+    };
+
     window.selectLineStyle = function(style) {
         document.getElementById('currentLineStyleVal').value = style;
         const icon = document.getElementById('icon-line-style');
@@ -750,21 +838,6 @@
         document.querySelectorAll('.visual-menu').forEach(m => m.style.display='none');
     };
 
-    // 自由生成独立连线，不受排版约束
-    window.addFreeLine = function() {
-        if (!window.graph) return;
-        const center = getCenterCoord();
-        
-        window.graph.addEdge({
-            source: { x: center.x - 60, y: center.y },
-            target: { x: center.x + 60, y: center.y },
-            attrs: window.getSelectedEdgeAttrs(),
-            router: window.getSelectedRouter(),
-            connector: { name: 'rounded', args: { radius: 4 } }
-        });
-        showToast("已在画布中央添加自由折线");
-    };
-
     window.addNodeToCenter = function(type) {
         if (!window.graph) return;
         const minW = parseInt(document.getElementById('globalW').value) || 130; 
@@ -772,7 +845,10 @@
         const initialText = '双击录入文本'; 
         const size = window.calculateNodeSize(initialText, minW, minH);
         
-        const center = getCenterCoord(); 
+        // 规避 getCenter 失效的问题，通过计算屏幕视口物理坐标来插入节点
+        const scrollerRect = document.querySelector('.x6-widget-scroller').getBoundingClientRect();
+        const center = window.graph.clientToLocal(scrollerRect.left + scrollerRect.width/2, scrollerRect.top + scrollerRect.height/2);
+        
         const offsetX = (Math.random() - 0.5) * 40; 
         const offsetY = (Math.random() - 0.5) * 40;
 
@@ -853,12 +929,15 @@
                 X_CENTER = Math.round(anchorPos.x + sortedProcesses[0].getSize().width / 2);
                 currentY = Math.round(anchorPos.y) - sortedProcesses[0].getSize().height / 2;
             }
+        } else {
+            // 通过获取视口容器物理宽度计算中心
+            const scrollerWidth = document.querySelector('.x6-widget-scroller').clientWidth || 1000;
+            X_CENTER = Math.round(scrollerWidth / 2); 
         }
 
         const X_LEFT = X_CENTER - gapX; 
         const X_RIGHT = X_CENTER + gapX; 
         const positionedSet = new Set(); 
-        
         let prevRowHeight = 0;
 
         sortedProcesses.forEach((p, index) => {
@@ -926,7 +1005,7 @@
         
         if (shouldCenter) {
             setTimeout(() => {
-                window.graph.zoomToFit({ padding: 60, maxScale: 1 });
+                window.graph.scroller.zoomToFit({ padding: 60, maxScale: 1 });
                 window.graph.centerContent();
             }, 50);
         }
@@ -1050,6 +1129,7 @@
             });
 
             if (data.edges) {
+                // 确保全局 AI 解析生成的边缘全部带终点箭头，强制主干直线
                 data.edges.forEach(edge => {
                     let srcNode = data.nodes.find(n => n.id === edge.source); let tgtNode = data.nodes.find(n => n.id === edge.target); if(!srcNode || !tgtNode) return;
                     
@@ -1062,10 +1142,9 @@
                     } else if (srcNode.category === 'process' && tgtNode.category === 'emission') { 
                         srcPort = 'p4'; tgtPort = 'p3'; 
                     } 
-                    window.graph.addEdge({ source: { cell: edge.source, port: srcPort }, target: { cell: edge.target, port: tgtPort }, attrs: window.getSelectedEdgeAttrs(), router: routerObj, connector: { name: 'rounded', args: { radius: 4 } } });
+                    window.graph.addEdge({ source: { cell: edge.source, port: srcPort }, target: { cell: edge.target, port: tgtPort }, attrs: { line: { stroke: '#5f6471', strokeWidth: 2, targetMarker: 'block', sourceMarker: null, strokeDasharray: '0' } }, router: routerObj, connector: { name: 'rounded', args: { radius: 4 } } });
                 });
             }
-            
             setTimeout(() => { window.applyGlobalLayout(true); }, 150);
         } catch (fatalError) { showError("系统渲染异常：" + fatalError.message); }
     };
