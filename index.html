@@ -226,11 +226,11 @@
 
             <div class="prop-group">
                 <span class="group-label">排版</span>
-                <label>宽</label><input type="number" id="globalW" value="130" style="width: 44px;" oninput="applyGlobalLayout()">
-                <label>高</label><input type="number" id="globalH" value="45" style="width: 40px;" oninput="applyGlobalLayout()">
-                <label>左右距</label><input type="number" id="globalGapX" value="320" style="width: 44px;" oninput="applyGlobalLayout()">
-                <label>上下距</label><input type="number" id="globalGapY" value="60" style="width: 40px;" oninput="applyGlobalLayout()">
-                <button class="btn-tool" onclick="forceRecenter()" style="border-color:#0052d9; color:#0052d9; margin-left: 5px;" title="仅重新居中视图">一键居中</button>
+                <label>宽</label><input type="number" id="globalW" value="130" style="width: 44px;" oninput="applyGlobalLayout(false)">
+                <label>高</label><input type="number" id="globalH" value="45" style="width: 40px;" oninput="applyGlobalLayout(false)">
+                <label>左右距</label><input type="number" id="globalGapX" value="320" style="width: 44px;" oninput="applyGlobalLayout(false)">
+                <label>上下距</label><input type="number" id="globalGapY" value="50" style="width: 40px;" oninput="applyGlobalLayout(false)">
+                <button class="btn-tool" onclick="applyGlobalLayout(true)" style="border-color:#0052d9; color:#0052d9; margin-left: 5px;">一键排版</button>
             </div>
 
             <div class="prop-group">
@@ -380,33 +380,37 @@
         if (bubble) { bubble.innerHTML = content; document.getElementById('chatMessages').scrollTop = document.getElementById('chatMessages').scrollHeight; }
     }
 
-    /* 物理核弹级：前端强制数据纠偏与结构固化，绝杀AI幻觉 */
+    /* 物理核弹级：前端强制数据纠偏，补齐孤儿节点，绝对防丢失 */
     function sanitizeGraphData(data) {
         const processNodes = data.nodes.filter(n => n.category === 'process');
-        const materialNodes = data.nodes.filter(n => n.category === 'material');
-        const emissionNodes = data.nodes.filter(n => n.category === 'emission');
+        let materialNodes = data.nodes.filter(n => n.category === 'material');
+        let emissionNodes = data.nodes.filter(n => n.category === 'emission');
         const otherNodes = data.nodes.filter(n => !['process', 'material', 'emission'].includes(n.category));
         
-        let pIds = new Set(processNodes.map(n => n.id));
-
-        // 清洗数据：消灭括号，强制截断原辅料乱入工序的Bug
+        // 1. 清洗乱码：彻底剔除括号和错误换行
         data.nodes.forEach(n => {
-            if (n.category === 'emission') {
-                n.label = (n.label || '').replace(/[()（）]/g, '');
-            }
+            n.label = (n.label || '').replace(/\\n/g, '\n').trim();
+            if (n.category === 'emission') n.label = n.label.replace(/[()（）]/g, '');
             if (n.category === 'process') {
-                const lines = (n.label || '').replace(/\\n/g, '\n').split('\n');
-                if (lines.length > 1) {
-                    n.label = lines[0].trim(); // 斩断多余的换行内容
-                }
+                const lines = n.label.split('\n');
+                if (lines.length > 1) n.label = lines[0].trim(); // 强行把混入工序的原料一刀切掉
             }
         });
 
-        const mergedNodes = [...processNodes, ...otherNodes];
-        const mergedEdges = [];
+        // 2. 连线纠错：修正 AI 画反的箭头 (如 material<-process 变成 material->process)
+        data.edges.forEach(e => {
+            const src = data.nodes.find(n => n.id === e.source);
+            const tgt = data.nodes.find(n => n.id === e.target);
+            if (src && tgt) {
+                if (src.category === 'process' && tgt.category === 'material') { e.source = tgt.id; e.target = src.id; }
+                if (src.category === 'emission' && tgt.category === 'process') { e.source = tgt.id; e.target = src.id; }
+            }
+        });
 
-        // 强行删去旧的主干线，物理重建 100% 垂直单向的链条
-        if (processNodes.length > 1) {
+        // 3. 强行提取主干单链，物理断绝跨级跳跃！
+        let pIds = new Set(processNodes.map(n => n.id));
+        const sortedPIds = [];
+        if (processNodes.length > 0) {
             const pEdges = data.edges.filter(e => pIds.has(e.source) && pIds.has(e.target));
             const outMap = {}; const inCount = {};
             processNodes.forEach(p => { outMap[p.id] = []; inCount[p.id] = 0; });
@@ -420,7 +424,6 @@
             let queue = processNodes.filter(p => inCount[p.id] === 0).map(p => p.id);
             if (queue.length === 0) queue = [processNodes[0].id]; 
             
-            const sortedPIds = [];
             while(queue.length > 0) {
                 const curr = queue.shift();
                 sortedPIds.push(curr);
@@ -429,40 +432,51 @@
                     if(inCount[tgt] === 0) queue.push(tgt);
                 });
             }
-            
-            processNodes.forEach(p => {
-                if (!sortedPIds.includes(p.id)) sortedPIds.push(p.id);
-            });
-
-            for (let i = 0; i < sortedPIds.length - 1; i++) {
-                mergedEdges.push({ source: sortedPIds[i], target: sortedPIds[i+1] });
-            }
+            processNodes.forEach(p => { if (!sortedPIds.includes(p.id)) sortedPIds.push(p.id); });
         }
 
-        // 强制归一：把零散的废气框/原料框硬捏成一个
-        processNodes.forEach(p => {
-            const relatedMEdges = data.edges.filter(e => e.target === p.id && materialNodes.find(m => m.id === e.source));
+        // 4. 抢救孤儿原辅料和排污（强行挂载到首尾工序）
+        materialNodes.forEach(m => {
+            const hasEdge = data.edges.some(e => e.source === m.id && pIds.has(e.target));
+            if (!hasEdge && sortedPIds.length > 0) data.edges.push({ source: m.id, target: sortedPIds[0] });
+        });
+        emissionNodes.forEach(em => {
+            const hasEdge = data.edges.some(e => e.target === em.id && pIds.has(e.source));
+            if (!hasEdge && sortedPIds.length > 0) data.edges.push({ source: sortedPIds[sortedPIds.length-1], target: em.id });
+        });
+
+        const mergedNodes = [...processNodes, ...otherNodes];
+        const mergedEdges = [];
+
+        // 拼接全新笔直主干线
+        for (let i = 0; i < sortedPIds.length - 1; i++) {
+            mergedEdges.push({ source: sortedPIds[i], target: sortedPIds[i+1] });
+        }
+
+        // 5. 强制归一：将指向同一工序的所有原料/排污合并为同一个框
+        sortedPIds.forEach(pId => {
+            const relatedMEdges = data.edges.filter(e => e.target === pId && materialNodes.find(m => m.id === e.source));
             if (relatedMEdges.length > 0) {
                 const labels = new Set();
                 relatedMEdges.forEach(e => {
                     const mNode = materialNodes.find(m => m.id === e.source);
-                    if (mNode) mNode.label.split(/\\n|\n/).forEach(l => { if(l.trim()) labels.add(l.trim()); });
+                    if (mNode) mNode.label.split('\n').forEach(l => { if(l.trim()) labels.add(l.trim()); });
                 });
-                const newMId = 'm_merge_' + p.id;
+                const newMId = 'm_merge_' + pId;
                 mergedNodes.push({ id: newMId, label: Array.from(labels).join('\n'), category: 'material' });
-                mergedEdges.push({ source: newMId, target: p.id });
+                mergedEdges.push({ source: newMId, target: pId });
             }
 
-            const relatedEEdges = data.edges.filter(e => e.source === p.id && emissionNodes.find(em => em.id === e.target));
+            const relatedEEdges = data.edges.filter(e => e.source === pId && emissionNodes.find(em => em.id === e.target));
             if (relatedEEdges.length > 0) {
                 const labels = new Set();
                 relatedEEdges.forEach(e => {
                     const eNode = emissionNodes.find(em => em.id === e.target);
-                    if (eNode) eNode.label.split(/\\n|\n/).forEach(l => { if(l.trim()) labels.add(l.trim()); });
+                    if (eNode) eNode.label.split('\n').forEach(l => { if(l.trim()) labels.add(l.trim()); });
                 });
-                const newEId = 'e_merge_' + p.id;
+                const newEId = 'e_merge_' + pId;
                 mergedNodes.push({ id: newEId, label: Array.from(labels).join('\n'), category: 'emission' });
-                mergedEdges.push({ source: p.id, target: newEId });
+                mergedEdges.push({ source: pId, target: newEId });
             }
         });
 
@@ -495,6 +509,7 @@
 2. 【工序极简】：工序节点只能写工序名称（纯动词或名词，如“除油”），绝不能把原料写进工序节点里！
 3. 【环评合规编码补充】：若提及污染物但未提供代号，必须自动生成（废气G1, 废水W1, 废渣S1等）。
 4. 排污节点文本必须是直接相连的 "名称代号"，绝对禁止出现任何括号！例如："合成废气G1"。
+5. 所有【原辅料】必须有一条 edge 指向对应的【工序】！
 
 【JSON 规范】：
 {"nodes": [{"id": "唯一标识", "label": "名称", "category": "分类"}], "edges": [{"source": "起点id", "target": "终点id"}]}
@@ -554,7 +569,7 @@
         return `'${document.getElementById('westFont').value}', '${document.getElementById('eastFont').value}', sans-serif`; 
     }
 
-    // 严苛的高度测算，彻底杜绝字体重叠
+    // 取消 lineHeight 注入，使用原生纯净的 tspan 换行机制杜绝千层饼
     window.calculateNodeSize = function(text, minW, minH) {
         if (!text) return { width: minW, height: minH };
         const lines = text.replace(/\\n/g, '\n').split(/\r?\n/); 
@@ -567,7 +582,7 @@
         const fontSize = parseInt(document.getElementById('globalFontSize').value) || 13;
         
         let w = Math.max(minW, Math.ceil(maxChars * fontSize * 0.55) + 30);
-        let h = Math.max(minH, Math.ceil(lines.length * fontSize * 1.6) + 24); // 加大行高保护系数
+        let h = Math.max(minH, Math.ceil(lines.length * fontSize * 1.5) + 24);
         if (w % 2 !== 0) w += 1;
         if (h % 2 !== 0) h += 1;
         return { width: w, height: h };
@@ -636,9 +651,7 @@
         });
     });
 
-    window.addEventListener('resize', () => {
-        // 彻底切断分辨率调整导致图纸乱飞的 Bug
-    });
+    window.addEventListener('resize', () => { /* 坚决解绑窗口缩放导致画面重置的问题 */ });
 
     // 强行单独居中指令
     window.forceRecenter = function() {
@@ -750,19 +763,18 @@
         const portAttrs = { circle: { r: 4, magnet: true, stroke: '#0052d9', fill: '#fff' } };
         const defaultPorts = { groups: { top: { position: 'top', attrs: portAttrs }, bottom: { position: 'bottom', attrs: portAttrs }, left: { position: 'left', attrs: portAttrs }, right: { position: 'right', attrs: portAttrs } }, items: [ { id: 'p1', group: 'top' }, { id: 'p2', group: 'bottom' }, { id: 'p3', group: 'left' }, { id: 'p4', group: 'right' } ] };
 
-        // 强行注入 lineHeight，彻底杜绝多行文字重叠！
-        window.graph.addNode({ shape: shape, x: Math.round(center.x - size.width/2 + offsetX), y: Math.round(center.y - size.height/2 + offsetY), width: size.width, height: size.height, ports: defaultPorts, data: { category: type, originalLabel: initialText }, attrs: { body: { fill: style.fill, stroke: style.stroke, strokeWidth: style.strokeWidth, strokeDasharray: style.dash, rx: style.rx, ry: style.rx, refPoints: style.refPoints }, text: { text: initialText, fill: style.color, lineHeight: 1.5, fontSize: parseInt(document.getElementById('globalFontSize').value), fontFamily: window.getCombinedFont(), fontWeight: window.isBold ? 'bold' : 'normal' } } });
+        window.graph.addNode({ shape: shape, x: Math.round(center.x - size.width/2 + offsetX), y: Math.round(center.y - size.height/2 + offsetY), width: size.width, height: size.height, ports: defaultPorts, data: { category: type, originalLabel: initialText }, attrs: { body: { fill: style.fill, stroke: style.stroke, strokeWidth: style.strokeWidth, strokeDasharray: style.dash, rx: style.rx, ry: style.rx, refPoints: style.refPoints }, text: { text: initialText, fill: style.color, fontSize: parseInt(document.getElementById('globalFontSize').value), fontFamily: window.getCombinedFont(), fontWeight: window.isBold ? 'bold' : 'normal' } } });
     };
 
-    // 核心排版引擎：利用【绝对定锚算法】，保证排版原地弹性收缩，绝对不掠夺用户视角
-    window.applyGlobalLayout = function() {
+    // 核心引擎：使用纯净的“中心点累加法”，完美处理“真实空隙间距”
+    window.applyGlobalLayout = function(shouldCenter = false) {
         if (!window.graph) return;
         const allNodes = window.graph.getNodes(); const allEdges = window.graph.getEdges(); if (allNodes.length === 0) return;
         
         const baseW = parseInt(document.getElementById('globalW').value) || 130; 
         const baseH = parseInt(document.getElementById('globalH').value) || 45;
         const gapX = parseInt(document.getElementById('globalGapX').value) || 320; 
-        const inputGapY = parseInt(document.getElementById('globalGapY').value) || 60; 
+        const inputGapY = parseInt(document.getElementById('globalGapY').value) || 50; 
 
         allNodes.forEach(node => { 
             const data = node.getData() || {}; 
@@ -810,24 +822,26 @@
 
         const nodeCoords = {}; 
         
-        // 【核心改进】：智能定位当前画面的“基石”。确保用户视野绝对稳定！
         let X_CENTER = 600;
         let currentY = 100;
         
-        if (sortedProcesses.length > 0) {
-            // 用第一个工序的物理坐标作为定海神针
+        if (!shouldCenter && sortedProcesses.length > 0) {
             const anchorPos = sortedProcesses[0].getPosition();
             if (anchorPos) {
                 X_CENTER = Math.round(anchorPos.x + sortedProcesses[0].getSize().width / 2);
-                // currentY 保留，保证从这个定海神针往下排版
                 currentY = Math.round(anchorPos.y) - sortedProcesses[0].getSize().height / 2;
             }
+        } else {
+            const scrollerWidth = document.getElementById('container').clientWidth;
+            X_CENTER = Math.round(scrollerWidth > 400 ? scrollerWidth / 2 : 500); 
         }
 
         const X_LEFT = X_CENTER - gapX; 
         const X_RIGHT = X_CENTER + gapX; 
         const positionedSet = new Set(); 
         
+        let prevRowHeight = 0;
+
         sortedProcesses.forEach((p, index) => {
             const materials = materialNodes.filter(m => !positionedSet.has(m.id) && ((outEdges[m.id] || []).includes(p.id) || (inEdges[p.id] || []).includes(m.id)));
             const emissions = emissionNodes.filter(e => !positionedSet.has(e.id) && ((inEdges[e.id] || []).includes(p.id) || (outEdges[p.id] || []).includes(e.id)));
@@ -842,16 +856,14 @@
             const eHeight = getGroupHeight(emissions);
             const rowHeight = Math.max(pHeight, mHeight, eHeight);
             
-            // 安全限制：无论输入多小，为了保证连线能够走通，系统底层锁定最少留出 40px 给 Manhattan 算法转弯。防止P字形重叠死结！
-            let stepHeight = 0;
             if (index === 0) {
-                stepHeight = rowHeight; 
+                currentY += rowHeight / 2; 
             } else {
-                const safeGap = Math.max(inputGapY, 40); 
-                stepHeight = safeGap + Math.max(0, rowHeight - baseH); 
+                // 【核心修正：纯净空隙计算法】上一行的一半高度 + 用户指定的真实空隙距离 + 这一行的一半高度
+                currentY += (prevRowHeight / 2) + inputGapY + (rowHeight / 2);
             }
             
-            const processY = Math.round(currentY + stepHeight / 2);
+            const processY = Math.round(currentY);
             nodeCoords[p.id] = { x: X_CENTER, y: processY };
             positionedSet.add(p.id);
             
@@ -871,21 +883,21 @@
                 eStartY += h + 20;
             });
             
-            currentY = processY + rowHeight / 2;
+            prevRowHeight = rowHeight;
         });
 
         const orphans = allNodes.filter(n => !positionedSet.has(n.id));
         if (orphans.length > 0) {
-            currentY += Math.max(inputGapY, 40);
+            currentY += inputGapY + (prevRowHeight / 2);
             orphans.forEach(o => {
                 const h = o.getSize().height;
-                nodeCoords[o.id] = { x: X_CENTER, y: currentY + h / 2 };
-                currentY += h + 30;
+                currentY += h / 2;
+                nodeCoords[o.id] = { x: X_CENTER, y: Math.round(currentY) };
+                currentY += h / 2 + 30;
                 positionedSet.add(o.id);
             });
         }
 
-        // 把计算好的完美坐标赋予节点，全程不再进行任何强行居中的拉扯操作
         allNodes.forEach(n => { 
             if (nodeCoords[n.id]) { 
                 const finalX = Math.round(nodeCoords[n.id].x - n.getSize().width / 2); 
@@ -893,6 +905,11 @@
                 n.position(finalX, finalY); 
             } 
         });
+        
+        if (shouldCenter) {
+            window.graph.scroller.zoomToFit({ maxScale: 1 });
+            window.graph.centerContent();
+        }
     };
 
     window.saveProject = function() {
@@ -911,7 +928,7 @@
         reader.readAsText(file); event.target.value = ''; 
     };
 
-    // 真正的局部修改：只调整单个组件本身的大小，绝对不去触发全盘重排
+    // 局部修改，绝不触发全局排版抢夺视角
     window.updateNodeStyle = function(type) {
         if (!window.graph) return;
         const cells = window.graph.getSelectedCells(); const targetNodes = cells.length ? cells.filter(c => c.isNode()) : window.graph.getNodes();
@@ -931,7 +948,6 @@
             
             if(newSize.width !== oldSize.width || newSize.height !== oldSize.height) {
                 node.resize(newSize.width, newSize.height);
-                // 确保它以中心点进行放大缩小，原地不动！
                 node.position(oldPos.x - (newSize.width - oldSize.width)/2, oldPos.y - (newSize.height - oldSize.height)/2);
             }
         });
@@ -987,7 +1003,7 @@
 
     window.renderFromJSON = function(jsonStr) {
         try {
-            // 通过无情的物理逻辑强制清洗 AI 乱码数据
+            // 前端物理级纠错引擎：接管并清洗AI生成的垃圾数据
             let data = sanitizeGraphData(JSON.parse(jsonStr));
             if (!data.nodes) data.nodes = []; if (!data.edges) data.edges = [];
             window.graph.clearCells();
@@ -1012,9 +1028,9 @@
                     n.category = 'process';
                 }
                 
-                // 强制加入 lineHeight 解决千层饼堆叠 Bug
+                // 完全去除了引发 bug 的 lineHeight
                 const size = window.calculateNodeSize(displayText, baseW, baseH);
-                window.graph.addNode({ id: n.id, x: 0, y: 0, width: size.width, height: size.height, ports: defaultPorts, data: { category: n.category, originalLabel: label }, attrs: { body: { fill: style.fill, stroke: style.stroke, strokeWidth: style.sw, strokeDasharray: style.dash, rx: style.rx, ry: style.rx }, text: { text: displayText, fill: style.fontColor, lineHeight: 1.5, fontSize: parseInt(document.getElementById('globalFontSize').value), fontFamily: window.getCombinedFont(), fontWeight: window.isBold ? 'bold' : 'normal' } } });
+                window.graph.addNode({ id: n.id, x: 0, y: 0, width: size.width, height: size.height, ports: defaultPorts, data: { category: n.category, originalLabel: label }, attrs: { body: { fill: style.fill, stroke: style.stroke, strokeWidth: style.sw, strokeDasharray: style.dash, rx: style.rx, ry: style.rx }, text: { text: displayText, fill: style.fontColor, fontSize: parseInt(document.getElementById('globalFontSize').value), fontFamily: window.getCombinedFont(), fontWeight: window.isBold ? 'bold' : 'normal' } } });
             });
 
             if (data.edges) {
@@ -1022,7 +1038,7 @@
                     let srcNode = data.nodes.find(n => n.id === edge.source); let tgtNode = data.nodes.find(n => n.id === edge.target); if(!srcNode || !tgtNode) return;
                     
                     let srcPort = 'p2'; let tgtPort = 'p1'; 
-                    // 强制：对于工序到工序的主干线，锁定为直连线
+                    // 强制：对于工序到工序的主干线，如果间距特别小，直接锁死为直连线
                     let routerObj = window.getSelectedRouter();
                     if (srcNode.category === 'process' && tgtNode.category === 'process') {
                         routerObj = { name: 'normal' };
@@ -1035,10 +1051,9 @@
                 });
             }
             
-            // 初次渲染：在执行排版的同时，强制执行一次画面居中，确保第一视角永远停靠在内容正中心
+            // 初次渲染：在执行排版的同时，强制执行一次画面居中
             setTimeout(() => { 
-                window.applyGlobalLayout(); 
-                window.forceRecenter();
+                window.applyGlobalLayout(true); 
             }, 150);
         } catch (fatalError) { showError("系统渲染异常：" + fatalError.message); }
     };
