@@ -222,6 +222,10 @@
                 <button class="btn-tool btn-shape" onclick="addNodeToCenter('text')" title="纯文本">
                     <svg viewBox="0 0 24 24"><text x="12" y="17" font-family="Arial" font-size="16" font-weight="bold" text-anchor="middle" fill="currentColor">T</text></svg>
                 </button>
+                <div style="width:1px; height:18px; background:var(--border); margin:0 4px;"></div>
+                <button class="btn-tool btn-shape" onclick="addFreeLine()" title="自由折线" style="color:var(--primary);">
+                    <svg viewBox="0 0 24 24"><path d="M4,20 L10,20 L10,4 L20,4" fill="none" stroke="currentColor" stroke-width="2"/><polygon points="20,1 24,4 20,7" fill="currentColor"/></svg>
+                </button>
             </div>
 
             <div class="prop-group">
@@ -229,8 +233,8 @@
                 <label>宽</label><input type="number" id="globalW" value="130" style="width: 44px;" oninput="applyGlobalLayout(false)">
                 <label>高</label><input type="number" id="globalH" value="45" style="width: 40px;" oninput="applyGlobalLayout(false)">
                 <label>左右距</label><input type="number" id="globalGapX" value="320" style="width: 44px;" oninput="applyGlobalLayout(false)">
-                <label>上下距</label><input type="number" id="globalGapY" value="50" style="width: 40px;" oninput="applyGlobalLayout(false)">
-                <button class="btn-tool" onclick="applyGlobalLayout(true)" style="border-color:#0052d9; color:#0052d9; margin-left: 5px;">一键排版</button>
+                <label>上下距</label><input type="number" id="globalGapY" value="60" style="width: 40px;" oninput="applyGlobalLayout(false)">
+                <button class="btn-tool" onclick="forceRecenter()" style="border-color:#0052d9; color:#0052d9; margin-left: 5px;" title="仅重新居中视图">一键居中</button>
             </div>
 
             <div class="prop-group">
@@ -333,6 +337,12 @@
 <input type="hidden" id="currentRouterVal" value="manhattan">
 
 <script>
+    // 【核心防御】：阻断工具栏的所有输入框、下拉框鼠标事件，绝对防止滚轮或点击时影响画布平移
+    document.querySelectorAll('.toolbar-container input, .toolbar-container select').forEach(elem => {
+        elem.addEventListener('wheel', e => e.stopPropagation(), { passive: false });
+        elem.addEventListener('mousedown', e => e.stopPropagation());
+    });
+
     /* =========================================================
        1. 业务逻辑与 AI 交互控制
        ========================================================= */
@@ -380,24 +390,21 @@
         if (bubble) { bubble.innerHTML = content; document.getElementById('chatMessages').scrollTop = document.getElementById('chatMessages').scrollHeight; }
     }
 
-    /* 物理核弹级：前端强制数据纠偏，补齐孤儿节点，绝对防丢失 */
     function sanitizeGraphData(data) {
         const processNodes = data.nodes.filter(n => n.category === 'process');
         let materialNodes = data.nodes.filter(n => n.category === 'material');
         let emissionNodes = data.nodes.filter(n => n.category === 'emission');
         const otherNodes = data.nodes.filter(n => !['process', 'material', 'emission'].includes(n.category));
         
-        // 1. 清洗乱码：彻底剔除括号和错误换行
         data.nodes.forEach(n => {
             n.label = (n.label || '').replace(/\\n/g, '\n').trim();
             if (n.category === 'emission') n.label = n.label.replace(/[()（）]/g, '');
             if (n.category === 'process') {
                 const lines = n.label.split('\n');
-                if (lines.length > 1) n.label = lines[0].trim(); // 强行把混入工序的原料一刀切掉
+                if (lines.length > 1) n.label = lines[0].trim(); 
             }
         });
 
-        // 2. 连线纠错：修正 AI 画反的箭头 (如 material<-process 变成 material->process)
         data.edges.forEach(e => {
             const src = data.nodes.find(n => n.id === e.source);
             const tgt = data.nodes.find(n => n.id === e.target);
@@ -407,7 +414,6 @@
             }
         });
 
-        // 3. 强行提取主干单链，物理断绝跨级跳跃！
         let pIds = new Set(processNodes.map(n => n.id));
         const sortedPIds = [];
         if (processNodes.length > 0) {
@@ -435,7 +441,6 @@
             processNodes.forEach(p => { if (!sortedPIds.includes(p.id)) sortedPIds.push(p.id); });
         }
 
-        // 4. 抢救孤儿原辅料和排污（强行挂载到首尾工序）
         materialNodes.forEach(m => {
             const hasEdge = data.edges.some(e => e.source === m.id && pIds.has(e.target));
             if (!hasEdge && sortedPIds.length > 0) data.edges.push({ source: m.id, target: sortedPIds[0] });
@@ -448,12 +453,10 @@
         const mergedNodes = [...processNodes, ...otherNodes];
         const mergedEdges = [];
 
-        // 拼接全新笔直主干线
         for (let i = 0; i < sortedPIds.length - 1; i++) {
             mergedEdges.push({ source: sortedPIds[i], target: sortedPIds[i+1] });
         }
 
-        // 5. 强制归一：将指向同一工序的所有原料/排污合并为同一个框
         sortedPIds.forEach(pId => {
             const relatedMEdges = data.edges.filter(e => e.target === pId && materialNodes.find(m => m.id === e.source));
             if (relatedMEdges.length > 0) {
@@ -552,7 +555,7 @@
     }
 
     /* =========================================================
-       2. 防弹级动态图形渲染逻辑 (彻底分离独立调整与视图绑定)
+       2. 防弹级动态图形渲染逻辑 
        ========================================================= */
     function showError(msg) { document.getElementById('error-text').innerHTML = msg; document.getElementById('error-msg').style.display = 'block'; }
     function hideError() { document.getElementById('error-msg').style.display = 'none'; }
@@ -569,7 +572,6 @@
         return `'${document.getElementById('westFont').value}', '${document.getElementById('eastFont').value}', sans-serif`; 
     }
 
-    // 取消 lineHeight 注入，使用原生纯净的 tspan 换行机制杜绝千层饼
     window.calculateNodeSize = function(text, minW, minH) {
         if (!text) return { width: minW, height: minH };
         const lines = text.replace(/\\n/g, '\n').split(/\r?\n/); 
@@ -582,7 +584,7 @@
         const fontSize = parseInt(document.getElementById('globalFontSize').value) || 13;
         
         let w = Math.max(minW, Math.ceil(maxChars * fontSize * 0.55) + 30);
-        let h = Math.max(minH, Math.ceil(lines.length * fontSize * 1.5) + 24);
+        let h = Math.max(minH, Math.ceil(lines.length * fontSize * 1.6) + 24);
         if (w % 2 !== 0) w += 1;
         if (h % 2 !== 0) h += 1;
         return { width: w, height: h };
@@ -651,9 +653,6 @@
         });
     });
 
-    window.addEventListener('resize', () => { /* 坚决解绑窗口缩放导致画面重置的问题 */ });
-
-    // 强行单独居中指令
     window.forceRecenter = function() {
         if(window.graph) {
             window.graph.scroller.zoomToFit({ maxScale: 1 });
@@ -742,6 +741,23 @@
         document.querySelectorAll('.visual-menu').forEach(m => m.style.display='none');
     };
 
+    // 【新增：自由绘制注释连线】
+    window.addFreeLine = function() {
+        if (!window.graph) return;
+        const center = window.graph.scroller.getCenter();
+        const startX = center.x - 50; const startY = center.y;
+        const endX = center.x + 50; const endY = center.y;
+        
+        window.graph.addEdge({
+            source: { x: startX, y: startY },
+            target: { x: endX, y: endY },
+            attrs: window.getSelectedEdgeAttrs(),
+            router: window.getSelectedRouter(),
+            connector: { name: 'rounded', args: { radius: 4 } }
+        });
+        showToast("已在画布中央添加自由折线");
+    };
+
     window.addNodeToCenter = function(type) {
         if (!window.graph) return;
         const minW = parseInt(document.getElementById('globalW').value) || 130; 
@@ -766,7 +782,6 @@
         window.graph.addNode({ shape: shape, x: Math.round(center.x - size.width/2 + offsetX), y: Math.round(center.y - size.height/2 + offsetY), width: size.width, height: size.height, ports: defaultPorts, data: { category: type, originalLabel: initialText }, attrs: { body: { fill: style.fill, stroke: style.stroke, strokeWidth: style.strokeWidth, strokeDasharray: style.dash, rx: style.rx, ry: style.rx, refPoints: style.refPoints }, text: { text: initialText, fill: style.color, fontSize: parseInt(document.getElementById('globalFontSize').value), fontFamily: window.getCombinedFont(), fontWeight: window.isBold ? 'bold' : 'normal' } } });
     };
 
-    // 核心引擎：使用纯净的“中心点累加法”，完美处理“真实空隙间距”
     window.applyGlobalLayout = function(shouldCenter = false) {
         if (!window.graph) return;
         const allNodes = window.graph.getNodes(); const allEdges = window.graph.getEdges(); if (allNodes.length === 0) return;
@@ -774,7 +789,7 @@
         const baseW = parseInt(document.getElementById('globalW').value) || 130; 
         const baseH = parseInt(document.getElementById('globalH').value) || 45;
         const gapX = parseInt(document.getElementById('globalGapX').value) || 320; 
-        const inputGapY = parseInt(document.getElementById('globalGapY').value) || 50; 
+        const inputGapY = parseInt(document.getElementById('globalGapY').value) || 60; 
 
         allNodes.forEach(node => { 
             const data = node.getData() || {}; 
@@ -839,7 +854,6 @@
         const X_LEFT = X_CENTER - gapX; 
         const X_RIGHT = X_CENTER + gapX; 
         const positionedSet = new Set(); 
-        
         let prevRowHeight = 0;
 
         sortedProcesses.forEach((p, index) => {
@@ -859,7 +873,6 @@
             if (index === 0) {
                 currentY += rowHeight / 2; 
             } else {
-                // 【核心修正：纯净空隙计算法】上一行的一半高度 + 用户指定的真实空隙距离 + 这一行的一半高度
                 currentY += (prevRowHeight / 2) + inputGapY + (rowHeight / 2);
             }
             
@@ -928,7 +941,6 @@
         reader.readAsText(file); event.target.value = ''; 
     };
 
-    // 局部修改，绝不触发全局排版抢夺视角
     window.updateNodeStyle = function(type) {
         if (!window.graph) return;
         const cells = window.graph.getSelectedCells(); const targetNodes = cells.length ? cells.filter(c => c.isNode()) : window.graph.getNodes();
@@ -964,7 +976,6 @@
         }).join('\n'); 
     }
     
-    // 简写模式仅原地伸缩自身图框
     window.toggleEmissionLabels = function() {
         if (!window.graph) return; const isShort = document.getElementById('shortLabel').checked;
         const baseW = parseInt(document.getElementById('globalW').value) || 130; 
@@ -1003,7 +1014,6 @@
 
     window.renderFromJSON = function(jsonStr) {
         try {
-            // 前端物理级纠错引擎：接管并清洗AI生成的垃圾数据
             let data = sanitizeGraphData(JSON.parse(jsonStr));
             if (!data.nodes) data.nodes = []; if (!data.edges) data.edges = [];
             window.graph.clearCells();
@@ -1028,7 +1038,6 @@
                     n.category = 'process';
                 }
                 
-                // 完全去除了引发 bug 的 lineHeight
                 const size = window.calculateNodeSize(displayText, baseW, baseH);
                 window.graph.addNode({ id: n.id, x: 0, y: 0, width: size.width, height: size.height, ports: defaultPorts, data: { category: n.category, originalLabel: label }, attrs: { body: { fill: style.fill, stroke: style.stroke, strokeWidth: style.sw, strokeDasharray: style.dash, rx: style.rx, ry: style.rx }, text: { text: displayText, fill: style.fontColor, fontSize: parseInt(document.getElementById('globalFontSize').value), fontFamily: window.getCombinedFont(), fontWeight: window.isBold ? 'bold' : 'normal' } } });
             });
@@ -1038,7 +1047,7 @@
                     let srcNode = data.nodes.find(n => n.id === edge.source); let tgtNode = data.nodes.find(n => n.id === edge.target); if(!srcNode || !tgtNode) return;
                     
                     let srcPort = 'p2'; let tgtPort = 'p1'; 
-                    // 强制：对于工序到工序的主干线，如果间距特别小，直接锁死为直连线
+                    // 【核心防死结】：强制判定工序到工序的线为直线，无视安全距离直接拉通
                     let routerObj = window.getSelectedRouter();
                     if (srcNode.category === 'process' && tgtNode.category === 'process') {
                         routerObj = { name: 'normal' };
@@ -1050,11 +1059,7 @@
                     window.graph.addEdge({ source: { cell: edge.source, port: srcPort }, target: { cell: edge.target, port: tgtPort }, attrs: window.getSelectedEdgeAttrs(), router: routerObj, connector: { name: 'rounded', args: { radius: 4 } } });
                 });
             }
-            
-            // 初次渲染：在执行排版的同时，强制执行一次画面居中
-            setTimeout(() => { 
-                window.applyGlobalLayout(true); 
-            }, 150);
+            setTimeout(() => { window.applyGlobalLayout(true); }, 120);
         } catch (fatalError) { showError("系统渲染异常：" + fatalError.message); }
     };
 
