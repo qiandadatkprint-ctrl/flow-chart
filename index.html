@@ -423,7 +423,8 @@
 
         // 3. 泛化分类容错：无论AI输出的是全拼、缩写还是中文，统一归类
         if (data.nodes) {
-            data.nodes.forEach(n => {
+            data.nodes.forEach((n, idx) => {
+                n.id = String(n.id || n.name || n.label || ('node_' + idx)); // 强制分配ID防止断链
                 let cat = String(n.category || '').toLowerCase();
                 if (cat.includes('material') || cat.includes('原') || cat.includes('辅')) n.category = 'material';
                 else if (cat.includes('emission') || cat.includes('污') || cat.includes('废')) n.category = 'emission';
@@ -988,8 +989,9 @@
                 X_CENTER = Math.round(anchorPos.x + sortedProcesses[0].getSize().width / 2);
                 currentY = Math.round(anchorPos.y) - sortedProcesses[0].getSize().height / 2;
             }
-        } else {
-            const scrollerWidth = document.querySelector('.x6-widget-scroller').clientWidth || 1000;
+} else {
+            const scrollerElem = document.querySelector('.x6-widget-scroller') || document.querySelector('.x6-graph-scroller') || document.getElementById('container');
+            const scrollerWidth = scrollerElem ? scrollerElem.clientWidth : 1000;
             X_CENTER = Math.round(scrollerWidth / 2); 
         }
 
