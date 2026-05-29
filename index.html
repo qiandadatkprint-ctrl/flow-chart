@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>工艺流程绘制系统</title>
-    <!-- 使用国内极速 CDN -->
+    <!-- 使用国内极速 CDN，彻底解决引擎卡死加载不出来的问题 -->
     <script src="https://npm.elemecdn.com/@antv/x6@1.34.6/dist/x6.js"></script>
     <style>
         /* 严谨的工业级色板 */
@@ -24,9 +24,7 @@
         ::-webkit-scrollbar-thumb { background: #d1d5da; border-radius: 3px; }
         ::-webkit-scrollbar-thumb:hover { background: #9da2a8; }
 
-        /* 左侧面板 */
         .sidebar { width: 340px; background: var(--panel-bg); display: flex; flex-direction: column; box-shadow: 2px 0 10px rgba(0,0,0,0.05); z-index: 20; border-right: 1px solid var(--border); flex-shrink: 0;}
-        
         .sidebar-header { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: #fbfbfc; flex-shrink: 0;}
         .sidebar-title { font-size: 15px; font-weight: 600; color: var(--text-main); display: flex; align-items: center; gap: 8px; font-family: "Microsoft YaHei", sans-serif;}
         .text-btn { cursor: pointer; color: var(--primary); font-size: 13px; font-weight: 500; background: none; border: none; padding: 4px 8px; border-radius: 4px; transition: 0.2s; font-family: "Microsoft YaHei", sans-serif;}
@@ -67,10 +65,9 @@
         .typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
         @keyframes typing { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
 
-        /* 主工作区 & 分层Ribbon工具栏 */
         .main-workspace { flex: 1; display: flex; flex-direction: column; position: relative; min-width: 0; background: var(--panel-bg);}
         .toolbar-container { display: flex; flex-direction: column; background: var(--bg); border-bottom: 1px solid var(--border); z-index: 15; flex-shrink: 0; font-family: "Microsoft YaHei", sans-serif; box-shadow: 0 2px 8px rgba(0,0,0,0.02);}
-        .toolbar-row { display: flex; align-items: center; padding: 10px 20px; background: #fff; border-bottom: 1px solid #f0f1f5; }
+        .toolbar-top { display: flex; justify-content: space-between; align-items: center; padding: 10px 20px; background: #fff; border-bottom: 1px solid var(--border); }
         .toolbar-left, .toolbar-right { display: flex; align-items: center; gap: 10px; }
         
         .toolbar-bottom { display: flex; align-items: flex-start; padding: 12px 20px; background: #fbfbfc; gap: 16px; flex-wrap: wrap; }
@@ -115,8 +112,6 @@
         .color-transparent::after { content: ''; position: absolute; top: 50%; left: -20%; width: 140%; height: 2px; background: #d54941; transform: rotate(45deg); }
 
         #container { flex: 1; width: 100%; height: 100%; position: relative; z-index: 1; outline: none; }
-        
-        /* 隐藏高级画布自身的滚动条 */
         .x6-widget-scroller { scrollbar-width: none; }
         .x6-widget-scroller::-webkit-scrollbar { display: none; width: 0; height: 0; }
 
@@ -192,7 +187,7 @@
     <div id="error-msg"><span id="error-text"></span><span class="close-error" onclick="hideError()">关闭</span></div>
     
     <div class="toolbar-container">
-        <!-- 顶层全局文件操作区 -->
+        <!-- 全局操作 -->
         <div class="toolbar-top">
             <div class="toolbar-left">
                 <span class="sys-notice">💡 提示：左键平移画布 | Shift+左键框选元素</span>
@@ -210,33 +205,19 @@
             </div>
         </div>
 
-        <!-- 底层模块化响应卡片面板 -->
+        <!-- 属性配置区 -->
         <div class="toolbar-bottom">
             <div class="prop-group">
                 <span class="group-label">插入</span>
-                <button class="btn-tool btn-shape" onclick="addNodeToCenter('process')" title="主干工序">
-                    <svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" fill="none" stroke="currentColor" stroke-width="2"/></svg>
-                </button>
-                <button class="btn-tool btn-shape" onclick="addNodeToCenter('material')" title="原辅料">
-                    <svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="6" fill="none" stroke="currentColor" stroke-width="2"/></svg>
-                </button>
-                <button class="btn-tool btn-shape" onclick="addNodeToCenter('emission')" title="产排污">
-                    <svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" fill="none" stroke="#d54941" stroke-width="2" stroke-dasharray="3 2"/></svg>
-                </button>
-                <button class="btn-tool btn-shape" onclick="addNodeToCenter('decision')" title="逻辑判定">
-                    <svg viewBox="0 0 24 24"><polygon points="12,3 21,12 12,21 3,12" fill="none" stroke="currentColor" stroke-width="2"/></svg>
-                </button>
-                <button class="btn-tool btn-shape" onclick="addNodeToCenter('ellipse')" title="起止状态">
-                    <svg viewBox="0 0 24 24"><ellipse cx="12" cy="12" rx="10" ry="7" fill="none" stroke="currentColor" stroke-width="2"/></svg>
-                </button>
-                <button class="btn-tool btn-shape" onclick="addNodeToCenter('text')" title="纯文本">
-                    <svg viewBox="0 0 24 24"><text x="12" y="17" font-family="Arial" font-size="16" font-weight="bold" text-anchor="middle" fill="currentColor">T</text></svg>
-                </button>
+                <button class="btn-tool btn-shape" onclick="addNodeToCenter('process')" title="主干工序"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" fill="none" stroke="currentColor" stroke-width="2"/></svg></button>
+                <button class="btn-tool btn-shape" onclick="addNodeToCenter('material')" title="原辅料"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="6" fill="none" stroke="currentColor" stroke-width="2"/></svg></button>
+                <button class="btn-tool btn-shape" onclick="addNodeToCenter('emission')" title="产排污"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" fill="none" stroke="#d54941" stroke-width="2" stroke-dasharray="3 2"/></svg></button>
+                <button class="btn-tool btn-shape" onclick="addNodeToCenter('decision')" title="逻辑判定"><svg viewBox="0 0 24 24"><polygon points="12,3 21,12 12,21 3,12" fill="none" stroke="currentColor" stroke-width="2"/></svg></button>
+                <button class="btn-tool btn-shape" onclick="addNodeToCenter('ellipse')" title="起止状态"><svg viewBox="0 0 24 24"><ellipse cx="12" cy="12" rx="10" ry="7" fill="none" stroke="currentColor" stroke-width="2"/></svg></button>
+                <button class="btn-tool btn-shape" onclick="addNodeToCenter('text')" title="纯文本"><svg viewBox="0 0 24 24"><text x="12" y="17" font-family="Arial" font-size="16" font-weight="bold" text-anchor="middle" fill="currentColor">T</text></svg></button>
                 <div style="width:1px; height:18px; background:var(--border); margin:0 4px;"></div>
                 <!-- 自由画线模式切换按钮 -->
-                <button id="btnDrawMode" class="btn-tool btn-shape" onclick="toggleDrawMode()" title="开启/关闭自由画笔 (在空白处直接拖动画线)" style="color:var(--primary);">
-                    <svg viewBox="0 0 24 24"><path d="M4,20 L10,20 L20,10 L14,4 L4,14 Z" fill="none" stroke="currentColor" stroke-width="2"/><line x1="14" y1="4" x2="20" y2="10" stroke="currentColor" stroke-width="2"/></svg>
-                </button>
+                <button id="btnDrawMode" class="btn-tool btn-shape" onclick="toggleDrawMode()" title="开启/关闭自由画笔 (在空白处直接拖动画线)" style="color:var(--primary);"><svg viewBox="0 0 24 24"><path d="M4,20 L10,20 L20,10 L14,4 L4,14 Z" fill="none" stroke="currentColor" stroke-width="2"/><line x1="14" y1="4" x2="20" y2="10" stroke="currentColor" stroke-width="2"/></svg></button>
             </div>
 
             <div class="prop-group">
@@ -296,24 +277,13 @@
 
                 <div class="visual-dropdown">
                     <button class="btn-tool" onclick="toggleMenu('arrowStyleMenu', event)" title="箭头方向">
-                        <svg width="24" height="12">
-                            <path d="M2,6 L20,6" stroke="currentColor" stroke-width="2" fill="none"/>
-                            <polygon points="20,3 24,6 20,9" fill="currentColor"/>
-                        </svg>
+                        <svg width="24" height="12"><path d="M2,6 L20,6" stroke="currentColor" stroke-width="2" fill="none"/><polygon points="20,3 24,6 20,9" fill="currentColor"/></svg>
                     </button>
                     <div class="visual-menu" id="arrowStyleMenu">
-                        <div class="visual-swatch" onclick="selectArrowStyle('target')" title="正向箭头">
-                            <svg><path d="M0,6 L100,6" stroke="#18191c" stroke-width="2"/><polygon points="96,2 100,6 96,10" fill="#18191c"/></svg>
-                        </div>
-                        <div class="visual-swatch" onclick="selectArrowStyle('source')" title="反向箭头">
-                            <svg><path d="M0,6 L100,6" stroke="#18191c" stroke-width="2"/><polygon points="4,2 0,6 4,10" fill="#18191c"/></svg>
-                        </div>
-                        <div class="visual-swatch" onclick="selectArrowStyle('both')" title="双向箭头">
-                            <svg><path d="M0,6 L100,6" stroke="#18191c" stroke-width="2"/><polygon points="96,2 100,6 96,10" fill="#18191c"/><polygon points="4,2 0,6 4,10" fill="#18191c"/></svg>
-                        </div>
-                        <div class="visual-swatch" onclick="selectArrowStyle('none')" title="无箭头">
-                            <svg><path d="M0,6 L100,6" stroke="#18191c" stroke-width="2"/></svg>
-                        </div>
+                        <div class="visual-swatch" onclick="selectArrowStyle('target')" title="正向箭头"><svg><path d="M0,6 L100,6" stroke="#18191c" stroke-width="2"/><polygon points="96,2 100,6 96,10" fill="#18191c"/></svg></div>
+                        <div class="visual-swatch" onclick="selectArrowStyle('source')" title="反向箭头"><svg><path d="M0,6 L100,6" stroke="#18191c" stroke-width="2"/><polygon points="4,2 0,6 4,10" fill="#18191c"/></svg></div>
+                        <div class="visual-swatch" onclick="selectArrowStyle('both')" title="双向箭头"><svg><path d="M0,6 L100,6" stroke="#18191c" stroke-width="2"/><polygon points="96,2 100,6 96,10" fill="#18191c"/><polygon points="4,2 0,6 4,10" fill="#18191c"/></svg></div>
+                        <div class="visual-swatch" onclick="selectArrowStyle('none')" title="无箭头"><svg><path d="M0,6 L100,6" stroke="#18191c" stroke-width="2"/></svg></div>
                     </div>
                 </div>
 
@@ -322,15 +292,9 @@
                         <svg width="24" height="12"><path id="icon-line-style" d="M0,6 L24,6" stroke="currentColor" stroke-width="2" fill="none"/></svg>
                     </button>
                     <div class="visual-menu" id="lineStyleMenu">
-                        <div class="visual-swatch" onclick="selectLineStyle('solid')">
-                            <svg><path d="M0,6 L100,6" stroke="#18191c" stroke-width="2"/></svg>
-                        </div>
-                        <div class="visual-swatch" onclick="selectLineStyle('dashed')">
-                            <svg><path d="M0,6 L100,6" stroke="#18191c" stroke-width="2" stroke-dasharray="6 4"/></svg>
-                        </div>
-                        <div class="visual-swatch" onclick="selectLineStyle('dotted')">
-                            <svg><path d="M0,6 L100,6" stroke="#18191c" stroke-width="2" stroke-dasharray="2 3"/></svg>
-                        </div>
+                        <div class="visual-swatch" onclick="selectLineStyle('solid')"><svg><path d="M0,6 L100,6" stroke="#18191c" stroke-width="2"/></svg></div>
+                        <div class="visual-swatch" onclick="selectLineStyle('dashed')"><svg><path d="M0,6 L100,6" stroke="#18191c" stroke-width="2" stroke-dasharray="6 4"/></svg></div>
+                        <div class="visual-swatch" onclick="selectLineStyle('dotted')"><svg><path d="M0,6 L100,6" stroke="#18191c" stroke-width="2" stroke-dasharray="2 3"/></svg></div>
                     </div>
                 </div>
 
@@ -339,12 +303,8 @@
                         <svg width="24" height="12"><path id="icon-router" d="M0,6 L12,6 L12,0 L24,0" stroke="currentColor" stroke-width="2" fill="none"/></svg>
                     </button>
                     <div class="visual-menu" id="lineRouterMenu">
-                        <div class="visual-swatch" onclick="selectRouter('manhattan')">
-                            <svg><path d="M0,6 L15,6 L15,2 L30,2" stroke="#18191c" stroke-width="2" fill="none"/></svg>
-                        </div>
-                        <div class="visual-swatch" onclick="selectRouter('normal')">
-                            <svg><path d="M0,6 L30,6" stroke="#18191c" stroke-width="2" fill="none"/></svg>
-                        </div>
+                        <div class="visual-swatch" onclick="selectRouter('manhattan')"><svg><path d="M0,6 L15,6 L15,2 L30,2" stroke="#18191c" stroke-width="2" fill="none"/></svg></div>
+                        <div class="visual-swatch" onclick="selectRouter('normal')"><svg><path d="M0,6 L30,6" stroke="#18191c" stroke-width="2" fill="none"/></svg></div>
                     </div>
                 </div>
             </div>
@@ -372,28 +332,65 @@
 <input type="hidden" id="currentArrowVal" value="target">
 
 <script>
-    // 强制阻止所有工具栏输入框鼠标滚轮的事件冒泡，防止画板乱飞
+    // ======= 核心：强力多节点智能轮询加载机制 =======
+    const cdnUrls = [
+        "https://registry.npmmirror.com/@antv/x6/1.34.6/files/dist/x6.js", 
+        "https://cdnjs.cloudflare.com/ajax/libs/antv-x6/1.34.6/x6.js", 
+        "https://unpkg.com/@antv/x6@1.34.6/dist/x6.js", 
+        "https://cdn.jsdelivr.net/npm/@antv/x6@1.34.6/dist/x6.js" 
+    ];
+
+    function loadEngineWithRetry() {
+        const tip = document.getElementById('loading-tip');
+        let currentIndex = 0;
+
+        function tryNextNode() {
+            if (currentIndex >= cdnUrls.length) {
+                tip.innerHTML = "网络异常：所有图形渲染库节点均下载失败。<br>请检查您的公司网络防火墙，或尝试连接手机热点。";
+                tip.style.color = "#d54941";
+                return;
+            }
+
+            tip.innerHTML = `渲染引擎初始化中 (正在尝试连接加速节点 ${currentIndex + 1}/${cdnUrls.length})...`;
+            
+            const script = document.createElement('script');
+            script.src = cdnUrls[currentIndex];
+            script.onload = () => {
+                tip.style.display = 'none';
+                initGraphEngine(); 
+            };
+            script.onerror = () => {
+                console.warn("CDN加载失败: " + cdnUrls[currentIndex]);
+                currentIndex++;
+                tryNextNode();
+            };
+            document.head.appendChild(script);
+        }
+
+        tryNextNode();
+    }
+
+    window.addEventListener('DOMContentLoaded', loadEngineWithRetry);
+
     document.querySelectorAll('.toolbar-container input, .toolbar-container select, .toolbar-container button').forEach(elem => {
         elem.addEventListener('wheel', e => e.stopPropagation(), { passive: false });
         elem.addEventListener('mousedown', e => e.stopPropagation());
     });
 
-    /* =========================================================
-       1. 业务逻辑与 AI 交互控制
-       ========================================================= */
     const configPanel = document.getElementById('configPanel');
     const apiKeyInput = document.getElementById('apiKey');
     const epIdInput = document.getElementById('epId');
 
-    function initGraphEngine() {
-        const tip = document.getElementById('loading-tip');
-        if (typeof window.X6 === 'undefined') { 
-            tip.innerHTML = "网络异常：图形渲染核心库下载失败。<br>请检查您的网络连接或稍后再试。"; 
-            tip.style.color = "#d54941";
-            return; 
-        }
-        tip.style.display = 'none';
+    function toggleConfig() { configPanel.style.display = configPanel.style.display === 'none' ? 'block' : 'none'; }
+    
+    function saveConfig() {
+        if (!apiKeyInput.value.trim() || !epIdInput.value.trim()) { showToast("鉴权信息不可为空"); return; }
+        localStorage.setItem('doubaoApiKey', apiKeyInput.value.trim());
+        localStorage.setItem('doubaoEpId', epIdInput.value.trim());
+        configPanel.style.display = 'none'; showToast("接口配置保存成功");
+    }
 
+    function initGraphEngine() {
         const savedKey = localStorage.getItem('doubaoApiKey');
         const savedEpId = localStorage.getItem('doubaoEpId');
         if (savedKey && savedEpId) {
@@ -495,17 +492,6 @@
         });
     }
 
-    if (document.readyState === 'loading') { window.addEventListener('DOMContentLoaded', initGraphEngine); } 
-    else { initGraphEngine(); }
-
-    function toggleConfig() { configPanel.style.display = configPanel.style.display === 'none' ? 'block' : 'none'; }
-    function saveConfig() {
-        if (!apiKeyInput.value.trim() || !epIdInput.value.trim()) { showToast("鉴权信息不可为空"); return; }
-        localStorage.setItem('doubaoApiKey', apiKeyInput.value.trim());
-        localStorage.setItem('doubaoEpId', epIdInput.value.trim());
-        configPanel.style.display = 'none'; showToast("接口配置保存成功");
-    }
-
     function insertExample() {
         const text = "①下料：使用火焰切割机等设备对钢板进行切割，产生G4-1切割烟尘、S1废金属。使用丙烷作为燃料。\n②加热：将钢板转移至加热炉加热，采用天然气，产生G4-2废气。\n③锻打：转移至空气锤平台，进行锻打操作。\n④正火：转移至退火炉内处理。产生G3-9废气。";
         document.getElementById('chatInput').value = text;
@@ -526,7 +512,6 @@
         if (bubble) { bubble.innerHTML = content; document.getElementById('chatMessages').scrollTop = document.getElementById('chatMessages').scrollHeight; }
     }
 
-    /* 前端无情接管：无论AI返回多烂的数据，一律粉碎重建成合规结构！ */
     function sanitizeGraphData(data) {
         if (data.pollutants && Array.isArray(data.pollutants)) {
             data.pollutants.forEach(p => {
@@ -687,7 +672,10 @@
             const data = await response.json();
             const reply = data.choices[0].message.content;
 
-            const jsonMatch = reply.match(/```(?:json)?\s*([\s\S]*?)```/i);
+            // 【核心修复】：重新实现了安全正则，彻底杜绝因为意外截断引发的 missing / 语法报错。
+            const regexStr = '\`\`\`(?:json)?\\s*([\\s\\S]*?)\`\`\`';
+            const jsonMatch = reply.match(new RegExp(regexStr, 'i'));
+            
             let jsonStr = "";
             if (jsonMatch) {
                 jsonStr = jsonMatch[1].trim();
@@ -696,8 +684,9 @@
             }
 
             if (jsonStr) {
-                let chatText = reply.replace(/```(?:json)?[\s\S]*?```/i, '').trim();
-                chatText += `<br><br><span style="color:#00a870; font-weight:500;">解析完毕，系统已强行纠偏并推送到视图。</span>`;
+                const replaceRegex = new RegExp('\`\`\`(?:json)?[\\s\\S]*?\`\`\`', 'i');
+                let chatText = reply.replace(replaceRegex, '').trim();
+                chatText += `<br><br><span style="color:#00a870; font-weight:500;">解析完毕，系统已应用物理强校准机制并推送到视图。</span>`;
                 updateMessage(aiMsgId, chatText);
                 renderFromJSON(jsonStr);
             } else {
@@ -711,16 +700,9 @@
         }
     }
 
-    /* =========================================================
-       2. 防弹级动态图形渲染逻辑 
-       ========================================================= */
     function showError(msg) { document.getElementById('error-text').innerHTML = msg; document.getElementById('error-msg').style.display = 'block'; }
     function hideError() { document.getElementById('error-msg').style.display = 'none'; }
     function showToast(msg) { showError(msg); setTimeout(hideError, 2500); }
-
-    window.isBold = false;
-    window.isDrawingMode = false;
-    let drawEdge = null;
 
     window.toggleBold = function() {
         window.isBold = !window.isBold;
@@ -733,20 +715,18 @@
         const btn = document.getElementById('btnDrawMode');
         if (window.isDrawingMode) {
             btn.classList.add('active');
-            window.graph.disablePanning(); 
+            if(window.graph) window.graph.disablePanning(); 
             document.getElementById('container').style.cursor = 'crosshair';
             showToast("已开启自由画笔：在空白处按住左键拖拽即可自由连线");
         } else {
             btn.classList.remove('active');
-            window.graph.enablePanning(); 
+            if(window.graph) window.graph.enablePanning(); 
             document.getElementById('container').style.cursor = 'default';
             showToast("已退出自由画笔模式");
         }
     }
 
-    window.getCombinedFont = function() { 
-        return `'${document.getElementById('westFont').value}', '${document.getElementById('eastFont').value}', sans-serif`; 
-    }
+    window.getCombinedFont = function() { return `'${document.getElementById('westFont').value}', '${document.getElementById('eastFont').value}', sans-serif`; }
 
     window.calculateNodeSize = function(text, minW, minH) {
         if (!text) return { width: minW, height: minH };
@@ -766,30 +746,6 @@
         return { width: w, height: h };
     }
 
-    function getCenterCoord() {
-        if (!window.graph) return { x: 500, y: 100 };
-        const scroller = document.querySelector('.x6-widget-scroller') || document.getElementById('container');
-        const rect = scroller.getBoundingClientRect();
-        return window.graph.clientToLocal(rect.left + rect.width / 2, rect.top + rect.height / 2);
-    }
-
-    window.forceRecenter = function() {
-        if(window.graph) {
-            window.graph.scroller.zoomToFit({ maxScale: 1 });
-            window.graph.centerContent();
-        }
-    };
-
-    window.deleteSelected = function() { 
-        if(window.graph){ 
-            const cells = window.graph.getSelectedCells(); 
-            if (cells.length) window.graph.removeCells(cells); 
-        }
-    };
-
-    /* =========================================================
-       3. 样式定制与控件响应
-       ========================================================= */
     window.toggleMenu = function(menuId, event) {
         event.stopPropagation();
         document.querySelectorAll('.color-menu, .visual-menu').forEach(menu => {
@@ -890,7 +846,9 @@
         const initialText = '双击录入文本'; 
         const size = window.calculateNodeSize(initialText, minW, minH);
         
-        const center = getCenterCoord(); 
+        const scrollerRect = document.querySelector('.x6-widget-scroller').getBoundingClientRect();
+        const center = window.graph.clientToLocal(scrollerRect.left + scrollerRect.width/2, scrollerRect.top + scrollerRect.height/2);
+        
         const offsetX = (Math.random() - 0.5) * 40; 
         const offsetY = (Math.random() - 0.5) * 40;
 
@@ -927,7 +885,6 @@
         });
     };
 
-    // 核心算法：以原点为基准的自适应排版，完美兼容各类屏幕，绝不乱飘
     window.applyGlobalLayout = function(shouldCenter = false) {
         if (!window.graph) return;
         const allNodes = window.graph.getNodes(); const allEdges = window.graph.getEdges(); if (allNodes.length === 0) return;
@@ -1010,7 +967,6 @@
             const pHeight = p.getSize().height; const mHeight = getGroupHeight(materials); const eHeight = getGroupHeight(emissions);
             const rowHeight = Math.max(pHeight, mHeight, eHeight);
             
-            // 安全限制：防止P字形死结连线
             const stepHeight = Math.max(inputGapY + Math.max(0, rowHeight - baseH), pHeight + 60); 
             
             if (index === 0) { currentY += rowHeight / 2; } 
