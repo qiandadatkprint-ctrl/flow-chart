@@ -187,7 +187,6 @@
     <div id="error-msg"><span id="error-text"></span><span class="close-error" onclick="hideError()">关闭</span></div>
     
     <div class="toolbar-container">
-        <!-- 全局操作 -->
         <div class="toolbar-top">
             <div class="toolbar-left">
                 <span class="sys-notice">💡 提示：左键平移画布 | Shift+左键框选元素</span>
@@ -205,19 +204,31 @@
             </div>
         </div>
 
-        <!-- 属性配置区 -->
         <div class="toolbar-bottom">
             <div class="prop-group">
                 <span class="group-label">插入</span>
-                <button class="btn-tool btn-shape" onclick="addNodeToCenter('process')" title="主干工序"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" fill="none" stroke="currentColor" stroke-width="2"/></svg></button>
-                <button class="btn-tool btn-shape" onclick="addNodeToCenter('material')" title="原辅料"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="6" fill="none" stroke="currentColor" stroke-width="2"/></svg></button>
-                <button class="btn-tool btn-shape" onclick="addNodeToCenter('emission')" title="产排污"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" fill="none" stroke="#d54941" stroke-width="2" stroke-dasharray="3 2"/></svg></button>
-                <button class="btn-tool btn-shape" onclick="addNodeToCenter('decision')" title="逻辑判定"><svg viewBox="0 0 24 24"><polygon points="12,3 21,12 12,21 3,12" fill="none" stroke="currentColor" stroke-width="2"/></svg></button>
-                <button class="btn-tool btn-shape" onclick="addNodeToCenter('ellipse')" title="起止状态"><svg viewBox="0 0 24 24"><ellipse cx="12" cy="12" rx="10" ry="7" fill="none" stroke="currentColor" stroke-width="2"/></svg></button>
-                <button class="btn-tool btn-shape" onclick="addNodeToCenter('text')" title="纯文本"><svg viewBox="0 0 24 24"><text x="12" y="17" font-family="Arial" font-size="16" font-weight="bold" text-anchor="middle" fill="currentColor">T</text></svg></button>
+                <button class="btn-tool btn-shape" onclick="addNodeToCenter('process')" title="主干工序">
+                    <svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+                </button>
+                <button class="btn-tool btn-shape" onclick="addNodeToCenter('material')" title="原辅料">
+                    <svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="6" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+                </button>
+                <button class="btn-tool btn-shape" onclick="addNodeToCenter('emission')" title="产排污">
+                    <svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" fill="none" stroke="#d54941" stroke-width="2" stroke-dasharray="3 2"/></svg>
+                </button>
+                <button class="btn-tool btn-shape" onclick="addNodeToCenter('decision')" title="逻辑判定">
+                    <svg viewBox="0 0 24 24"><polygon points="12,3 21,12 12,21 3,12" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+                </button>
+                <button class="btn-tool btn-shape" onclick="addNodeToCenter('ellipse')" title="起止状态">
+                    <svg viewBox="0 0 24 24"><ellipse cx="12" cy="12" rx="10" ry="7" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+                </button>
+                <button class="btn-tool btn-shape" onclick="addNodeToCenter('text')" title="纯文本">
+                    <svg viewBox="0 0 24 24"><text x="12" y="17" font-family="Arial" font-size="16" font-weight="bold" text-anchor="middle" fill="currentColor">T</text></svg>
+                </button>
                 <div style="width:1px; height:18px; background:var(--border); margin:0 4px;"></div>
-                <!-- 自由画线模式切换按钮 -->
-                <button id="btnDrawMode" class="btn-tool btn-shape" onclick="toggleDrawMode()" title="开启/关闭自由画笔 (在空白处直接拖动画线)" style="color:var(--primary);"><svg viewBox="0 0 24 24"><path d="M4,20 L10,20 L20,10 L14,4 L4,14 Z" fill="none" stroke="currentColor" stroke-width="2"/><line x1="14" y1="4" x2="20" y2="10" stroke="currentColor" stroke-width="2"/></svg></button>
+                <button id="btnDrawMode" class="btn-tool btn-shape" onclick="toggleDrawMode()" title="开启/关闭自由画笔 (在空白处直接拖动画线)" style="color:var(--primary);">
+                    <svg viewBox="0 0 24 24"><path d="M4,20 L10,20 L20,10 L14,4 L4,14 Z" fill="none" stroke="currentColor" stroke-width="2"/><line x1="14" y1="4" x2="20" y2="10" stroke="currentColor" stroke-width="2"/></svg>
+                </button>
             </div>
 
             <div class="prop-group">
@@ -332,46 +343,7 @@
 <input type="hidden" id="currentArrowVal" value="target">
 
 <script>
-    // ======= 核心：强力多节点智能轮询加载机制 =======
-    const cdnUrls = [
-        "https://registry.npmmirror.com/@antv/x6/1.34.6/files/dist/x6.js", 
-        "https://cdnjs.cloudflare.com/ajax/libs/antv-x6/1.34.6/x6.js", 
-        "https://unpkg.com/@antv/x6@1.34.6/dist/x6.js", 
-        "https://cdn.jsdelivr.net/npm/@antv/x6@1.34.6/dist/x6.js" 
-    ];
-
-    function loadEngineWithRetry() {
-        const tip = document.getElementById('loading-tip');
-        let currentIndex = 0;
-
-        function tryNextNode() {
-            if (currentIndex >= cdnUrls.length) {
-                tip.innerHTML = "网络异常：所有图形渲染库节点均下载失败。<br>请检查您的公司网络防火墙，或尝试连接手机热点。";
-                tip.style.color = "#d54941";
-                return;
-            }
-
-            tip.innerHTML = `渲染引擎初始化中 (正在尝试连接加速节点 ${currentIndex + 1}/${cdnUrls.length})...`;
-            
-            const script = document.createElement('script');
-            script.src = cdnUrls[currentIndex];
-            script.onload = () => {
-                tip.style.display = 'none';
-                initGraphEngine(); 
-            };
-            script.onerror = () => {
-                console.warn("CDN加载失败: " + cdnUrls[currentIndex]);
-                currentIndex++;
-                tryNextNode();
-            };
-            document.head.appendChild(script);
-        }
-
-        tryNextNode();
-    }
-
-    window.addEventListener('DOMContentLoaded', loadEngineWithRetry);
-
+    // 强制阻止所有工具栏的鼠标滚轮冒泡，防止画板乱飞
     document.querySelectorAll('.toolbar-container input, .toolbar-container select, .toolbar-container button').forEach(elem => {
         elem.addEventListener('wheel', e => e.stopPropagation(), { passive: false });
         elem.addEventListener('mousedown', e => e.stopPropagation());
@@ -381,16 +353,7 @@
     const apiKeyInput = document.getElementById('apiKey');
     const epIdInput = document.getElementById('epId');
 
-    function toggleConfig() { configPanel.style.display = configPanel.style.display === 'none' ? 'block' : 'none'; }
-    
-    function saveConfig() {
-        if (!apiKeyInput.value.trim() || !epIdInput.value.trim()) { showToast("鉴权信息不可为空"); return; }
-        localStorage.setItem('doubaoApiKey', apiKeyInput.value.trim());
-        localStorage.setItem('doubaoEpId', epIdInput.value.trim());
-        configPanel.style.display = 'none'; showToast("接口配置保存成功");
-    }
-
-    function initGraphEngine() {
+    window.addEventListener('DOMContentLoaded', () => {
         const savedKey = localStorage.getItem('doubaoApiKey');
         const savedEpId = localStorage.getItem('doubaoEpId');
         if (savedKey && savedEpId) {
@@ -399,6 +362,318 @@
         } else {
             configPanel.style.display = 'block';
         }
+    });
+
+    function toggleConfig() { configPanel.style.display = configPanel.style.display === 'none' ? 'block' : 'none'; }
+
+    function saveConfig() {
+        if (!apiKeyInput.value.trim() || !epIdInput.value.trim()) { showToast("鉴权信息不可为空"); return; }
+        localStorage.setItem('doubaoApiKey', apiKeyInput.value.trim());
+        localStorage.setItem('doubaoEpId', epIdInput.value.trim());
+        configPanel.style.display = 'none'; showToast("接口配置保存成功");
+    }
+
+    function insertExample() {
+        const text = "各类原料投入原料检测工序，产生实验废气G1与实验废液S1；\n随后加入异丙醇、二甲苯进行投料与合成反应，产生废气G2；\n反应后使用纯水进行洗涤，产生清洗废水W1；\n压滤后产生实验废渣S2，最后通过电加热烘干产生废气G3。";
+        document.getElementById('chatInput').value = text;
+    }
+
+    function appendMessage(role, content) {
+        const chatMessages = document.getElementById('chatMessages');
+        const msgId = 'msg-' + Date.now();
+        const icon = role === 'user' ? '用户' : '豆包';
+        const html = `<div class="msg-row ${role}" id="${msgId}"><div class="msg-avatar">${icon}</div><div class="msg-bubble">${content}</div></div>`;
+        chatMessages.insertAdjacentHTML('beforeend', html);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+        return msgId;
+    }
+
+    function updateMessage(msgId, content) {
+        const bubble = document.querySelector(`#${msgId} .msg-bubble`);
+        if (bubble) { bubble.innerHTML = content; document.getElementById('chatMessages').scrollTop = document.getElementById('chatMessages').scrollHeight; }
+    }
+
+    /* 【核心算法】：物理核弹级强制数据清洗。接管并修正AI的所有“幻觉” */
+    function sanitizeGraphData(data) {
+        // 1. 如果AI发明了非标准字段 (如 pollutants)，将其强行洗入节点池
+        if (data.pollutants && Array.isArray(data.pollutants)) {
+            data.pollutants.forEach(p => {
+                const id = p.id || p.name || 'e_' + Math.random();
+                if (!data.nodes) data.nodes = [];
+                data.nodes.push({ id: id, label: id, category: 'emission' });
+                if (p.source) {
+                    if (!data.edges) data.edges = [];
+                    data.edges.push({ source: p.source, target: id });
+                }
+            });
+        }
+        
+        // 2. 将非标准连线属性强行标准化
+        if (data.edges) {
+            data.edges = data.edges.map(e => ({
+                source: e.source || e.from || e.start,
+                target: e.target || e.to || e.end
+            }));
+        }
+
+        // 3. 泛化分类容错：无论AI输出的是全拼、缩写还是中文，统一归类
+        if (data.nodes) {
+            data.nodes.forEach(n => {
+                let cat = String(n.category || '').toLowerCase();
+                if (cat.includes('material') || cat.includes('原') || cat.includes('辅')) n.category = 'material';
+                else if (cat.includes('emission') || cat.includes('污') || cat.includes('废')) n.category = 'emission';
+                else n.category = 'process'; // 无法识别的一律兜底为主工序
+                
+                n.label = (n.label || '').replace(/\\n/g, '\n').trim();
+                
+                // 剔除AI自作聪明的括号
+                if (n.category === 'emission') {
+                    n.label = n.label.replace(/[()（）]/g, '');
+                }
+                
+                // 强行把混入工序的原料描述给一刀切掉，只保留第一行纯工序名
+                if (n.category === 'process') {
+                    const lines = n.label.split('\n');
+                    if (lines.length > 1) n.label = lines[0].trim(); 
+                }
+            });
+        }
+
+        const processNodes = (data.nodes || []).filter(n => n.category === 'process');
+        let materialNodes = (data.nodes || []).filter(n => n.category === 'material');
+        let emissionNodes = (data.nodes || []).filter(n => n.category === 'emission');
+        
+        // 4. 纠正反向箭头
+        data.edges.forEach(e => {
+            const src = data.nodes.find(n => n.id === e.source);
+            const tgt = data.nodes.find(n => n.id === e.target);
+            if (src && tgt) {
+                if (src.category === 'process' && tgt.category === 'material') { e.source = tgt.id; e.target = src.id; }
+                if (src.category === 'emission' && tgt.category === 'process') { e.source = tgt.id; e.target = src.id; }
+            }
+        });
+
+        let pIds = new Set(processNodes.map(n => n.id));
+        const sortedPIds = [];
+        
+        // 5. 拓扑排序主干工序
+        if (processNodes.length > 0) {
+            const pEdges = data.edges.filter(e => pIds.has(e.source) && pIds.has(e.target));
+            const outMap = {}; const inCount = {};
+            processNodes.forEach(p => { outMap[p.id] = []; inCount[p.id] = 0; });
+            pEdges.forEach(e => {
+                if (outMap[e.source] !== undefined && inCount[e.target] !== undefined) {
+                    outMap[e.source].push(e.target);
+                    inCount[e.target]++;
+                }
+            });
+
+            let queue = processNodes.filter(p => inCount[p.id] === 0).map(p => p.id);
+            if (queue.length === 0) queue = [processNodes[0].id]; 
+            
+            while(queue.length > 0) {
+                const curr = queue.shift();
+                sortedPIds.push(curr);
+                outMap[curr].forEach(tgt => {
+                    inCount[tgt]--;
+                    if(inCount[tgt] === 0) queue.push(tgt);
+                });
+            }
+            // 兜底遗漏的节点
+            processNodes.forEach(p => { if (!sortedPIds.includes(p.id)) sortedPIds.push(p.id); });
+        }
+
+        // 6. 强行接管孤儿原辅料和排污（挂载到首尾工序上，绝不丢弃）
+        materialNodes.forEach(m => {
+            const hasEdge = data.edges.some(e => e.source === m.id && pIds.has(e.target));
+            if (!hasEdge && sortedPIds.length > 0) data.edges.push({ source: m.id, target: sortedPIds[0] });
+        });
+        emissionNodes.forEach(em => {
+            const hasEdge = data.edges.some(e => e.target === em.id && pIds.has(e.source));
+            if (!hasEdge && sortedPIds.length > 0) data.edges.push({ source: sortedPIds[sortedPIds.length-1], target: em.id });
+        });
+
+        const mergedNodes = [...processNodes];
+        const mergedEdges = [];
+
+        // 7. 物理重写主干连线，彻底灭绝跨级跳跃！
+        for (let i = 0; i < sortedPIds.length - 1; i++) {
+            mergedEdges.push({ source: sortedPIds[i], target: sortedPIds[i+1] });
+        }
+
+        // 8. 强行将指向同一工序的多个原料或排污，合并成唯一的大框（内换行）
+        sortedPIds.forEach(pId => {
+            const relatedMEdges = data.edges.filter(e => e.target === pId && materialNodes.find(m => m.id === e.source));
+            if (relatedMEdges.length > 0) {
+                const labels = new Set();
+                relatedMEdges.forEach(e => {
+                    const mNode = materialNodes.find(m => m.id === e.source);
+                    if (mNode) mNode.label.split('\n').forEach(l => { if(l.trim()) labels.add(l.trim()); });
+                });
+                const newMId = 'm_merge_' + pId;
+                mergedNodes.push({ id: newMId, label: Array.from(labels).join('\n'), category: 'material' });
+                mergedEdges.push({ source: newMId, target: pId });
+            }
+
+            const relatedEEdges = data.edges.filter(e => e.source === pId && emissionNodes.find(em => em.id === e.target));
+            if (relatedEEdges.length > 0) {
+                const labels = new Set();
+                relatedEEdges.forEach(e => {
+                    const eNode = emissionNodes.find(em => em.id === e.target);
+                    if (eNode) eNode.label.split('\n').forEach(l => { if(l.trim()) labels.add(l.trim()); });
+                });
+                const newEId = 'e_merge_' + pId;
+                mergedNodes.push({ id: newEId, label: Array.from(labels).join('\n'), category: 'emission' });
+                mergedEdges.push({ source: pId, target: newEId });
+            }
+        });
+
+        return { nodes: mergedNodes, edges: mergedEdges };
+    }
+
+    async function sendMessage() {
+        const inputElem = document.getElementById('chatInput');
+        const text = inputElem.value.trim();
+        if (!text) return;
+
+        const apiKey = localStorage.getItem('doubaoApiKey'); const epId = localStorage.getItem('doubaoEpId');
+        if (!apiKey || !epId) { configPanel.style.display = 'block'; showError("系统缺少接口鉴权配置"); return; }
+
+        appendMessage('user', text); inputElem.value = ''; document.getElementById('sendBtn').disabled = true;
+        const aiMsgId = appendMessage('ai', `<div class="typing-indicator">引擎解析中<span></span><span></span><span></span></div>`);
+
+        const statusSteps = ["正在分析流程结构...", "匹配原辅料投入节点...", "整合产排污节点...", "渲染指令生成中..."];
+        let stepIdx = 0;
+        const progressInterval = setInterval(() => {
+            updateMessage(aiMsgId, `<div class="typing-indicator">${statusSteps[stepIdx]}<span></span><span></span><span></span></div>`);
+            stepIdx = (stepIdx + 1) % statusSteps.length;
+        }, 1200);
+
+        const systemPrompt = `你是一个专业的环境工程工艺图解析系统。
+请严格分析用户提供的工艺描述，并提取为标准 JSON 数据格式（必须用 \`\`\`json 和 \`\`\` 包裹）。绝对禁止生成如 pollutants, from, to 这种不合规的字段！
+
+【核心规则】：
+1. 【主干单链】：必须提取所有的主工序步骤，并在 \`edges\` 中生成严格首尾相连的单向数据。绝不允许跨级跳跃！
+2. 【工序极简】：工序节点 (process) 只能写工序名称（纯动词或名词，如“除油”），绝不能把大段句子或原料写进工序节点里！
+3. 【环评合规编码补充】：若提及污染物但未提供代号，必须自动生成（废气G1, 废水W1, 废渣S1等）。
+4. 排污节点文本必须是直接相连的 "名称代号"，绝对禁止出现任何括号！例如："合成废气G1"。
+5. 所有【原辅料】必须有一条 edge 指向对应的【工序】！
+
+【严格的 JSON 规范示例】：
+{"nodes": [{"id": "唯一标识", "label": "名称", "category": "分类"}], "edges": [{"source": "起点id", "target": "终点id"}]}
+* category 取值仅限: process, material, emission。`;
+
+        try {
+            const response = await fetch('https://ark.cn-beijing.volces.com/api/v3/chat/completions', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+                body: JSON.stringify({
+                    model: epId,
+                    messages: [ { role: "system", content: systemPrompt }, { role: "user", content: text } ],
+                    temperature: 0.01 
+                })
+            });
+
+            clearInterval(progressInterval);
+            if (!response.ok) throw new Error("调用失败，请检查网络或参数。");
+            
+            const data = await response.json();
+            const reply = data.choices[0].message.content;
+
+            const jsonMatch = reply.match(/```(?:json)?\s*([\s\S]*?)```/i);
+            let jsonStr = "";
+            if (jsonMatch) {
+                jsonStr = jsonMatch[1].trim();
+            } else if (reply.trim().startsWith('{')) {
+                jsonStr = reply.trim(); 
+            }
+
+            if (jsonStr) {
+                let chatText = reply.replace(/```(?:json)?[\s\S]*?```/i, '').trim();
+                chatText += `<br><br><span style="color:#00a870; font-weight:500;">解析完毕，系统已应用物理强校准机制并推送到视图。</span>`;
+                updateMessage(aiMsgId, chatText);
+                renderFromJSON(jsonStr);
+            } else {
+                updateMessage(aiMsgId, reply + "\n\n(未能提取标准化数据)");
+            }
+        } catch (error) {
+            clearInterval(progressInterval);
+            updateMessage(aiMsgId, "系统解析异常：" + error.message);
+        } finally {
+            document.getElementById('sendBtn').disabled = false;
+        }
+    }
+
+    /* =========================================================
+       2. 防弹级动态图形渲染逻辑 
+       ========================================================= */
+    function showError(msg) { document.getElementById('error-text').innerHTML = msg; document.getElementById('error-msg').style.display = 'block'; }
+    function hideError() { document.getElementById('error-msg').style.display = 'none'; }
+    function showToast(msg) { showError(msg); setTimeout(hideError, 2500); }
+
+    window.isBold = false;
+    window.isDrawingMode = false;
+    let drawEdge = null;
+
+    window.toggleBold = function() {
+        window.isBold = !window.isBold;
+        document.getElementById('btnBold').classList.toggle('active', window.isBold);
+        updateNodeStyle('fontWeight');
+    }
+
+    window.toggleDrawMode = function() {
+        window.isDrawingMode = !window.isDrawingMode;
+        const btn = document.getElementById('btnDrawMode');
+        if (window.isDrawingMode) {
+            btn.classList.add('active');
+            window.graph.disablePanning(); 
+            document.getElementById('container').style.cursor = 'crosshair';
+            showToast("已开启自由画笔：在空白处按住左键拖拽即可自由连线");
+        } else {
+            btn.classList.remove('active');
+            window.graph.enablePanning(); 
+            document.getElementById('container').style.cursor = 'default';
+            showToast("已退出自由画笔模式");
+        }
+    }
+
+    window.getCombinedFont = function() { return `'${document.getElementById('westFont').value}', '${document.getElementById('eastFont').value}', sans-serif`; }
+
+    // 【核心修复】：彻底舍弃会导致文字千层饼的 lineHeight，依靠纯粹的分行高度计算撑起包围盒
+    window.calculateNodeSize = function(text, minW, minH) {
+        if (!text) return { width: minW, height: minH };
+        const lines = text.replace(/\\n/g, '\n').split(/\r?\n/); 
+        let maxChars = 0;
+        lines.forEach(l => { 
+            let len = 0; 
+            for(let i=0; i<l.length; i++) { len += l.charCodeAt(i) > 255 ? 2 : 1.1; } 
+            if(len > maxChars) maxChars = len; 
+        });
+        const fontSize = parseInt(document.getElementById('globalFontSize').value) || 13;
+        
+        let w = Math.max(minW, Math.ceil(maxChars * fontSize * 0.55) + 30);
+        let h = Math.max(minH, Math.ceil(lines.length * fontSize * 1.5) + 24);
+        if (w % 2 !== 0) w += 1;
+        if (h % 2 !== 0) h += 1;
+        return { width: w, height: h };
+    }
+
+    function getCenterCoord() {
+        if (!window.graph) return { x: 500, y: 100 };
+        const scroller = document.querySelector('.x6-widget-scroller') || document.getElementById('container');
+        const rect = scroller.getBoundingClientRect();
+        return window.graph.clientToLocal(rect.left + rect.width / 2, rect.top + rect.height / 2);
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+        if (typeof window.X6 === 'undefined') { document.getElementById('loading-tip').innerHTML = "图形库模块加载失败。"; return; }
+        document.getElementById('loading-tip').style.display = 'none';
+
+        const portAttrs = { circle: { r: 4, magnet: true, stroke: '#0052d9', fill: '#fff' } };
+        const defaultPorts = {
+            groups: { top: { position: 'top', attrs: portAttrs }, bottom: { position: 'bottom', attrs: portAttrs }, left: { position: 'left', attrs: portAttrs }, right: { position: 'right', attrs: portAttrs } },
+            items: [ { id: 'p1', group: 'top' }, { id: 'p2', group: 'bottom' }, { id: 'p3', group: 'left' }, { id: 'p4', group: 'right' } ]
+        };
 
         window.getSelectedRouter = function() { 
             const routerType = document.getElementById('currentRouterVal').value;
@@ -490,262 +765,25 @@
                 const line = cell.attr('line'); document.getElementById('borderWidth').value = line.strokeWidth || 2;
             }
         });
-    }
+    });
 
-    function insertExample() {
-        const text = "①下料：使用火焰切割机等设备对钢板进行切割，产生G4-1切割烟尘、S1废金属。使用丙烷作为燃料。\n②加热：将钢板转移至加热炉加热，采用天然气，产生G4-2废气。\n③锻打：转移至空气锤平台，进行锻打操作。\n④正火：转移至退火炉内处理。产生G3-9废气。";
-        document.getElementById('chatInput').value = text;
-    }
-
-    function appendMessage(role, content) {
-        const chatMessages = document.getElementById('chatMessages');
-        const msgId = 'msg-' + Date.now();
-        const icon = role === 'user' ? '用户' : '豆包';
-        const html = `<div class="msg-row ${role}" id="${msgId}"><div class="msg-avatar">${icon}</div><div class="msg-bubble">${content}</div></div>`;
-        chatMessages.insertAdjacentHTML('beforeend', html);
-        chatMessages.scrollTop = chatMessages.scrollHeight;
-        return msgId;
-    }
-
-    function updateMessage(msgId, content) {
-        const bubble = document.querySelector(`#${msgId} .msg-bubble`);
-        if (bubble) { bubble.innerHTML = content; document.getElementById('chatMessages').scrollTop = document.getElementById('chatMessages').scrollHeight; }
-    }
-
-    function sanitizeGraphData(data) {
-        if (data.pollutants && Array.isArray(data.pollutants)) {
-            data.pollutants.forEach(p => {
-                const id = p.id || p.name || 'e_' + Math.random();
-                if (!data.nodes) data.nodes = [];
-                data.nodes.push({ id: id, label: id, category: 'emission' });
-                if (p.source) {
-                    if (!data.edges) data.edges = [];
-                    data.edges.push({ source: p.source, target: id });
-                }
-            });
+    window.forceRecenter = function() {
+        if(window.graph) {
+            window.graph.scroller.zoomToFit({ maxScale: 1 });
+            window.graph.centerContent();
         }
-        if (data.edges) {
-            data.edges = data.edges.map(e => ({ source: e.source || e.from || e.start, target: e.target || e.to || e.end }));
+    };
+
+    window.deleteSelected = function() { 
+        if(window.graph){ 
+            const cells = window.graph.getSelectedCells(); 
+            if (cells.length) window.graph.removeCells(cells); 
         }
+    };
 
-        const processNodes = (data.nodes || []).filter(n => n.category === 'process');
-        let materialNodes = (data.nodes || []).filter(n => n.category === 'material');
-        let emissionNodes = (data.nodes || []).filter(n => n.category === 'emission');
-        const otherNodes = (data.nodes || []).filter(n => !['process', 'material', 'emission'].includes(n.category));
-        
-        data.nodes.forEach(n => {
-            n.label = (n.label || '').replace(/\\n/g, '\n').trim();
-            if (n.category === 'process') {
-                const lines = n.label.split('\n');
-                if (lines.length > 1) n.label = lines[0].trim(); 
-            }
-            if (n.category === 'emission') n.label = n.label.replace(/[()（）]/g, '');
-        });
-
-        data.edges.forEach(e => {
-            const src = data.nodes.find(n => n.id === e.source);
-            const tgt = data.nodes.find(n => n.id === e.target);
-            if (src && tgt) {
-                if (src.category === 'process' && tgt.category === 'material') { e.source = tgt.id; e.target = src.id; }
-                if (src.category === 'emission' && tgt.category === 'process') { e.source = tgt.id; e.target = src.id; }
-            }
-        });
-
-        let pIds = new Set(processNodes.map(n => n.id));
-        const sortedPIds = [];
-        if (processNodes.length > 0) {
-            const pEdges = data.edges.filter(e => pIds.has(e.source) && pIds.has(e.target));
-            const outMap = {}; const inCount = {};
-            processNodes.forEach(p => { outMap[p.id] = []; inCount[p.id] = 0; });
-            pEdges.forEach(e => {
-                if (outMap[e.source] !== undefined && inCount[e.target] !== undefined) {
-                    outMap[e.source].push(e.target);
-                    inCount[e.target]++;
-                }
-            });
-
-            let queue = processNodes.filter(p => inCount[p.id] === 0).map(p => p.id);
-            if (queue.length === 0) queue = [processNodes[0].id]; 
-            
-            while(queue.length > 0) {
-                const curr = queue.shift();
-                sortedPIds.push(curr);
-                outMap[curr].forEach(tgt => {
-                    inCount[tgt]--;
-                    if(inCount[tgt] === 0) queue.push(tgt);
-                });
-            }
-            processNodes.forEach(p => { if (!sortedPIds.includes(p.id)) sortedPIds.push(p.id); });
-        }
-
-        materialNodes.forEach(m => {
-            const hasEdge = data.edges.some(e => e.source === m.id && pIds.has(e.target));
-            if (!hasEdge && sortedPIds.length > 0) data.edges.push({ source: m.id, target: sortedPIds[0] });
-        });
-        emissionNodes.forEach(em => {
-            const hasEdge = data.edges.some(e => e.target === em.id && pIds.has(e.source));
-            if (!hasEdge && sortedPIds.length > 0) data.edges.push({ source: sortedPIds[sortedPIds.length-1], target: em.id });
-        });
-
-        const mergedNodes = [...processNodes, ...otherNodes];
-        const mergedEdges = [];
-
-        for (let i = 0; i < sortedPIds.length - 1; i++) {
-            mergedEdges.push({ source: sortedPIds[i], target: sortedPIds[i+1] });
-        }
-
-        sortedPIds.forEach(pId => {
-            const relatedMEdges = data.edges.filter(e => e.target === pId && materialNodes.find(m => m.id === e.source));
-            if (relatedMEdges.length > 0) {
-                const labels = new Set();
-                relatedMEdges.forEach(e => {
-                    const mNode = materialNodes.find(m => m.id === e.source);
-                    if (mNode) mNode.label.split('\n').forEach(l => { if(l.trim()) labels.add(l.trim()); });
-                });
-                const newMId = 'm_merge_' + pId;
-                mergedNodes.push({ id: newMId, label: Array.from(labels).join('\n'), category: 'material' });
-                mergedEdges.push({ source: newMId, target: pId });
-            }
-
-            const relatedEEdges = data.edges.filter(e => e.source === pId && emissionNodes.find(em => em.id === e.target));
-            if (relatedEEdges.length > 0) {
-                const labels = new Set();
-                relatedEEdges.forEach(e => {
-                    const eNode = emissionNodes.find(em => em.id === e.target);
-                    if (eNode) eNode.label.split('\n').forEach(l => { if(l.trim()) labels.add(l.trim()); });
-                });
-                const newEId = 'e_merge_' + pId;
-                mergedNodes.push({ id: newEId, label: Array.from(labels).join('\n'), category: 'emission' });
-                mergedEdges.push({ source: pId, target: newEId });
-            }
-        });
-
-        return { nodes: mergedNodes, edges: mergedEdges };
-    }
-
-    async function sendMessage() {
-        const inputElem = document.getElementById('chatInput');
-        const text = inputElem.value.trim();
-        if (!text) return;
-
-        const apiKey = localStorage.getItem('doubaoApiKey'); const epId = localStorage.getItem('doubaoEpId');
-        if (!apiKey || !epId) { configPanel.style.display = 'block'; showError("系统缺少接口鉴权配置"); return; }
-
-        appendMessage('user', text); inputElem.value = ''; document.getElementById('sendBtn').disabled = true;
-        const aiMsgId = appendMessage('ai', `<div class="typing-indicator">引擎解析中<span></span><span></span><span></span></div>`);
-
-        const statusSteps = ["正在分析流程结构...", "匹配原辅料投入节点...", "整合产排污节点...", "渲染指令生成中..."];
-        let stepIdx = 0;
-        const progressInterval = setInterval(() => {
-            updateMessage(aiMsgId, `<div class="typing-indicator">${statusSteps[stepIdx]}<span></span><span></span><span></span></div>`);
-            stepIdx = (stepIdx + 1) % statusSteps.length;
-        }, 1200);
-
-        const systemPrompt = `你是一个专业的环境工程工艺图解析系统。
-请严格分析用户提供的工艺描述，并提取为标准 JSON 数据格式（必须用 \`\`\`json 和 \`\`\` 包裹）。绝对禁止生成如 pollutants, from, to 这种不合规的字段！
-
-【核心规则】：
-1. 【主干单链】：必须提取所有的主工序步骤，并在 \`edges\` 中生成严格首尾相连的单向数据。绝不允许跨级跳跃！
-2. 【工序极简】：工序节点 (process) 只能写工序名称（纯动词或名词，如“除油”），绝不能把大段句子或原料写进工序节点里！
-3. 【环评合规编码补充】：若提及污染物但未提供代号，必须自动生成（废气G1, 废水W1, 废渣S1等）。
-4. 排污节点文本必须是直接相连的 "名称代号"，绝对禁止出现任何括号！例如："合成废气G1"。
-5. 所有【原辅料】必须有一条 edge 指向对应的【工序】！
-
-【严格的 JSON 规范示例】：
-{"nodes": [{"id": "唯一标识", "label": "名称", "category": "分类"}], "edges": [{"source": "起点id", "target": "终点id"}]}
-* category 取值仅限: process, material, emission。`;
-
-        try {
-            const response = await fetch('https://ark.cn-beijing.volces.com/api/v3/chat/completions', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
-                body: JSON.stringify({
-                    model: epId,
-                    messages: [ { role: "system", content: systemPrompt }, { role: "user", content: text } ],
-                    temperature: 0.01 
-                })
-            });
-
-            clearInterval(progressInterval);
-            if (!response.ok) throw new Error("调用失败，请检查网络或参数。");
-            
-            const data = await response.json();
-            const reply = data.choices[0].message.content;
-
-            // 【核心修复】：重新实现了安全正则，彻底杜绝因为意外截断引发的 missing / 语法报错。
-            const regexStr = '\`\`\`(?:json)?\\s*([\\s\\S]*?)\`\`\`';
-            const jsonMatch = reply.match(new RegExp(regexStr, 'i'));
-            
-            let jsonStr = "";
-            if (jsonMatch) {
-                jsonStr = jsonMatch[1].trim();
-            } else if (reply.trim().startsWith('{')) {
-                jsonStr = reply.trim(); 
-            }
-
-            if (jsonStr) {
-                const replaceRegex = new RegExp('\`\`\`(?:json)?[\\s\\S]*?\`\`\`', 'i');
-                let chatText = reply.replace(replaceRegex, '').trim();
-                chatText += `<br><br><span style="color:#00a870; font-weight:500;">解析完毕，系统已应用物理强校准机制并推送到视图。</span>`;
-                updateMessage(aiMsgId, chatText);
-                renderFromJSON(jsonStr);
-            } else {
-                updateMessage(aiMsgId, reply + "\n\n(未能提取标准化数据)");
-            }
-        } catch (error) {
-            clearInterval(progressInterval);
-            updateMessage(aiMsgId, "系统解析异常：" + error.message);
-        } finally {
-            document.getElementById('sendBtn').disabled = false;
-        }
-    }
-
-    function showError(msg) { document.getElementById('error-text').innerHTML = msg; document.getElementById('error-msg').style.display = 'block'; }
-    function hideError() { document.getElementById('error-msg').style.display = 'none'; }
-    function showToast(msg) { showError(msg); setTimeout(hideError, 2500); }
-
-    window.toggleBold = function() {
-        window.isBold = !window.isBold;
-        document.getElementById('btnBold').classList.toggle('active', window.isBold);
-        updateNodeStyle('fontWeight');
-    }
-
-    window.toggleDrawMode = function() {
-        window.isDrawingMode = !window.isDrawingMode;
-        const btn = document.getElementById('btnDrawMode');
-        if (window.isDrawingMode) {
-            btn.classList.add('active');
-            if(window.graph) window.graph.disablePanning(); 
-            document.getElementById('container').style.cursor = 'crosshair';
-            showToast("已开启自由画笔：在空白处按住左键拖拽即可自由连线");
-        } else {
-            btn.classList.remove('active');
-            if(window.graph) window.graph.enablePanning(); 
-            document.getElementById('container').style.cursor = 'default';
-            showToast("已退出自由画笔模式");
-        }
-    }
-
-    window.getCombinedFont = function() { return `'${document.getElementById('westFont').value}', '${document.getElementById('eastFont').value}', sans-serif`; }
-
-    window.calculateNodeSize = function(text, minW, minH) {
-        if (!text) return { width: minW, height: minH };
-        const lines = text.replace(/\\n/g, '\n').split(/\r?\n/); 
-        let maxChars = 0;
-        lines.forEach(l => { 
-            let len = 0; 
-            for(let i=0; i<l.length; i++) { len += l.charCodeAt(i) > 255 ? 2 : 1.1; } 
-            if(len > maxChars) maxChars = len; 
-        });
-        const fontSize = parseInt(document.getElementById('globalFontSize').value) || 13;
-        
-        let w = Math.max(minW, Math.ceil(maxChars * fontSize * 0.55) + 30);
-        let h = Math.max(minH, Math.ceil(lines.length * fontSize * 1.5) + 24);
-        if (w % 2 !== 0) w += 1;
-        if (h % 2 !== 0) h += 1;
-        return { width: w, height: h };
-    }
-
+    /* =========================================================
+       3. 样式定制与控件响应
+       ========================================================= */
     window.toggleMenu = function(menuId, event) {
         event.stopPropagation();
         document.querySelectorAll('.color-menu, .visual-menu').forEach(menu => {
@@ -846,9 +884,7 @@
         const initialText = '双击录入文本'; 
         const size = window.calculateNodeSize(initialText, minW, minH);
         
-        const scrollerRect = document.querySelector('.x6-widget-scroller').getBoundingClientRect();
-        const center = window.graph.clientToLocal(scrollerRect.left + scrollerRect.width/2, scrollerRect.top + scrollerRect.height/2);
-        
+        const center = getCenterCoord(); 
         const offsetX = (Math.random() - 0.5) * 40; 
         const offsetY = (Math.random() - 0.5) * 40;
 
@@ -967,6 +1003,7 @@
             const pHeight = p.getSize().height; const mHeight = getGroupHeight(materials); const eHeight = getGroupHeight(emissions);
             const rowHeight = Math.max(pHeight, mHeight, eHeight);
             
+            // 【安全拦截】：真正确保实际物理空隙足够，绝不生成死结连线
             const stepHeight = Math.max(inputGapY + Math.max(0, rowHeight - baseH), pHeight + 60); 
             
             if (index === 0) { currentY += rowHeight / 2; } 
@@ -1133,6 +1170,7 @@
                 } else { n.category = 'process'; }
                 
                 const size = window.calculateNodeSize(displayText, baseW, baseH);
+                // 彻底移除了引起渲染错误的 lineHeight 属性
                 window.graph.addNode({ id: n.id, x: 0, y: 0, width: size.width, height: size.height, ports: defaultPorts, data: { category: n.category, originalLabel: label }, attrs: { body: { fill: style.fill, stroke: style.stroke, strokeWidth: style.sw, strokeDasharray: style.dash, rx: style.rx, ry: style.rx }, text: { text: displayText, fill: style.fontColor, fontSize: parseInt(document.getElementById('globalFontSize').value), fontFamily: window.getCombinedFont(), fontWeight: window.isBold ? 'bold' : 'normal' } } });
             });
 
@@ -1141,6 +1179,8 @@
                     let srcNode = data.nodes.find(n => n.id === edge.source); let tgtNode = data.nodes.find(n => n.id === edge.target); if(!srcNode || !tgtNode) return;
                     let srcPort = 'p2'; let tgtPort = 'p1'; 
                     let routerObj = window.getSelectedRouter();
+                    
+                    // 强制：对于主干工序连线，直接锁定为直线！从物理上阻止其生成弯曲和死结
                     if (srcNode.category === 'process' && tgtNode.category === 'process') {
                         routerObj = { name: 'normal' };
                     } else if (srcNode.category === 'material' && tgtNode.category === 'process') { 
