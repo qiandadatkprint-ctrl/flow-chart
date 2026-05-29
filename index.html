@@ -234,7 +234,7 @@
                 <label>高</label><input type="number" id="globalH" value="45" style="width: 40px;" oninput="applyGlobalLayout(false)">
                 <label>左右距</label><input type="number" id="globalGapX" value="320" style="width: 44px;" oninput="applyGlobalLayout(false)">
                 <label>上下距</label><input type="number" id="globalGapY" value="60" style="width: 40px;" oninput="applyGlobalLayout(false)">
-                <button class="btn-tool" onclick="forceRecenter()" style="border-color:#0052d9; color:#0052d9; margin-left: 5px;" title="仅重新居中视图">一键居中</button>
+                <button class="btn-tool" onclick="forceRecenter()" style="border-color:#0052d9; color:#0052d9; margin-left: 5px;" title="将视角瞬间居中对齐图纸">一键居中</button>
             </div>
 
             <div class="prop-group">
@@ -337,7 +337,7 @@
 <input type="hidden" id="currentRouterVal" value="manhattan">
 
 <script>
-    // 【核心防御】：阻断工具栏的所有输入框、下拉框鼠标事件，绝对防止滚轮或点击时影响画布平移
+    // 阻断输入框滚动事件，防止干扰画布
     document.querySelectorAll('.toolbar-container input, .toolbar-container select').forEach(elem => {
         elem.addEventListener('wheel', e => e.stopPropagation(), { passive: false });
         elem.addEventListener('mousedown', e => e.stopPropagation());
@@ -584,10 +584,18 @@
         const fontSize = parseInt(document.getElementById('globalFontSize').value) || 13;
         
         let w = Math.max(minW, Math.ceil(maxChars * fontSize * 0.55) + 30);
-        let h = Math.max(minH, Math.ceil(lines.length * fontSize * 1.6) + 24);
+        let h = Math.max(minH, Math.ceil(lines.length * fontSize * 1.5) + 24);
         if (w % 2 !== 0) w += 1;
         if (h % 2 !== 0) h += 1;
         return { width: w, height: h };
+    }
+
+    // 获取视口绝对中心（修复插入组件无效的 Bug）
+    function getCenterCoord() {
+        if (!window.graph) return { x: 500, y: 100 };
+        const scroller = document.querySelector('.x6-widget-scroller') || document.getElementById('container');
+        const rect = scroller.getBoundingClientRect();
+        return window.graph.clientToLocal(rect.left + rect.width / 2, rect.top + rect.height / 2);
     }
 
     window.addEventListener('DOMContentLoaded', () => {
@@ -653,9 +661,10 @@
         });
     });
 
+    // 强行单独居中指令，完美拉回视角
     window.forceRecenter = function() {
         if(window.graph) {
-            window.graph.scroller.zoomToFit({ maxScale: 1 });
+            window.graph.zoomToFit({ padding: 60, maxScale: 1 });
             window.graph.centerContent();
         }
     };
@@ -741,16 +750,14 @@
         document.querySelectorAll('.visual-menu').forEach(m => m.style.display='none');
     };
 
-    // 【新增：自由绘制注释连线】
+    // 自由生成独立连线，不受排版约束
     window.addFreeLine = function() {
         if (!window.graph) return;
-        const center = window.graph.scroller.getCenter();
-        const startX = center.x - 50; const startY = center.y;
-        const endX = center.x + 50; const endY = center.y;
+        const center = getCenterCoord();
         
         window.graph.addEdge({
-            source: { x: startX, y: startY },
-            target: { x: endX, y: endY },
+            source: { x: center.x - 60, y: center.y },
+            target: { x: center.x + 60, y: center.y },
             attrs: window.getSelectedEdgeAttrs(),
             router: window.getSelectedRouter(),
             connector: { name: 'rounded', args: { radius: 4 } }
@@ -765,7 +772,7 @@
         const initialText = '双击录入文本'; 
         const size = window.calculateNodeSize(initialText, minW, minH);
         
-        const center = window.graph.scroller.getCenter(); 
+        const center = getCenterCoord(); 
         const offsetX = (Math.random() - 0.5) * 40; 
         const offsetY = (Math.random() - 0.5) * 40;
 
@@ -846,14 +853,12 @@
                 X_CENTER = Math.round(anchorPos.x + sortedProcesses[0].getSize().width / 2);
                 currentY = Math.round(anchorPos.y) - sortedProcesses[0].getSize().height / 2;
             }
-        } else {
-            const scrollerWidth = document.getElementById('container').clientWidth;
-            X_CENTER = Math.round(scrollerWidth > 400 ? scrollerWidth / 2 : 500); 
         }
 
         const X_LEFT = X_CENTER - gapX; 
         const X_RIGHT = X_CENTER + gapX; 
         const positionedSet = new Set(); 
+        
         let prevRowHeight = 0;
 
         sortedProcesses.forEach((p, index) => {
@@ -920,8 +925,10 @@
         });
         
         if (shouldCenter) {
-            window.graph.scroller.zoomToFit({ maxScale: 1 });
-            window.graph.centerContent();
+            setTimeout(() => {
+                window.graph.zoomToFit({ padding: 60, maxScale: 1 });
+                window.graph.centerContent();
+            }, 50);
         }
     };
 
@@ -1047,7 +1054,6 @@
                     let srcNode = data.nodes.find(n => n.id === edge.source); let tgtNode = data.nodes.find(n => n.id === edge.target); if(!srcNode || !tgtNode) return;
                     
                     let srcPort = 'p2'; let tgtPort = 'p1'; 
-                    // 【核心防死结】：强制判定工序到工序的线为直线，无视安全距离直接拉通
                     let routerObj = window.getSelectedRouter();
                     if (srcNode.category === 'process' && tgtNode.category === 'process') {
                         routerObj = { name: 'normal' };
@@ -1059,7 +1065,8 @@
                     window.graph.addEdge({ source: { cell: edge.source, port: srcPort }, target: { cell: edge.target, port: tgtPort }, attrs: window.getSelectedEdgeAttrs(), router: routerObj, connector: { name: 'rounded', args: { radius: 4 } } });
                 });
             }
-            setTimeout(() => { window.applyGlobalLayout(true); }, 120);
+            
+            setTimeout(() => { window.applyGlobalLayout(true); }, 150);
         } catch (fatalError) { showError("系统渲染异常：" + fatalError.message); }
     };
 
