@@ -3,8 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <title>工艺流程绘制系统</title>
-    <!-- 使用国内极速 CDN，彻底解决引擎卡死加载不出来的问题 -->
-    <script src="https://npm.elemecdn.com/@antv/x6@1.34.6/dist/x6.js"></script>
+   <!-- 使用国内高可用 CDN (jsDelivr)，如果加载失败则自动切换备用源 -->
+    <script src="https://fastly.jsdelivr.net/npm/@antv/x6@1.34.6/dist/x6.js"></script>
+    <script>
+        if (typeof window.X6 === 'undefined') {
+            document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/antv-x6/1.34.6/x6.js"><\/script>');
+        }
+    </script>
     <style>
         /* 严谨的工业级色板 */
         :root { 
