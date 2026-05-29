@@ -240,9 +240,10 @@
                 <span class="group-label">排版</span>
                 <label>宽</label><input type="number" id="globalW" value="130" style="width: 44px;" oninput="updateGlobalSize()">
                 <label>高</label><input type="number" id="globalH" value="45" style="width: 40px;" oninput="updateGlobalSize()">
-                <label>左右距</label><input type="number" id="globalGapX" value="320" style="width: 44px;" oninput="applyGlobalLayout(false)">
-                <label>上下距</label><input type="number" id="globalGapY" value="60" style="width: 40px;" oninput="applyGlobalLayout(false)">
-                <button class="btn-tool" onclick="forceRecenter()" style="border-color:#0052d9; color:#0052d9; margin-left: 5px;" title="仅重新居中视图">一键居中</button>
+                <label>左右距</label><input type="number" id="globalGapX" value="320" style="width: 44px;">
+                <label>上下距</label><input type="number" id="globalGapY" value="60" style="width: 40px;">
+                <button class="btn-tool" onclick="applyGlobalLayout(true)" style="background:#f0f9eb; border-color:#00a870; color:#00a870; margin-left: 5px;" title="根据间距重新洗牌排版(会重置位置)">应用间距重排</button>
+                <button class="btn-tool" onclick="forceRecenter()" style="border-color:#0052d9; color:#0052d9;" title="仅将所有内容拉回视野正中心">一键居中</button>
             </div>
 
             <div class="prop-group">
@@ -664,11 +665,17 @@
         return { width: w, height: h };
     }
 
-    function getCenterCoord() {
+function getCenterCoord() {
         if (!window.graph) return { x: 500, y: 100 };
-        const scroller = document.querySelector('.x6-widget-scroller') || document.getElementById('container');
-        const rect = scroller.getBoundingClientRect();
-        return window.graph.clientToLocal(rect.left + rect.width / 2, rect.top + rect.height / 2);
+        // 精确获取当前视野的实际数学中心
+        const { tx, ty } = window.graph.translate();
+        const scale = window.graph.zoom();
+        const scrollerElem = document.querySelector('.x6-widget-scroller') || document.getElementById('container');
+        const rect = scrollerElem.getBoundingClientRect();
+        return {
+            x: (rect.width / 2 - tx) / scale,
+            y: (rect.height / 2 - ty) / scale
+        };
     }
 
     window.addEventListener('DOMContentLoaded', () => {
@@ -763,15 +770,23 @@
             document.getElementById('editModal').style.display = 'flex'; setTimeout(() => document.getElementById('editModalInput').focus(), 50); 
         });
         
-        graph.on('cell:selected', ({ cell }) => { 
+graph.on('cell:selected', ({ cell }) => { 
             if (cell.isNode()) {
                 const attrs = cell.getAttrs();
                 document.getElementById('borderWidth').value = attrs.body.strokeWidth !== undefined ? attrs.body.strokeWidth : 2;
             } else if (cell.isEdge()) {
                 const line = cell.attr('line'); document.getElementById('borderWidth').value = line.strokeWidth || 2;
+                // 【关键修复】：激活线条折角拖拽工具
+                cell.addTools(['vertices', 'segments']); 
             }
         });
-    });
+
+        // 【新增】：取消选中时，自动隐藏线条拖拽点，保持画布整洁
+        graph.on('cell:unselected', ({ cell }) => {
+            if (cell.isEdge()) {
+                cell.removeTools();
+            }
+        });
 
     window.forceRecenter = function() {
         if(window.graph) {
@@ -927,9 +942,12 @@
         });
     };
 
-    window.applyGlobalLayout = function(shouldCenter = false) {
+window.applyGlobalLayout = function(shouldCenter = false) {
         if (!window.graph) return;
         const allNodes = window.graph.getNodes(); const allEdges = window.graph.getEdges(); if (allNodes.length === 0) return;
+        
+        // 【关键修复】：开启历史记录批量打包，这样一键撤销就能恢复整个排版动作！
+        window.graph.startBatch('auto-layout');
         
         const baseW = parseInt(document.getElementById('globalW').value) || 130; 
         const baseH = parseInt(document.getElementById('globalH').value) || 45;
@@ -989,7 +1007,7 @@
                 X_CENTER = Math.round(anchorPos.x + sortedProcesses[0].getSize().width / 2);
                 currentY = Math.round(anchorPos.y) - sortedProcesses[0].getSize().height / 2;
             }
-} else {
+        } else {
             const scrollerElem = document.querySelector('.x6-widget-scroller') || document.querySelector('.x6-graph-scroller') || document.getElementById('container');
             const scrollerWidth = scrollerElem ? scrollerElem.clientWidth : 1000;
             X_CENTER = Math.round(scrollerWidth / 2); 
@@ -1010,7 +1028,6 @@
             const pHeight = p.getSize().height; const mHeight = getGroupHeight(materials); const eHeight = getGroupHeight(emissions);
             const rowHeight = Math.max(pHeight, mHeight, eHeight);
             
-            // 【安全拦截】：真正确保实际物理空隙足够，绝不生成死结连线
             const stepHeight = Math.max(inputGapY + Math.max(0, rowHeight - baseH), pHeight + 60); 
             
             if (index === 0) { currentY += rowHeight / 2; } 
@@ -1054,6 +1071,9 @@
             } 
         });
         
+        // 【关键修复】：关闭历史打包
+        window.graph.stopBatch('auto-layout');
+
         if (shouldCenter) {
             setTimeout(() => {
                 window.graph.scroller.zoomToFit({ padding: 60, maxScale: 1 });
