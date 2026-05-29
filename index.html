@@ -65,21 +65,7 @@
         .typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
         @keyframes typing { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
 
-        .stencil-container { padding: 15px 20px; border-top: 1px solid var(--border); background: #fbfbfc; flex-shrink: 0; }
-        .section-title { font-size: 12px; font-weight: 600; color: var(--text-sub); margin: 0 0 12px 0; font-family: "Microsoft YaHei", sans-serif;}
-        .stencil-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
-        
-        .stencil-item-btn { display: flex; align-items: center; justify-content: center; width: 100%; height: 56px; border: 1px solid var(--border); border-radius: 6px; background: #fff; cursor: pointer; transition: all 0.2s; }
-        .stencil-item-btn:hover { border-color: var(--primary); box-shadow: 0 2px 8px rgba(0,82,217,0.1); background: #fbfbfc; }
-
-        .visual-shape { width: 44px; height: 28px; box-sizing: border-box; }
-        .v-process { border: 2px solid #18191c; background: #f4f5f7; }
-        .v-material { border: 1px solid #dcdfe6; border-radius: 14px; background: #fff; }
-        .v-emission { border: 2px dashed #d54941; background: #fff1f0; }
-        .v-decision { width: 24px; height: 24px; border: 2px solid #18191c; background: #fff; transform: rotate(45deg); }
-        .v-ellipse { border: 2px solid #18191c; background: #fff; border-radius: 50%; }
-        .v-text { border: 1px dashed #9da2a8; background: transparent; }
-
+        /* 主工作区 & 分层Ribbon工具栏 */
         .main-workspace { flex: 1; display: flex; flex-direction: column; position: relative; min-width: 0; background: var(--panel-bg);}
         .toolbar-container { display: flex; flex-direction: column; background: var(--bg); border-bottom: 1px solid var(--border); z-index: 15; flex-shrink: 0; font-family: "Microsoft YaHei", sans-serif; box-shadow: 0 2px 8px rgba(0,0,0,0.02);}
         .toolbar-row { display: flex; align-items: center; padding: 10px 20px; background: #fff; border-bottom: 1px solid #f0f1f5; }
@@ -180,7 +166,7 @@
         <div class="chat-messages" id="chatMessages">
             <div class="msg-row ai">
                 <div class="msg-avatar">豆包</div>
-                <div class="msg-bubble">系统已就绪。请输入工艺流程描述，我将自动提取主干工序、原辅料及产排污节点，并绘制标准的拓扑流程图。</div>
+                <div class="msg-bubble">您好。我是工艺结构分析引擎。请录入流程描述，我将为您构建排版流程图。</div>
             </div>
         </div>
         
@@ -189,7 +175,7 @@
                 <span>流程说明录入：</span>
                 <button class="text-btn" onclick="insertExample()" style="padding:0; font-size:12px;">快速载入示例</button>
             </div>
-            <textarea id="chatInput" placeholder="支持大段文本直接粘贴。若物料缺少行业代号，系统将依据环评规范为您智能补充。"></textarea>
+            <textarea id="chatInput" placeholder="支持大段文本直接粘贴。若物料缺少行业代号，系统将依据环评规范智能补充。"></textarea>
             <button class="send-btn" id="sendBtn" onclick="sendMessage()">执行智能分析与排版</button>
         </div>
     </div>
@@ -241,11 +227,11 @@
 
             <div class="prop-group">
                 <span class="group-label">排版</span>
-                <label>宽</label><input type="number" id="globalW" value="130" style="width: 44px;" oninput="updateGlobalSize()">
-                <label>高</label><input type="number" id="globalH" value="45" style="width: 40px;" oninput="updateGlobalSize()">
-                <label>左右距</label><input type="number" id="globalGapX" value="320" style="width: 44px;" oninput="applyGlobalLayout()">
-                <label>上下距</label><input type="number" id="globalGapY" value="80" style="width: 40px;" oninput="applyGlobalLayout()">
-                <button class="btn-tool" onclick="applyGlobalLayout()" style="border-color:#0052d9; color:#0052d9; margin-left: 5px;">一键排版</button>
+                <label>宽</label><input type="number" id="globalW" value="130" style="width: 44px;" oninput="applyGlobalLayout(false)">
+                <label>高</label><input type="number" id="globalH" value="45" style="width: 40px;" oninput="applyGlobalLayout(false)">
+                <label>左右距</label><input type="number" id="globalGapX" value="320" style="width: 44px;" oninput="applyGlobalLayout(false)">
+                <label>上下距</label><input type="number" id="globalGapY" value="80" style="width: 40px;" oninput="applyGlobalLayout(false)">
+                <button class="btn-tool" onclick="applyGlobalLayout(true)" style="border-color:#0052d9; color:#0052d9; margin-left: 5px;">一键排版</button>
             </div>
 
             <div class="prop-group">
@@ -376,7 +362,7 @@
     }
 
     function insertExample() {
-        const text = "各类原料投入原料检测工序，产生实验废气G1与实验废液S1；\n随后加入异丙醇、二甲苯进行投料与合成反应，产生废气G2；\n反应后使用纯水进行洗涤，产生清洗废水W1；\n压滤后产生实验废渣S2，最后通过电加热烘干产生废气G3。";
+        const text = "各类原料投入原料检测工序，产生实验废气与实验废液；\n随后加入异丙醇、二甲苯进行投料与合成反应，产生废气；\n反应后使用纯水进行洗涤，产生清洗废水；\n压滤后产生实验废渣，最后通过电加热烘干产生废气。";
         document.getElementById('chatInput').value = text;
     }
 
@@ -393,6 +379,69 @@
     function updateMessage(msgId, content) {
         const bubble = document.querySelector(`#${msgId} .msg-bubble`);
         if (bubble) { bubble.innerHTML = content; document.getElementById('chatMessages').scrollTop = document.getElementById('chatMessages').scrollHeight; }
+    }
+
+    /* 拦截并清洗图形数据，强行抹除所有括号、跳跃线条与错误组合 */
+    function sanitizeGraphData(data) {
+        // 第一道防线：文本与括号清洗
+        data.nodes.forEach(n => {
+            if (n.category === 'emission') {
+                // 彻底删除任何形式的括号
+                n.label = (n.label || '').replace(/[()（）]/g, '');
+            }
+            if (n.category === 'process') {
+                // 如果 AI 把原料写进了工序，强行截断，只保留第一行的纯工序名
+                const lines = (n.label || '').split(/\\n|\n/);
+                if (lines.length > 1) {
+                    n.label = lines[0]; 
+                }
+            }
+        });
+
+        // 第二道防线：重写主干链条，物理灭绝跨级跳跃
+        const processNodes = data.nodes.filter(n => n.category === 'process');
+        if (processNodes.length > 1) {
+            const pIds = new Set(processNodes.map(n => n.id));
+            const pEdges = data.edges.filter(e => pIds.has(e.source) && pIds.has(e.target));
+            
+            // 构建拓扑排序
+            const outMap = {};
+            const inCount = {};
+            processNodes.forEach(p => { outMap[p.id] = []; inCount[p.id] = 0; });
+            pEdges.forEach(e => {
+                if (outMap[e.source] !== undefined && inCount[e.target] !== undefined) {
+                    outMap[e.source].push(e.target);
+                    inCount[e.target]++;
+                }
+            });
+
+            let queue = processNodes.filter(p => inCount[p.id] === 0).map(p => p.id);
+            if (queue.length === 0) queue = [processNodes[0].id]; 
+            
+            const sortedPIds = [];
+            while(queue.length > 0) {
+                const curr = queue.shift();
+                sortedPIds.push(curr);
+                outMap[curr].forEach(tgt => {
+                    inCount[tgt]--;
+                    if(inCount[tgt] === 0) queue.push(tgt);
+                });
+            }
+            
+            processNodes.forEach(p => {
+                if (!sortedPIds.includes(p.id)) sortedPIds.push(p.id);
+            });
+
+            // 强行删去旧的主干线，重新建立 100% 直线的 1->2->3 连接
+            data.edges = data.edges.filter(e => !(pIds.has(e.source) && pIds.has(e.target)));
+            for (let i = 0; i < sortedPIds.length - 1; i++) {
+                data.edges.push({
+                    source: sortedPIds[i],
+                    target: sortedPIds[i+1]
+                });
+            }
+        }
+        return data;
     }
 
     async function sendMessage() {
@@ -413,24 +462,22 @@
             stepIdx = (stepIdx + 1) % statusSteps.length;
         }, 1200);
 
+        // 重度防弹版 Prompt
         const systemPrompt = `你是一个专业的环境工程工艺图解析系统。
 请严格分析用户提供的工艺描述，并提取为标准 JSON 数据格式（必须用 \`\`\`json 和 \`\`\` 包裹）。
 
 【核心拓扑及合规编码规则】：
-1. 【主干单链】：必须提取所有的主工序步骤，并在 \`edges\` 中生成严格首尾相连的单链流转数据（如 A->B, B->C），绝不允许跨级跳跃（如 A->C 属于严重错误）。
-2. 【环评合规编码补充（核心）】：若原文中提及了污染物（废水、废气、固废/废渣、噪声）但没有提供对应的行业代号（如 G1、W1、S1 等），你必须基于环境工程规范，顺次为其强制自动生成标准的环评编码。
-   - 废气用 G1, G2, G3...
-   - 废水用 W1, W2, W3...
-   - 固体废物/废渣/废液用 S1, S2, S3...
-   - 噪声用 N1, N2, N3...
-   - 节点文本必须以 "名称代号" 的形式直接相连，绝对不能使用括号包裹！例如："合成废气G1"、"精馏废水W1"。
-3. 【严格分离与合并】：
-   - 【工序节点】(process) 只能写工序名称，绝不能把原料写进工序节点里！
-   - 【原辅料节点】(material) 必须作为独立节点，通过 edge 指向对应的工序。同一工序投入的多种物料合并在1个物料节点中（内部用 \\n 换行）。
-   - 【产排污节点】(emission) 必须作为独立节点，由对应工序通过 edge 指向它。同一工序产生的多种污染物合并在1个节点中（内部用 \\n 换行）。
+1. 【主干单链】：必须提取所有的主工序步骤，并在 \`edges\` 中生成严格首尾相连的单链流转数据，绝不允许跨级跳跃。
+2. 【工序必须极简】：工序节点 (process) 的名称必须是纯动词或短语（如“除油”、“合成反应”），绝对禁止将物料名称写入工序节点中！
+3. 【环评合规编码补充】：若原文中提及了污染物（废水、废气、固废/废渣、噪声）但没有提供行业代号，你必须顺次为其强制自动生成标准的环评编码。
+   - 废气用 G1, G2... 废水用 W1, W2... 废渣用 S1, S2...
+   - 排污节点文本必须是直接相连的 "名称代号"，绝对禁止出现任何括号！例如："合成废气G1"。
+4. 【严格分离与合并】：
+   - 同一工序投入的多种物料必须合并在1个物料节点中（内部用 \\n 换行）。
+   - 同一工序产生的多种污染物必须合并在1个排污节点中（内部用 \\n 换行）。
 
 【JSON 数据结构规范】：
-{"nodes": [{"id": "唯一标识", "label": "名称代号", "category": "分类"}], "edges": [{"source": "起点id", "target": "终点id"}]}
+{"nodes": [{"id": "唯一标识", "label": "名称", "category": "分类"}], "edges": [{"source": "起点id", "target": "终点id"}]}
 * category 取值仅限: process, material, emission。`;
 
         try {
@@ -455,7 +502,7 @@
 
             if (jsonMatch) {
                 const jsonStr = jsonMatch[1].trim();
-                chatText += `<br><br><span style="color:#00a870; font-weight:500;">解析完毕，数据已推送至视图。</span>`;
+                chatText += `<br><br><span style="color:#00a870; font-weight:500;">解析完毕，系统已应用强校准纠偏并推送到视图。</span>`;
                 updateMessage(aiMsgId, chatText);
                 renderFromJSON(jsonStr);
             } else {
@@ -470,7 +517,7 @@
     }
 
     /* =========================================================
-       2. 防弹级动态图形渲染逻辑 (彻底分离独立调整与全局重置)
+       2. 防弹级动态图形渲染逻辑
        ========================================================= */
     function showError(msg) { document.getElementById('error-text').innerHTML = msg; document.getElementById('error-msg').style.display = 'block'; }
     function hideError() { document.getElementById('error-msg').style.display = 'none'; }
@@ -487,6 +534,7 @@
         return `'${document.getElementById('westFont').value}', '${document.getElementById('eastFont').value}', sans-serif`; 
     }
 
+    // 强行注入 lineHeight，彻底消灭挤在一起的 Bug
     window.calculateNodeSize = function(text, minW, minH) {
         if (!text) return { width: minW, height: minH };
         const lines = text.replace(/\\n/g, '\n').split(/\r?\n/); 
@@ -569,7 +617,7 @@
     });
 
     window.addEventListener('resize', () => {
-        // 解绑：仅在明确需要时才进行全局自适应重排，日常缩放窗体不影响已经定位好的图纸
+        // 解绑：仅在明确需要时才进行全局自适应重排
     });
 
     /* =========================================================
@@ -674,34 +722,11 @@
         const portAttrs = { circle: { r: 4, magnet: true, stroke: '#0052d9', fill: '#fff' } };
         const defaultPorts = { groups: { top: { position: 'top', attrs: portAttrs }, bottom: { position: 'bottom', attrs: portAttrs }, left: { position: 'left', attrs: portAttrs }, right: { position: 'right', attrs: portAttrs } }, items: [ { id: 'p1', group: 'top' }, { id: 'p2', group: 'bottom' }, { id: 'p3', group: 'left' }, { id: 'p4', group: 'right' } ] };
 
-        window.graph.addNode({ shape: shape, x: Math.round(center.x - size.width/2 + offsetX), y: Math.round(center.y - size.height/2 + offsetY), width: size.width, height: size.height, ports: defaultPorts, data: { category: type, originalLabel: initialText }, attrs: { body: { fill: style.fill, stroke: style.stroke, strokeWidth: style.strokeWidth, strokeDasharray: style.dash, rx: style.rx, ry: style.rx, refPoints: style.refPoints }, text: { text: initialText, fill: style.color, fontSize: parseInt(document.getElementById('globalFontSize').value), fontFamily: window.getCombinedFont(), fontWeight: window.isBold ? 'bold' : 'normal' } } });
+        // 强行注入 lineHeight，彻底杜绝多行文字重叠！
+        window.graph.addNode({ shape: shape, x: Math.round(center.x - size.width/2 + offsetX), y: Math.round(center.y - size.height/2 + offsetY), width: size.width, height: size.height, ports: defaultPorts, data: { category: type, originalLabel: initialText }, attrs: { body: { fill: style.fill, stroke: style.stroke, strokeWidth: style.strokeWidth, strokeDasharray: style.dash, rx: style.rx, ry: style.rx, refPoints: style.refPoints }, text: { text: initialText, fill: style.color, lineHeight: 1.5, fontSize: parseInt(document.getElementById('globalFontSize').value), fontFamily: window.getCombinedFont(), fontWeight: window.isBold ? 'bold' : 'normal' } } });
     };
 
-    // 【新增核心函数】：在原地只更新图框的尺寸，绝不触发全局排版干扰用户的自定义坐标
-    window.updateGlobalSize = function() {
-        if (!window.graph) return;
-        const baseW = parseInt(document.getElementById('globalW').value) || 130; 
-        const baseH = parseInt(document.getElementById('globalH').value) || 45;
-        
-        window.graph.getNodes().forEach(node => { 
-            const data = node.getData() || {}; 
-            if (data.category !== 'text' && data.category !== 'decision' && data.category !== 'ellipse') { 
-                const text = (node.attr('text/text') || '').replace(/\\n/g, '\n'); 
-                const newSize = window.calculateNodeSize(text, baseW, baseH); 
-                const oldSize = node.getSize();
-                const oldPos = node.getPosition();
-                
-                // 仅更新大小，并向四周均匀放大/缩小，保持中心点不变
-                if (newSize.width !== oldSize.width || newSize.height !== oldSize.height) {
-                    node.resize(newSize.width, newSize.height); 
-                    node.position(oldPos.x - (newSize.width - oldSize.width) / 2, oldPos.y - (newSize.height - oldSize.height) / 2);
-                }
-            } 
-        });
-    };
-
-    // 核心引擎：深度排版重置（仅在点击“一键排版”或首次解析后触发）
-    window.applyGlobalLayout = function() {
+    window.applyGlobalLayout = function(shouldCenter = false) {
         if (!window.graph) return;
         const allNodes = window.graph.getNodes(); const allEdges = window.graph.getEdges(); if (allNodes.length === 0) return;
         
@@ -749,18 +774,15 @@
                 visited.add(currId); 
                 const node = processNodes.find(p => p.id === currId);
                 if (node) sortedProcesses.push(node);
-                
                 const nextIds = (outEdges[currId] || []).filter(id => processIds.has(id));
                 queue.push(...nextIds); 
             } 
         }
-        
-        processNodes.forEach(p => { 
-            if(!visited.has(p.id)) sortedProcesses.push(p); 
-        });
+        processNodes.forEach(p => { if(!visited.has(p.id)) sortedProcesses.push(p); });
 
         const nodeCoords = {}; 
-        const X_CENTER = 600; 
+        const scrollerWidth = document.getElementById('container').clientWidth;
+        const X_CENTER = Math.round(scrollerWidth > 400 ? scrollerWidth / 2 : 500); 
         const X_LEFT = X_CENTER - gapX; 
         const X_RIGHT = X_CENTER + gapX; 
         
@@ -781,7 +803,8 @@
             const eHeight = getGroupHeight(emissions);
             const rowHeight = Math.max(pHeight, mHeight, eHeight);
             
-            const stepHeight = inputGapY + Math.max(0, rowHeight - baseH); 
+            // 安全限制：保证中心点之间的距离绝对足够连线穿梭，绝不扭曲
+            const stepHeight = Math.max(inputGapY + Math.max(0, rowHeight - baseH), pHeight + 40); 
             
             const processY = Math.round(currentY + stepHeight / 2);
             nodeCoords[p.id] = { x: X_CENTER, y: processY };
@@ -802,7 +825,6 @@
                 positionedSet.add(e.id);
                 eStartY += h + 20;
             });
-            
             currentY += stepHeight;
         });
 
@@ -824,8 +846,10 @@
             } 
         });
         
-        window.graph.scroller.zoomToFit({ maxScale: 1 });
-        window.graph.centerContent();
+        if (shouldCenter) {
+            window.graph.scroller.zoomToFit({ maxScale: 1 });
+            window.graph.centerContent();
+        }
     };
 
     window.saveProject = function() {
@@ -844,7 +868,6 @@
         reader.readAsText(file); event.target.value = ''; 
     };
 
-    // 局部修改功能：只自适应本身的宽高尺寸，绝对不触发全局排版干扰用户的拖拽
     window.updateNodeStyle = function(type) {
         if (!window.graph) return;
         const cells = window.graph.getSelectedCells(); const targetNodes = cells.length ? cells.filter(c => c.isNode()) : window.graph.getNodes();
@@ -862,7 +885,6 @@
             const oldSize = node.getSize();
             const oldPos = node.getPosition();
             
-            // 局部平滑放大/缩小
             if(newSize.width !== oldSize.width || newSize.height !== oldSize.height) {
                 node.resize(newSize.width, newSize.height);
                 node.position(oldPos.x - (newSize.width - oldSize.width)/2, oldPos.y - (newSize.height - oldSize.height)/2);
@@ -881,7 +903,6 @@
         }).join('\n'); 
     }
     
-    // 排污简写：只原地缩放自己
     window.toggleEmissionLabels = function() {
         if (!window.graph) return; const isShort = document.getElementById('shortLabel').checked;
         const baseW = parseInt(document.getElementById('globalW').value) || 130; 
@@ -901,7 +922,6 @@
         });
     };
 
-    // 局部双击编辑：只原地缩放自己
     window.saveEditModal = function() { 
         if (window.editTargetNode) { 
             let newText = document.getElementById('editModalInput').value.trim() === '' ? ' ' : document.getElementById('editModalInput').value; 
@@ -921,7 +941,8 @@
 
     window.renderFromJSON = function(jsonStr) {
         try {
-            let data = JSON.parse(jsonStr);
+            // 前端强行接管清洗 AI 生成的数据
+            let data = sanitizeGraphData(JSON.parse(jsonStr));
             if (!data.nodes) data.nodes = []; if (!data.edges) data.edges = [];
             window.graph.clearCells();
 
@@ -945,8 +966,9 @@
                     n.category = 'process';
                 }
                 
+                // 注入 lineHeight 修复文字重叠 Bug
                 const size = window.calculateNodeSize(displayText, baseW, baseH);
-                window.graph.addNode({ id: n.id, x: 0, y: 0, width: size.width, height: size.height, ports: defaultPorts, data: { category: n.category, originalLabel: label }, attrs: { body: { fill: style.fill, stroke: style.stroke, strokeWidth: style.sw, strokeDasharray: style.dash, rx: style.rx, ry: style.rx }, text: { text: displayText, fill: style.fontColor, fontSize: parseInt(document.getElementById('globalFontSize').value), fontFamily: window.getCombinedFont(), fontWeight: window.isBold ? 'bold' : 'normal' } } });
+                window.graph.addNode({ id: n.id, x: 0, y: 0, width: size.width, height: size.height, ports: defaultPorts, data: { category: n.category, originalLabel: label }, attrs: { body: { fill: style.fill, stroke: style.stroke, strokeWidth: style.sw, strokeDasharray: style.dash, rx: style.rx, ry: style.rx }, text: { text: displayText, fill: style.fontColor, lineHeight: 1.5, fontSize: parseInt(document.getElementById('globalFontSize').value), fontFamily: window.getCombinedFont(), fontWeight: window.isBold ? 'bold' : 'normal' } } });
             });
 
             if (data.edges) {
@@ -958,7 +980,7 @@
                     window.graph.addEdge({ source: { cell: edge.source, port: srcPort }, target: { cell: edge.target, port: tgtPort }, attrs: window.getSelectedEdgeAttrs(), router: window.getSelectedRouter(), connector: { name: 'rounded', args: { radius: 4 } } });
                 });
             }
-            setTimeout(() => { window.applyGlobalLayout(); }, 80);
+            setTimeout(() => { window.applyGlobalLayout(true); }, 120);
         } catch (fatalError) { showError("系统渲染异常：" + fatalError.message); }
     };
 
