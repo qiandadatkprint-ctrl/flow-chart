@@ -1018,7 +1018,8 @@ window.applyGlobalLayout = function(shouldCenter = false) {
         } else {
             const scrollerElem = document.querySelector('.x6-widget-scroller') || document.querySelector('.x6-graph-scroller') || document.getElementById('container');
             const scrollerWidth = scrollerElem ? scrollerElem.clientWidth : 1000;
-            X_CENTER = Math.round(scrollerWidth / 2); 
+            // 【防御性修复】：如果宽度捕获失败(等于0)，给一个合理的 600 像素作为中心，防止缩到左上角
+            X_CENTER = scrollerWidth > 200 ? Math.round(scrollerWidth / 2) : 600; 
         }
 
         const X_LEFT = X_CENTER - gapX; const X_RIGHT = X_CENTER + gapX; 
@@ -1084,11 +1085,13 @@ window.applyGlobalLayout = function(shouldCenter = false) {
 
         if (shouldCenter) {
             setTimeout(() => {
-                window.graph.scroller.zoomToFit({ padding: 60, maxScale: 1 });
-                window.graph.centerContent();
-            }, 50);
+                if (window.graph) {
+                    // 【延迟校准】：给画布留出充足的时间计算边界，再进行居中
+                    window.graph.scroller.zoomToFit({ padding: 60, maxScale: 1 });
+                    window.graph.centerContent();
+                }
+            }, 200); // 50ms 调高至 200ms
         }
-    };
 
     window.saveProject = function() {
         if(!window.graph) return;
