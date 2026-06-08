@@ -524,13 +524,20 @@
 
             const relatedEEdges = data.edges.filter(e => e.source === pId && emissionNodes.find(em => em.id === e.target));
             if (relatedEEdges.length > 0) {
-                const labels = new Set();
+                const codes = new Set();
                 relatedEEdges.forEach(e => {
                     const eNode = emissionNodes.find(em => em.id === e.target);
-                    if (eNode) eNode.label.split('\n').forEach(l => { if(l.trim()) labels.add(l.trim()); });
+                    if (eNode) {
+                        const matches = eNode.label.match(/[A-Za-z]+[-_]?\d+/g);
+                        if (matches) {
+                            matches.forEach(m => codes.add(m));
+                        } else {
+                            eNode.label.split(/[\n、,，]/).forEach(l => { if(l.trim()) codes.add(l.trim()); });
+                        }
+                    }
                 });
                 const newEId = 'e_merge_' + pId;
-                mergedNodes.push({ id: newEId, label: Array.from(labels).join('\n'), category: 'emission' });
+                mergedNodes.push({ id: newEId, label: Array.from(codes).join('、'), category: 'emission' });
                 mergedEdges.push({ source: pId, target: newEId });
             }
         });
@@ -563,7 +570,7 @@
 1. 【主干单链】：必须提取所有的主工序步骤，并在 \`edges\` 中生成严格首尾相连的单向数据。绝不允许跨级跳跃！
 2. 【工序极简】：工序节点 (process) 只能写工序名称（纯动词或名词，如“除油”），绝不能把大段句子或原料写进工序节点里！
 3. 【环评合规编码补充】：若提及污染物但未提供代号，必须自动生成（废气G1, 废水W1, 废渣S1等）。
-4. 排污节点文本必须是直接相连的 "名称代号"，绝对禁止出现任何括号！例如："合成废气G1"。
+4. 【产排污极简】：排污节点 (emission) 的文本【只允许输出代号】（如 G1, S1, W1 等），绝对不要输出"废气"、"废水"等中文描述！如果有多个代号，用顿号连接，例如："G1、S1"。
 5. 所有【原辅料】必须有一条 edge 指向对应的【工序】！
 
 【严格的 JSON 规范示例】：
@@ -1128,11 +1135,12 @@ window.applyGlobalLayout = function(shouldCenter = false) {
 
     window.clearCanvas = function() { if(confirm("确认清空整个画布吗？该操作不可逆。")) { window.graph.clearCells(); } };
     
-    function formatEmissionLabel(fullText, isShort) { 
-        if (!isShort) return fullText.replace(/\\n/g, '\n'); 
-        return fullText.replace(/\\n/g, '\n').split('\n').map(line => { 
-            const match = line.match(/[A-Za-z]+[-_]?\d+/); return match ? match[0] : line; 
-        }).join('\n'); 
+function formatEmissionLabel(fullText, isShort) { 
+        const matches = fullText.match(/[A-Za-z]+[-_]?\d+/g);
+        if (isShort && matches) {
+            return Array.from(new Set(matches)).join('、');
+        }
+        return fullText.replace(/\\n/g, '、').replace(/\n/g, '、'); 
     }
     
     window.toggleEmissionLabels = function() {
@@ -1193,8 +1201,10 @@ window.applyGlobalLayout = function(shouldCenter = false) {
                 if (cat.includes('material') || cat.includes('原') || cat.includes('辅')) { 
                     n.category = 'material'; style.fill = '#ffffff'; style.rx = 20; style.sw = 0; style.stroke = 'transparent'; 
                 } 
-                else if (cat.includes('emission') || cat.includes('污') || cat.includes('废')) { 
-                    n.category = 'emission'; style.fill = '#fff1f0'; style.stroke = '#d54941'; style.fontColor = '#d54941'; style.dash = '5 5'; style.sw = 2; displayText = isShortMode ? formatEmissionLabel(label, true) : label; 
+else if (cat.includes('emission') || cat.includes('污') || cat.includes('废')) { 
+                    n.category = 'emission'; style.fill = '#fff1f0'; style.stroke = '#d54941'; style.fontColor = '#d54941'; style.dash = '5 5'; style.sw = 2;
+                    const matches = label.match(/[A-Za-z]+[-_]?\d+/g);
+                    displayText = matches ? Array.from(new Set(matches)).join('、') : label.replace(/[\n]/g, '、');
                 } else { n.category = 'process'; }
                 
                 const size = window.calculateNodeSize(displayText, baseW, baseH);
