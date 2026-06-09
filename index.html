@@ -1083,7 +1083,7 @@ window.applyGlobalLayout = function(shouldCenter = false) {
         // 【关键修复】：关闭历史打包
         window.graph.stopBatch('auto-layout');
 
-        if (shouldCenter) {
+if (shouldCenter) {
             setTimeout(() => {
                 if (window.graph) {
                     // 【延迟校准】：给画布留出充足的时间计算边界，再进行居中
@@ -1092,6 +1092,7 @@ window.applyGlobalLayout = function(shouldCenter = false) {
                 }
             }, 200); // 50ms 调高至 200ms
         }
+    }; // <--- 就是这里！补上这个右大括号和分号，闭合 applyGlobalLayout 函数
 
     window.saveProject = function() {
         if(!window.graph) return;
